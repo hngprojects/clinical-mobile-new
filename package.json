@@ -43,7 +43,7 @@
     "expo-splash-screen": "~55.0.20",
     "expo-status-bar": "~55.0.6",
     "expo-system-ui": "~55.0.17",
-    "react": "19.2.0",
+    "react": "19.2.6",
     "react-hook-form": "^7.57.0",
     "react-native": "0.85.3",
     "react-native-gesture-handler": "~2.31.2",
