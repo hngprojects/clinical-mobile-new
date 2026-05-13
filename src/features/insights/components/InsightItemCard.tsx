@@ -9,6 +9,7 @@ import { INSIGHT_CARD_RADIUS } from '../api/constants';
 import type { InsightItemCardProps, InsightMenuAnchor } from '../api/types';
 
 import { InsightCardOverflowMenu } from './InsightCardOverflowMenu';
+import { InsightRenameModal } from './InsightRenameModal';
 
 export function InsightItemCard({
   title,
@@ -23,6 +24,7 @@ export function InsightItemCard({
   const anchorRef = useRef<View>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [anchor, setAnchor] = useState<InsightMenuAnchor | null>(null);
+  const [renameOpen, setRenameOpen] = useState(false);
 
   const openMenu = useCallback(() => {
     anchorRef.current?.measureInWindow((x, y, width, height) => {
@@ -81,9 +83,18 @@ export function InsightItemCard({
       visible={menuOpen}
       anchor={anchor}
       onClose={closeMenu}
-      onRename={onRename}
+      onRename={() => setRenameOpen(true)}
       onView={onView}
       onDelete={onDelete}
+    />
+  );
+
+  const renameModal = (
+    <InsightRenameModal
+      visible={renameOpen}
+      initialValue={title}
+      onClose={() => setRenameOpen(false)}
+      onSubmit={(newTitle) => onRename?.(newTitle)}
     />
   );
 
@@ -98,6 +109,7 @@ export function InsightItemCard({
           {content}
         </Pressable>
         {menu}
+        {renameModal}
       </>
     );
   }
@@ -106,6 +118,7 @@ export function InsightItemCard({
     <>
       <View style={cardStyle}>{content}</View>
       {menu}
+      {renameModal}
     </>
   );
 }

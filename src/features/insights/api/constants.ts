@@ -9,3 +9,7 @@ export const INSIGHT_MENU_RADIUS = 24;
 export const INSIGHT_MENU_WIDTH = 160;
 
 export const INSIGHT_MENU_ESTIMATED_HEIGHT = 176;
+
+export const INSIGHT_RENAME_MAX_LENGTH = 50;
+
+export const INSIGHT_RENAME_ACTIVE_BLUE = '#1565C0';

@@ -5,9 +5,16 @@ export interface InsightItemCardProps {
   subtitle: string;
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
-  onRename?: () => void;
+  onRename?: (newTitle: string) => void;
   onView?: () => void;
   onDelete?: () => void;
+}
+
+export interface InsightRenameModalProps {
+  visible: boolean;
+  initialValue: string;
+  onClose: () => void;
+  onSubmit: (newTitle: string) => void;
 }
 
 export interface InsightMenuAnchor {

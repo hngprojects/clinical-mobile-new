@@ -10,12 +10,17 @@ import { InsightSearchBar } from './InsightSearchBar';
 export function InsightScreen() {
   const { spacing } = useTheme();
   const [query, setQuery] = useState('');
+  const [insightTitle, setInsightTitle] = useState('Hormone Health Discussion');
 
   return (
     <Screen scrollable>
       <View style={{ gap: spacing.md }}>
         <InsightSearchBar value={query} onChangeText={setQuery} />
-        <InsightItemCard title="Hormone Health Discussion" subtitle="2 mins ago" />
+        <InsightItemCard
+          title={insightTitle}
+          subtitle="2 mins ago"
+          onRename={(next) => setInsightTitle(next)}
+        />
       </View>
     </Screen>
   );
