@@ -17,6 +17,12 @@ export interface InsightRenameModalProps {
   onSubmit: (newTitle: string) => void;
 }
 
+export interface InsightDeleteConfirmModalProps {
+  visible: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}
+
 export interface InsightMenuAnchor {
   x: number;
   y: number;

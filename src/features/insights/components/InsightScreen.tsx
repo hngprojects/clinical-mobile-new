@@ -11,16 +11,20 @@ export function InsightScreen() {
   const { spacing } = useTheme();
   const [query, setQuery] = useState('');
   const [insightTitle, setInsightTitle] = useState('Hormone Health Discussion');
+  const [showInsight, setShowInsight] = useState(true);
 
   return (
     <Screen scrollable>
       <View style={{ gap: spacing.md }}>
         <InsightSearchBar value={query} onChangeText={setQuery} />
-        <InsightItemCard
-          title={insightTitle}
-          subtitle="2 mins ago"
-          onRename={(next) => setInsightTitle(next)}
-        />
+        {showInsight ? (
+          <InsightItemCard
+            title={insightTitle}
+            subtitle="2 mins ago"
+            onRename={(next) => setInsightTitle(next)}
+            onDelete={() => setShowInsight(false)}
+          />
+        ) : null}
       </View>
     </Screen>
   );

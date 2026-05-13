@@ -9,6 +9,7 @@ import { INSIGHT_CARD_RADIUS } from '../api/constants';
 import type { InsightItemCardProps, InsightMenuAnchor } from '../api/types';
 
 import { InsightCardOverflowMenu } from './InsightCardOverflowMenu';
+import { InsightDeleteConfirmModal } from './InsightDeleteConfirmModal';
 import { InsightRenameModal } from './InsightRenameModal';
 
 export function InsightItemCard({
@@ -25,6 +26,7 @@ export function InsightItemCard({
   const [menuOpen, setMenuOpen] = useState(false);
   const [anchor, setAnchor] = useState<InsightMenuAnchor | null>(null);
   const [renameOpen, setRenameOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const openMenu = useCallback(() => {
     anchorRef.current?.measureInWindow((x, y, width, height) => {
@@ -85,7 +87,15 @@ export function InsightItemCard({
       onClose={closeMenu}
       onRename={() => setRenameOpen(true)}
       onView={onView}
-      onDelete={onDelete}
+      onDelete={() => setDeleteOpen(true)}
+    />
+  );
+
+  const deleteModal = (
+    <InsightDeleteConfirmModal
+      visible={deleteOpen}
+      onClose={() => setDeleteOpen(false)}
+      onConfirm={() => onDelete?.()}
     />
   );
 
@@ -110,6 +120,7 @@ export function InsightItemCard({
         </Pressable>
         {menu}
         {renameModal}
+        {deleteModal}
       </>
     );
   }
@@ -119,6 +130,7 @@ export function InsightItemCard({
       <View style={cardStyle}>{content}</View>
       {menu}
       {renameModal}
+      {deleteModal}
     </>
   );
 }
