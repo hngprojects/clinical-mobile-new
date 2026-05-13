@@ -5,9 +5,8 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
+import { INSIGHT_CARD_RADIUS } from '../api/constants';
 import type { InsightItemCardProps } from '../api/types';
-
-const INSIGHT_ITEM_CARD_RADIUS = 12;
 
 export function InsightItemCard({
   title,
@@ -25,7 +24,7 @@ export function InsightItemCard({
       borderWidth: 1,
       borderColor: colors.borderSubtle,
       padding: spacing.lg,
-      borderRadius: INSIGHT_ITEM_CARD_RADIUS,
+      borderRadius: INSIGHT_CARD_RADIUS,
     },
     style,
   ];

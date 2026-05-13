@@ -1,0 +1,5 @@
+export const INSIGHT_CARD_RADIUS = 12;
+
+export const INSIGHT_SEARCH_BORDER = '#D0D0D0';
+
+export const INSIGHT_SEARCH_BACKGROUND = '#FFFFFF';
