@@ -1,65 +1,72 @@
-import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { useState } from 'react';
+import { ScrollView, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 
-import { Button, Screen, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
-import { ThemeMode } from '@/shared/theme/ThemeContext';
 
 import { useHome } from '../hooks/useHome';
+import { HomeHeader } from './HomeHeader';
+import { Insight } from './InsightCard';
+import { RecentInsightsSection } from './RecentInsightsSection';
+import { UploadCard } from './UploadCard';
 
-const THEME_CYCLE: ThemeMode[] = ['system', 'light', 'dark'];
+const MOCK_INSIGHTS: Insight[] = [
+  { id: '1', title: 'Hormone Health Discussion', timestamp: '2 mins ago' },
+  { id: '2', title: 'Hormone Health Discussion', timestamp: '2 mins ago' },
+  { id: '3', title: 'Hormone Health Discussion', timestamp: '2 mins ago' },
+];
 
 export function HomeScreen() {
-  const { colors, spacing, mode, setMode } = useTheme();
-  const { user, logout } = useHome();
+  const { colors, spacing } = useTheme();
+  const { user } = useHome();
+  const [insights, setInsights] = useState<Insight[]>(MOCK_INSIGHTS);
 
-  const cycleTheme = () => {
-    const next = THEME_CYCLE[(THEME_CYCLE.indexOf(mode) + 1) % THEME_CYCLE.length];
-    setMode(next);
+  const handleRename = (id: string, newTitle: string) => {
+    try {
+      setInsights((prev) => prev.map((i) => (i.id === id ? { ...i, title: newTitle } : i)));
+      Toast.show({
+        type: 'success',
+        text1: `You have successfully renamed your Insight to ${newTitle}`,
+        topOffset: 60,
+      });
+    } catch {
+      Toast.show({
+        type: 'error',
+        text1: "Sorry! We've encountered a problem renaming your Insight. Kindly try again.",
+        topOffset: 60,
+      });
+    }
   };
 
-  const greeting = user ? `Welcome back, ${user.firstName}!` : 'Welcome!';
+  const handleDelete = (id: string) => {
+    setInsights((prev) => prev.filter((i) => i.id !== id));
+    Toast.show({
+      type: 'success',
+      text1: 'Your Insight message has been successfully deleted',
+      topOffset: 60,
+    });
+  };
 
   return (
-    <Screen>
-      <View style={[styles.container, { gap: spacing.xl }]}>
-        <View style={styles.center}>
-          <Typography variant="h1" align="center">
-            {greeting}
-          </Typography>
-          {user && (
-            <Typography variant="body1" color={colors.textSecondary} align="center">
-              {user.email}
-            </Typography>
-          )}
-        </View>
-
-        <View
-          style={[
-            styles.card,
-            {
-              backgroundColor: colors.surface,
-              padding: spacing.md,
-              borderRadius: spacing.sm,
-              gap: spacing.sm,
-            },
-          ]}
-        >
-          <Typography variant="h3">Theme</Typography>
-          <Typography variant="body2" color={colors.textSecondary}>
-            Current: <Typography variant="body2">{mode}</Typography>
-          </Typography>
-          <Button label={`Switch theme (${mode})`} variant="outline" onPress={cycleTheme} />
-        </View>
-
-        <Button label="Sign Out" variant="outline" onPress={logout} />
-      </View>
-    </Screen>
+    <SafeAreaView style={[styles.fill, { backgroundColor: colors.background }]} edges={['top']}>
+      <HomeHeader name={user?.firstName ?? 'User'} />
+      <ScrollView
+        style={styles.fill}
+        contentContainerStyle={{ gap: spacing.lg, paddingBottom: spacing.xl }}
+        showsVerticalScrollIndicator={false}
+      >
+        <UploadCard />
+        <RecentInsightsSection
+          insights={insights}
+          onRename={handleRename}
+          onDelete={handleDelete}
+        />
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center' },
-  center: { alignItems: 'center', gap: 8 },
-  card: { borderWidth: 1 },
+  fill: { flex: 1 },
 });
