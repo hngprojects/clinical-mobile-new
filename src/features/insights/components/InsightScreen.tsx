@@ -15,11 +15,7 @@ export function InsightScreen() {
     <Screen scrollable>
       <View style={{ gap: spacing.md }}>
         <InsightSearchBar value={query} onChangeText={setQuery} />
-        <InsightItemCard
-          title="Hormone Health Discussion"
-          subtitle="2 mins ago"
-          onMenuPress={() => undefined}
-        />
+        <InsightItemCard title="Hormone Health Discussion" subtitle="2 mins ago" />
       </View>
     </Screen>
   );

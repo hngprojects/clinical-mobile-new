@@ -5,9 +5,9 @@ import { Platform, StyleSheet, TextInput, View } from 'react-native';
 import { useTheme } from '@/shared/theme';
 
 import {
-    INSIGHT_CARD_RADIUS,
-    INSIGHT_SEARCH_BACKGROUND,
-    INSIGHT_SEARCH_BORDER,
+  INSIGHT_CARD_RADIUS,
+  INSIGHT_SEARCH_BACKGROUND,
+  INSIGHT_SEARCH_BORDER,
 } from '../api/constants';
 import type { InsightSearchBarProps } from '../api/types';
 
