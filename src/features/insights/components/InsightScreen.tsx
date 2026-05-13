@@ -1,13 +1,23 @@
 import React from 'react';
+import { View } from 'react-native';
 
-import { Screen, Typography } from '@/shared/components';
+import { Screen } from '@/shared/components';
+import { useTheme } from '@/shared/theme';
+
+import { InsightItemCard } from './InsightItemCard';
 
 export function InsightScreen() {
+  const { spacing } = useTheme();
+
   return (
-    <Screen>
-      <Typography variant="h1" align="center">
-        InsightScreen
-      </Typography>
+    <Screen scrollable>
+      <View style={{ gap: spacing.md }}>
+        <InsightItemCard
+          title="Hormone Health Discussion"
+          subtitle="2 mins ago"
+          onMenuPress={() => undefined}
+        />
+      </View>
     </Screen>
   );
 }
