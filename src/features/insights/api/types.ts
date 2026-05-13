@@ -39,3 +39,13 @@ export interface InsightSearchBarProps extends Omit<
   placeholder?: string;
   containerStyle?: StyleProp<ViewStyle>;
 }
+
+export interface InsightUploadEmptyStateProps {
+  onUploadPress?: () => void;
+}
+
+export interface InsightListItem {
+  id: string;
+  title: string;
+  subtitle: string;
+}
