@@ -1,11 +1,9 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   FlatList,
   LayoutAnimation,
-  Platform,
   Pressable,
   StyleSheet,
-  UIManager,
   View,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
@@ -17,12 +15,7 @@ import { terms } from '../../onboarding/data/TandC';
 export function TermsAndConditions() {
   const { spacing, colors } = useTheme();
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-
-  useEffect(() => {
-    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-      UIManager.setLayoutAnimationEnabledExperimental(true);
-    }
-  }, []);
+  
 
   const toggle = useCallback((key: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
