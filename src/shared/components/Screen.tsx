@@ -23,7 +23,7 @@ export function Screen({
   children,
   scrollable = false,
   edges = ['top', 'bottom'],
-  padding = true,
+  padding = false,
   style,
   keyboardAvoiding = false,
   ...props
