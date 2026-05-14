@@ -8,6 +8,10 @@ const palette = {
   grey300: '#D1D5DB',
   grey100: '#F3F4F6',
   grey50: '#F9FAFB',
+  outlineBorderSubtle: '#F0F0F0',
+  backgroundSecondary: '#FAFAFA',
+  outlineBorderSubtleDark: '#2D3B4D',
+  surfaceMutedDark: '#252F3F',
   white: '#FFFFFF',
   error500: '#EF4444',
   success500: '#22C55E',
@@ -17,6 +21,8 @@ const palette = {
 export const lightColors = {
   background: palette.grey50,
   surface: palette.white,
+  surfaceMuted: palette.backgroundSecondary,
+  borderSubtle: palette.outlineBorderSubtle,
   primary: palette.primary500,
   primaryPressed: palette.primary600,
   primarySubtle: palette.primary100,
@@ -37,6 +43,8 @@ export type Colors = Record<keyof typeof lightColors, string>;
 export const darkColors: Colors = {
   background: '#0F172A',
   surface: '#1E293B',
+  surfaceMuted: palette.surfaceMutedDark,
+  borderSubtle: palette.outlineBorderSubtleDark,
   primary: '#818CF8',
   primaryPressed: '#6C63FF',
   primarySubtle: '#1E1B4B',

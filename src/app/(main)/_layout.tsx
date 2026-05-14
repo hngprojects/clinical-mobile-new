@@ -27,6 +27,13 @@ export default function MainLayout() {
           headerShown: false,
         }}
       />
+      <Tabs.Screen
+        name="insights"
+        options={{
+          title: 'Insights',
+          headerShown: false,
+        }}
+      />
     </Tabs>
   );
 }

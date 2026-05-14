@@ -2,6 +2,7 @@ import React from 'react';
 import {
   ScrollView,
   StyleSheet,
+  StyleProp,
   View,
   ViewProps,
   KeyboardAvoidingView,
@@ -17,6 +18,7 @@ interface ScreenProps extends ViewProps {
   edges?: Edge[];
   padding?: boolean;
   keyboardAvoiding?: boolean;
+  scrollContentContainerStyle?: StyleProp<ViewStyle>;
 }
 
 export function Screen({
@@ -24,6 +26,7 @@ export function Screen({
   scrollable = false,
   edges = ['top', 'bottom'],
   padding = false,
+  scrollContentContainerStyle,
   style,
   keyboardAvoiding = false,
   ...props
@@ -33,7 +36,7 @@ export function Screen({
   const inner = scrollable ? (
     <ScrollView
       style={styles.fill}
-      contentContainerStyle={[padding && { padding: spacing.md }]}
+      contentContainerStyle={[padding && { padding: spacing.md }, scrollContentContainerStyle]}
       showsVerticalScrollIndicator={false}
     >
       {children}
