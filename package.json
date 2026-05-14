@@ -18,7 +18,8 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "security:scan": "bash scripts/check-shai-hulud.sh"
   },
   "jest": {
     "preset": "jest-expo",
