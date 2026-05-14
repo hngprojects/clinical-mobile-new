@@ -42,16 +42,12 @@ function RootLayoutNav() {
     }
   }, [isReady]);
 
-  if (!isReady) return null;
-
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      {hasCompleted ? (
-        isLoggedIn ? (
-          <Stack.Screen name="(main)" options={{ animation: 'fade' }} />
-        ) : (
-          <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
-        )
+      {hasCompleted && isLoggedIn ? (
+        <Stack.Screen name="(main)" options={{ animation: 'fade' }} />
+      ) : hasCompleted && !isLoggedIn ? (
+        <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
       ) : (
         <Stack.Screen name="(onboarding)" options={{ animation: 'fade' }} />
       )}
