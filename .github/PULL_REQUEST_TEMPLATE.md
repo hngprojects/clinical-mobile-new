@@ -1,42 +1,35 @@
-# **Description**
+# Description
 
-<!--- Describe your changes in detail -->
+<!-- What does this PR do and why? Keep it tight. -->
 
-This PR ...
+# Changes Proposed
 
-# **Changes Proposed**
+## What were you told to do?
 
-## **What were you told to do?**
-
-## **What did you do?**
+## What did you do?
 
 ## Types of changes
 
-<!--- What types of changes does your code introduce? Put an `x` in all the boxes that apply: -->
-
 - [ ] Bug fix (non-breaking change which fixes an issue)
 - [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to change)
+- [ ] Breaking change (fix or feature that would change existing functionality)
 - [ ] Chore (changes that do not relate to a fix or feature and don't modify src or test files)
 
-# **Check List**
+# Screenshots (REQUIRED)
 
-<!--- Go over all the following points, and put an `x` in all the boxes that apply. -->
-<!--- If you're unsure about any of these, don't hesitate to ask. We're here to help! -->
+> Every PR must include at least one screenshot or screen recording.
+>
+> If your change has no UI impact, attach a screenshot of `pnpm lint` and `pnpm test` passing locally instead.
+>
+> PRs without an attached image or video will be blocked by CI and cannot be merged.
 
-- [x] My code follows the code style of this project.
-- [x] This PR does not contain plagiarized content.
-- [x] The title and description of the PR are clear and explain the approach.
-- [x] I am making a pull request against the **dev branch** (left side).
-- [x] My commit message style matches our requested structure.
-- [x] My code additions will not fail code linting checks or unit tests.
-- [x] I am only making changes to files I was requested to.
+<!-- Drag and drop your screenshots, GIFs, or videos below. Markdown image syntax or <img> tags both work. -->
 
----
+# Checklist
 
-# Images
-
-<!-- Add Screenshots of: -->
-
-- The live component worked on
-- Linting check (run pnpm lint)
+- [ ] My code follows the code style of this project
+- [ ] This PR does not contain plagiarized content
+- [ ] The title and description of the PR are clear and explain the approach
+- [ ] I am opening this PR against the **dev** branch
+- [ ] My commit messages match the requested style
+- [ ] My code passes lint, typecheck, and tests locally
