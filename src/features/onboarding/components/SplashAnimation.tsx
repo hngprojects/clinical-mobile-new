@@ -3,6 +3,8 @@ import { Animated, Dimensions, StyleSheet, Text, View } from 'react-native';
 
 import { ClinsightLogo } from '@/shared/components';
 
+import { Svg, Path } from 'react-native-svg';
+
 const { width: W, height: H } = Dimensions.get('window');
 const SPLASH_BG = '#FFFFFF';
 
@@ -47,8 +49,6 @@ export function SplashAnimation({ onComplete }: SplashAnimationProps) {
     </Animated.View>
   );
 }
-
-import { Svg, Path } from 'react-native-svg';
 
 function PatternBackground() {
   return (

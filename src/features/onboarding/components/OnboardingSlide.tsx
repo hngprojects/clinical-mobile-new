@@ -1,8 +1,6 @@
 import React from 'react';
 import { Dimensions, Image, StyleSheet, Text, View } from 'react-native';
 
-import { ClinsightLogo } from '@/shared/components';
-
 import { OnboardingSlideData } from '../data/slides';
 import { useOnboardingLayout } from '../hooks/useOnboardingLayout';
 
@@ -37,7 +35,7 @@ function SlideIllustration({ id }: { id: OnboardingSlideData['id'] }) {
 function LabResultsIllustration() {
   const { layoutScale } = useOnboardingLayout();
   const imgWidth = Math.min(320 * layoutScale, SCREEN_WIDTH - 48);
-  const imgHeight = imgWidth * 0.65; 
+  const imgHeight = imgWidth * 0.65;
 
   return (
     <Image
@@ -53,7 +51,7 @@ function LabResultsIllustration() {
 function NoGuessingIllustration() {
   const { layoutScale } = useOnboardingLayout();
   const imgWidth = Math.min(320 * layoutScale, SCREEN_WIDTH - 40);
-  const imgHeight = imgWidth * 1.2; 
+  const imgHeight = imgWidth * 1.2;
 
   return (
     <Image

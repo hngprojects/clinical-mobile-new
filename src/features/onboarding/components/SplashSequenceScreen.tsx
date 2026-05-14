@@ -3,7 +3,6 @@ import { Animated, Dimensions, StyleSheet, Text, View } from 'react-native';
 import { Svg, Path } from 'react-native-svg';
 
 import { ClinsightLogo } from '@/shared/components';
-import { brand } from '@/shared/theme/brand';
 
 const { width: W, height: H } = Dimensions.get('window');
 
@@ -31,7 +30,11 @@ export function SplashSequenceScreen({ onComplete }: SplashSequenceScreenProps) 
       // Hold until wordmark delay
       Animated.delay(WORDMARK_DELAY - 400),
       // Wordmark fades in
-      Animated.timing(wordmarkOpacity, { toValue: 1, duration: WORDMARK_DURATION, useNativeDriver: true }),
+      Animated.timing(wordmarkOpacity, {
+        toValue: 1,
+        duration: WORDMARK_DURATION,
+        useNativeDriver: true,
+      }),
       // Hold before navigating
       Animated.delay(HOLD_AFTER),
     ]).start(() => onComplete());
