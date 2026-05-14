@@ -1,11 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import {
-  FlatList,
-  LayoutAnimation,
-  Pressable,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { FlatList, LayoutAnimation, Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { Typography } from '@/shared/components';
@@ -15,7 +9,6 @@ import { terms } from '../../onboarding/data/TandC';
 export function TermsAndConditions() {
   const { spacing, colors } = useTheme();
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  
 
   const toggle = useCallback((key: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -28,7 +21,10 @@ export function TermsAndConditions() {
     return (
       <View style={styles.termCard}>
         <Pressable onPress={() => toggle(item.title)} style={styles.headerRow}>
-          <Typography variant="h3" style={{ flex: 1, color: '#000000', fontSize: 18, fontWeight: '500' }}>
+          <Typography
+            variant="h3"
+            style={{ flex: 1, color: '#000000', fontSize: 18, fontWeight: '500' }}
+          >
             {item.title}
           </Typography>
           <Svg width={24} height={24} viewBox="0 0 14 8" fill="none">
@@ -57,7 +53,12 @@ export function TermsAndConditions() {
             {item.content ? (
               <Typography
                 variant="body1"
-                style={{ color: '#5E5E5E', marginBottom: spacing.sm, fontWeight: '400', fontSize: 18}}
+                style={{
+                  color: '#5E5E5E',
+                  marginBottom: spacing.sm,
+                  fontWeight: '400',
+                  fontSize: 18,
+                }}
               >
                 {item.content}
               </Typography>
@@ -66,7 +67,12 @@ export function TermsAndConditions() {
             {item.subcontent ? (
               <Typography
                 variant="body1"
-                style={{ color: '#5E5E5E', marginBottom: spacing.sm, fontWeight: '400', fontSize: 18}}
+                style={{
+                  color: '#5E5E5E',
+                  marginBottom: spacing.sm,
+                  fontWeight: '400',
+                  fontSize: 18,
+                }}
               >
                 {item.subcontent}
               </Typography>
@@ -75,7 +81,12 @@ export function TermsAndConditions() {
             {item.bulletTop ? (
               <Typography
                 variant="body1"
-                style={{ color: '#5E5E5E', marginBottom: spacing.sm, fontWeight: '400', fontSize: 18}}
+                style={{
+                  color: '#5E5E5E',
+                  marginBottom: spacing.sm,
+                  fontWeight: '400',
+                  fontSize: 18,
+                }}
               >
                 {item.bulletTop}
               </Typography>
@@ -85,17 +96,11 @@ export function TermsAndConditions() {
               <View style={{ marginTop: spacing.xs }}>
                 {item.bullets.map((bullet, idx) => (
                   <View key={idx} style={styles.bulletRow}>
-                    <Typography
-                      variant="body1"
-                      style={{ marginRight: 10, color: '#5E5E5E' }}
-                    >
+                    <Typography variant="body1" style={{ marginRight: 10, color: '#5E5E5E' }}>
                       •
                     </Typography>
                     {typeof bullet === 'string' ? (
-                      <Typography
-                        variant="body1"
-                        style={{ color: '#5E5E5E', flex: 1}}
-                      >
+                      <Typography variant="body1" style={{ color: '#5E5E5E', flex: 1 }}>
                         {bullet}
                       </Typography>
                     ) : (

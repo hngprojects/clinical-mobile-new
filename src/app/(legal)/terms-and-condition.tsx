@@ -6,8 +6,6 @@ import { Screen, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 import { TermsAndConditions } from '@/features/legal';
 
-
-
 export default function TermsAndCondition() {
   const { colors } = useTheme();
 

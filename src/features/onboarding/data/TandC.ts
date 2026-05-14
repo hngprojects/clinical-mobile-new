@@ -62,10 +62,7 @@ export const terms: Term[] = [
   {
     title: '7. Termination',
     content: 'We reserve the right to suspend or terminate access if:',
-    bullets: [
-        'You violate these terms',
-        'You misuse the platform'
-    ],
+    bullets: ['You violate these terms', 'You misuse the platform'],
   },
   {
     title: '8. Changes to Terms',
