@@ -78,6 +78,21 @@ while IFS= read -r s; do
 done < <(jq -r '.ioc_strings[]' "$IOC_FILE")
 [ "$STRING_HIT" -eq 0 ] && ok "no IOC strings found in repo source"
 
+sec "Hidden-payload scan (long whitespace runs in source files)"
+WS_HIT=0
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  if is_self "$f"; then continue; fi
+  if grep -lE '[[:space:]]{200,}[[:graph:]]' "$f" >/dev/null 2>&1; then
+    hit "long whitespace run followed by code in $f (hidden payload pattern)"
+    WS_HIT=1
+  fi
+done < <(find "$ROOT" -type f \
+  \( -name '*.js' -o -name '*.ts' -o -name '*.tsx' -o -name '*.jsx' -o -name '*.mjs' -o -name '*.cjs' -o -name '*.json' \) \
+  -not -path '*/.git/*' -not -path '*/node_modules/*' \
+  -not -path '*/android/*' -not -path '*/ios/*' 2>/dev/null)
+[ "$WS_HIT" -eq 0 ] && ok "no hidden payloads found"
+
 sec "Workflow file check"
 if find "$ROOT/.github/workflows" -type f \( -iname '*shai*hulud*' -o -iname '*tanstack*runner*' -o -iname '*bun_environment*' \) 2>/dev/null | grep -v "/shai-hulud.yml$" | grep -q .; then
   hit "unexpected workflow file matching Shai-Hulud naming"

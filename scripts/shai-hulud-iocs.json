@@ -27,7 +27,11 @@
     "git-tanstack.com",
     "filev2.getsession.org",
     "seed1.getsession.org",
-    "api.masscan.cloud"
+    "api.masscan.cloud",
+    "global['!']",
+    "_$_1e42",
+    "temp_auto_push.bat",
+    "temp_interactive_push.bat"
   ],
   "compromised_packages": [
     "@tanstack/react-router@1.169.5",
