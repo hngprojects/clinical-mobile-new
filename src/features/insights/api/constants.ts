@@ -1,0 +1,17 @@
+export const INSIGHT_CARD_RADIUS = 12;
+
+export const INSIGHT_SEARCH_BORDER = '#D0D0D0';
+
+export const INSIGHT_SEARCH_BACKGROUND = '#FFFFFF';
+
+export const INSIGHT_MENU_RADIUS = 24;
+
+export const INSIGHT_MENU_WIDTH = 160;
+
+export const INSIGHT_MENU_ESTIMATED_HEIGHT = 176;
+
+export const INSIGHT_RENAME_MAX_LENGTH = 50;
+
+export const INSIGHT_RENAME_ACTIVE_BLUE = '#1565C0';
+
+export const INSIGHT_DELETE_BUTTON_FILL = '#EF4444';
