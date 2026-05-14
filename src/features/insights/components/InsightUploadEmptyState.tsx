@@ -58,6 +58,7 @@ export function InsightUploadEmptyState({ onUploadPress }: InsightUploadEmptySta
 
 const styles = StyleSheet.create({
   root: {
+    flex: 1,
     flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',

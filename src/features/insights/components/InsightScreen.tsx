@@ -13,8 +13,24 @@ import { InsightSearchBar } from './InsightSearchBar';
 
 export function InsightScreen() {
   const { spacing } = useTheme();
-  const { query, setQuery, items, filtered, addDemoInsight, renameInsight, deleteInsight } =
-    useInsightList();
+  const {
+    query,
+    setQuery,
+    items,
+    filtered,
+    isSearching,
+    addDemoInsight,
+    renameInsight,
+    deleteInsight,
+  } = useInsightList();
+
+  const hasActiveQuery = query.trim().length > 0;
+  const isSearchActive = hasActiveQuery && items.length > 0;
+
+  const listData = useMemo(
+    () => (isSearching && hasActiveQuery ? [] : filtered),
+    [filtered, hasActiveQuery, isSearching],
+  );
 
   const renderItem: ListRenderItem<InsightListItem> = useCallback(
     ({ item }) => (
@@ -23,41 +39,48 @@ export function InsightScreen() {
     [deleteInsight, renameInsight],
   );
 
-  const listHeader = useMemo(
+  const listEmpty = useMemo(
     () => (
-      <View style={{ marginBottom: spacing.md }}>
-        <InsightSearchBar value={query} onChangeText={setQuery} />
-      </View>
+      <InsightListEmpty
+        hasAnyItems={items.length > 0}
+        isSearchActive={isSearchActive}
+        isSearching={isSearching}
+        onUploadPress={addDemoInsight}
+      />
     ),
-    [query, setQuery, spacing.md],
+    [addDemoInsight, isSearchActive, isSearching, items.length],
   );
 
-  const listEmpty = useMemo(
-    () => <InsightListEmpty hasAnyItems={items.length > 0} onUploadPress={addDemoInsight} />,
-    [addDemoInsight, items.length],
-  );
+  const listEmptyVisible = listData.length === 0;
 
   return (
     <Screen scrollable={false}>
-      <FlatList
-        style={styles.list}
-        data={filtered}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        ListHeaderComponent={listHeader}
-        ListEmptyComponent={listEmpty}
-        ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
-        contentContainerStyle={
-          filtered.length === 0 ? styles.emptyContent : { paddingBottom: spacing.lg }
-        }
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      />
+      <View style={styles.screenBody}>
+        <View style={{ marginBottom: spacing.md }}>
+          <InsightSearchBar value={query} onChangeText={setQuery} />
+        </View>
+        <FlatList
+          style={styles.list}
+          data={listData}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          ListEmptyComponent={listEmptyVisible ? listEmpty : undefined}
+          ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
+          contentContainerStyle={
+            listEmptyVisible ? styles.emptyContent : { paddingBottom: spacing.lg }
+          }
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        />
+      </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  screenBody: {
+    flex: 1,
+  },
   list: {
     flex: 1,
   },

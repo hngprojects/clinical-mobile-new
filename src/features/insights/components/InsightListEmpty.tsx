@@ -1,36 +1,51 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
+import { InsightSearchEmptyState } from './InsightSearchEmptyState';
 import { InsightUploadEmptyState } from './InsightUploadEmptyState';
 
 interface InsightListEmptyProps {
   hasAnyItems: boolean;
+  /** User has typed a query but the list has no rows yet (searching or no matches). */
+  isSearchActive: boolean;
+  isSearching: boolean;
   onUploadPress: () => void;
 }
 
-export function InsightListEmpty({ hasAnyItems, onUploadPress }: InsightListEmptyProps) {
-  const { colors, spacing } = useTheme();
+export function InsightListEmpty({
+  hasAnyItems,
+  isSearchActive,
+  isSearching,
+  onUploadPress,
+}: InsightListEmptyProps) {
+  const { colors } = useTheme();
 
   if (!hasAnyItems) {
     return <InsightUploadEmptyState onUploadPress={onUploadPress} />;
   }
 
-  return (
-    <View style={[styles.searchEmpty, { paddingHorizontal: spacing.md }]}>
-      <Typography variant="body2" color={colors.textSecondary} align="center">
-        No insights match your search.
-      </Typography>
-    </View>
-  );
+  if (isSearchActive && isSearching) {
+    return (
+      <View style={styles.searchLoading}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (isSearchActive) {
+    return <InsightSearchEmptyState />;
+  }
+
+  return null;
 }
 
 const styles = StyleSheet.create({
-  searchEmpty: {
-    flexGrow: 1,
+  searchLoading: {
+    flex: 1,
+    width: '100%',
     justifyContent: 'center',
-    paddingVertical: 24,
+    alignItems: 'center',
   },
 });

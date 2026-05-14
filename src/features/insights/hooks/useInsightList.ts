@@ -1,11 +1,25 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { InsightListItem } from '../api/types';
 import { DUMMY_INSIGHT_LIST } from '../data/dummyInsights';
 
+const SEARCH_DEBOUNCE_MS = 420;
+
 export function useInsightList() {
   const [query, setQuery] = useState('');
   const [items, setItems] = useState<InsightListItem[]>(() => [...DUMMY_INSIGHT_LIST]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (!trimmed) {
+      setIsSearching(false);
+      return;
+    }
+    setIsSearching(true);
+    const id = setTimeout(() => setIsSearching(false), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(id);
+  }, [query]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -37,6 +51,7 @@ export function useInsightList() {
     setQuery,
     items,
     filtered,
+    isSearching,
     addDemoInsight,
     renameInsight,
     deleteInsight,

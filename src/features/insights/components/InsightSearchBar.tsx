@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { Platform, StyleSheet, TextInput, View } from 'react-native';
+import React, { useMemo } from 'react';
+import { Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { useTheme } from '@/shared/theme';
 
@@ -15,6 +15,7 @@ const DEFAULT_PLACEHOLDER = 'Search Insights';
 
 const ICON_SIZE = 22;
 const ICON_GAP = 8;
+const TRAILING_SLOT = 40;
 
 export function InsightSearchBar({
   value,
@@ -29,6 +30,15 @@ export function InsightSearchBar({
   const backgroundColor = isDark ? colors.inputBackground : INSIGHT_SEARCH_BACKGROUND;
   const borderColor = isDark ? colors.border : INSIGHT_SEARCH_BORDER;
   const leftPad = spacing.md + ICON_SIZE + ICON_GAP;
+
+  const showClear = value.length > 0;
+  const rightPad = useMemo(() => {
+    let extra = spacing.md;
+    if (showClear) extra += TRAILING_SLOT;
+    return extra;
+  }, [showClear, spacing.md]);
+
+  const clear = () => onChangeText('');
 
   return (
     <View style={[styles.wrap, containerStyle]} collapsable={false}>
@@ -48,7 +58,7 @@ export function InsightSearchBar({
             borderWidth: 1,
             borderRadius: INSIGHT_CARD_RADIUS,
             paddingVertical: spacing.md + 2,
-            paddingRight: spacing.md,
+            paddingRight: rightPad,
             paddingLeft: leftPad,
             ...(Platform.OS === 'ios' ? { borderCurve: 'continuous' as const } : {}),
           },
@@ -56,7 +66,6 @@ export function InsightSearchBar({
         ]}
         autoCapitalize="none"
         autoCorrect={false}
-        clearButtonMode="while-editing"
         returnKeyType="search"
         underlineColorAndroid="transparent"
         {...inputProps}
@@ -72,6 +81,19 @@ export function InsightSearchBar({
         ]}
       >
         <Ionicons name="search-outline" size={ICON_SIZE} color={colors.text} />
+      </View>
+      <View style={[styles.trailing, { paddingRight: spacing.sm }]}>
+        {showClear ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Clear search"
+            hitSlop={10}
+            onPress={clear}
+            style={({ pressed }) => [styles.clearHit, pressed && styles.clearPressed]}
+          >
+            <Ionicons name="close-circle" size={24} color={colors.textSecondary} />
+          </Pressable>
+        ) : null}
       </View>
     </View>
   );
@@ -93,5 +115,23 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     justifyContent: 'center',
+  },
+  trailing: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 4,
+    pointerEvents: 'box-none',
+  },
+  clearHit: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  clearPressed: {
+    opacity: 0.65,
   },
 });
