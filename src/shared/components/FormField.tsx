@@ -1,6 +1,5 @@
 import React from 'react';
 import { Control, Controller, FieldPath, FieldValues } from 'react-hook-form';
-import { TextInputProps } from 'react-native';
 
 import { AppTextInputProps, TextInput } from './TextInput';
 

@@ -24,7 +24,7 @@ export default function LoginScreen() {
     } else {
       bannerY.value = withTiming(-100, { duration: 300 });
     }
-  }, [loginMutation.error]);
+  }, [loginMutation.error, bannerY]);
 
   const animatedBannerStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: bannerY.value }],
@@ -37,7 +37,7 @@ export default function LoginScreen() {
       <View style={styles.bannerContainer}>
         <Animated.View style={[styles.errorBanner, animatedBannerStyle]}>
           <Typography variant="body2" color={colors.textSecondary} align="center">
-            We couldn't sign you up right now. Please check your connection and try again.
+            We couldn&apos;t sign you up right now. Please check your connection and try again.
           </Typography>
         </Animated.View>
       </View>
@@ -56,7 +56,7 @@ export default function LoginScreen() {
 
         <View style={styles.footer}>
           <Typography variant="body1" style={{ color: colors.textSecondary }}>
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
           </Typography>
           <Typography
             variant="body1"
