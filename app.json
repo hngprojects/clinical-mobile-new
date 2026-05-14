@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "react-native-starter",
-    "slug": "react-native-starter",
+    "name": "Clinsight",
+    "slug": "clinsight",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "reactnativestarter",
+    "scheme": "clinsight",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true
@@ -30,10 +30,14 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#FFFFFF",
           "android": {
             "image": "./assets/images/splash-icon.png",
-            "imageWidth": 76
+            "imageWidth": 200
+          },
+          "ios": {
+            "image": "./assets/images/splash-icon.png",
+            "imageWidth": 200
           }
         }
       ]

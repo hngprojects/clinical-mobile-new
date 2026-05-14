@@ -1,31 +1,23 @@
 export interface OnboardingSlideData {
-  id: string;
+  id: 'lab-results' | 'no-guessing' | 'doctor-opinion';
   title: string;
   subtitle: string;
-  emoji: string;
-  accentColor: string;
 }
 
 export const SLIDES: OnboardingSlideData[] = [
   {
-    id: 'welcome',
-    title: 'Welcome to the App',
-    subtitle: 'The fastest way to build something your team will love.',
-    emoji: '👋',
-    accentColor: '#6C63FF',
+    id: 'lab-results',
+    title: 'Understand your lab results',
+    subtitle: 'Upload your lab report and get a clear, simple explanation in seconds',
   },
   {
-    id: 'collaborate',
-    title: 'Collaborate Seamlessly',
-    subtitle: 'Work together in real-time with your entire team.',
-    emoji: '🤝',
-    accentColor: '#0EA5E9',
+    id: 'no-guessing',
+    title: 'No more guessing your results',
+    subtitle: "Get clear explanations for every value and understand what's happening in your body",
   },
   {
-    id: 'achieve',
-    title: 'Achieve More',
-    subtitle: 'Track goals, measure progress, and celebrate every win.',
-    emoji: '🚀',
-    accentColor: '#22C55E',
+    id: 'doctor-opinion',
+    title: "Get a doctor's second opinion",
+    subtitle: 'You can request a verified doctor to review your results for an additional fee.',
   },
 ];
