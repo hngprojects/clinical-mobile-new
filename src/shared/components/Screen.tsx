@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, StyleSheet, View, ViewProps } from 'react-native';
+import { ScrollView, StyleSheet, StyleProp, View, ViewProps, ViewStyle } from 'react-native';
 import { SafeAreaView, Edge } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/shared/theme';
@@ -9,6 +9,8 @@ interface ScreenProps extends ViewProps {
   scrollable?: boolean;
   edges?: Edge[];
   padding?: boolean;
+  /** Merged into `ScrollView` `contentContainerStyle` when `scrollable` is true. */
+  scrollContentContainerStyle?: StyleProp<ViewStyle>;
 }
 
 export function Screen({
@@ -16,6 +18,7 @@ export function Screen({
   scrollable = false,
   edges = ['top', 'bottom'],
   padding = true,
+  scrollContentContainerStyle,
   style,
   ...props
 }: ScreenProps) {
@@ -24,7 +27,7 @@ export function Screen({
   const inner = scrollable ? (
     <ScrollView
       style={styles.fill}
-      contentContainerStyle={[padding && { padding: spacing.md }]}
+      contentContainerStyle={[padding && { padding: spacing.md }, scrollContentContainerStyle]}
       showsVerticalScrollIndicator={false}
     >
       {children}
