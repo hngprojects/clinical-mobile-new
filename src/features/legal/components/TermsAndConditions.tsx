@@ -51,43 +51,19 @@ export function TermsAndConditions() {
         {isOpen ? (
           <View style={{ marginTop: 13 }}>
             {item.content ? (
-              <Typography
-                variant="body1"
-                style={{
-                  color: '#5E5E5E',
-                  marginBottom: spacing.sm,
-                  fontWeight: '400',
-                  fontSize: 18,
-                }}
-              >
+              <Typography variant="body1" style={{ marginBottom: spacing.sm, ...styles.text }}>
                 {item.content}
               </Typography>
             ) : null}
 
             {item.subcontent ? (
-              <Typography
-                variant="body1"
-                style={{
-                  color: '#5E5E5E',
-                  marginBottom: spacing.sm,
-                  fontWeight: '400',
-                  fontSize: 18,
-                }}
-              >
+              <Typography variant="body1" style={{ marginBottom: spacing.sm, ...styles.text }}>
                 {item.subcontent}
               </Typography>
             ) : null}
 
             {item.bulletTop ? (
-              <Typography
-                variant="body1"
-                style={{
-                  color: '#5E5E5E',
-                  marginBottom: spacing.sm,
-                  fontWeight: '400',
-                  fontSize: 18,
-                }}
-              >
+              <Typography variant="body1" style={{ marginBottom: spacing.sm, ...styles.text }}>
                 {item.bulletTop}
               </Typography>
             ) : null}
@@ -165,5 +141,10 @@ const styles = StyleSheet.create({
   icon: {
     width: 24,
     height: 24,
+  },
+  text: {
+    color: '#5E5E5E',
+    fontWeight: '400',
+    fontSize: 18,
   },
 });
