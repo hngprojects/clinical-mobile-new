@@ -1,6 +1,6 @@
 import { router, Stack } from 'expo-router';
 import React from 'react';
-import { View } from 'react-native';
+import { View, Pressable } from 'react-native';
 
 import { RegisterForm } from '@/features/auth';
 import { Screen, Typography, PatternBackground, ClinsightLogo } from '@/shared/components';
