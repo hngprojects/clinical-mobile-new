@@ -46,7 +46,7 @@ export default function LoginScreen() {
               textAlign: 'center',
             }}
           >
-            We couldn&apos;t sign you in right now. Please check your credentials and try again.
+            {loginMutation.error?.message || "Something went wrong. Please check your credentials."}
           </Typography>
         </Animated.View>
       </View>
@@ -62,7 +62,10 @@ export default function LoginScreen() {
         </View>
 
         <View style={{ marginTop: 40 }}>
-          <LoginForm mutation={loginMutation} />
+          <LoginForm 
+            mutation={loginMutation} 
+            onInteract={() => loginMutation.reset()} 
+          />
         </View>
 
         <View style={styles.footer}>

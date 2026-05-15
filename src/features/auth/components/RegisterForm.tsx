@@ -72,7 +72,7 @@ export function RegisterForm() {
         }
       />
 
-      {passwordValue.length > 0 && (
+      {passwordValue.length > 0 && !(has8Chars && hasUpper && hasNumber) && (
         <View style={styles.validationList}>
           <ValidationItem label="Password must have at least 8 characters" isValid={has8Chars} />
           <ValidationItem label="Password must have at least one uppercase letter" isValid={hasUpper} />

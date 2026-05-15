@@ -9,7 +9,13 @@ import { useTheme } from '@/shared/theme';
 
 import { LoginFormData, loginSchema } from '../schemas/auth.schemas';
 
-export function LoginForm({ mutation }: { mutation: any }) {
+export function LoginForm({ 
+  mutation, 
+  onInteract 
+}: { 
+  mutation: any; 
+  onInteract?: () => void; 
+}) {
   const { spacing, colors } = useTheme();
   const { mutate: login, isPending } = mutation;
   const [showPassword, setShowPassword] = useState(false);
@@ -38,6 +44,7 @@ export function LoginForm({ mutation }: { mutation: any }) {
           keyboardType="email-address"
           textContentType="emailAddress"
           placeholder="chioma@gmail.com"
+          onFocus={onInteract}
         />
 
         <View style={{ marginTop: 16 }}>
@@ -48,6 +55,7 @@ export function LoginForm({ mutation }: { mutation: any }) {
             secureTextEntry={!showPassword}
             textContentType="password"
             placeholder="Enter your password"
+            onFocus={onInteract}
             rightIcon={
               <Pressable onPress={() => setShowPassword(!showPassword)}>
                 <Ionicons
@@ -75,7 +83,7 @@ export function LoginForm({ mutation }: { mutation: any }) {
           </Pressable>
         </View>
 
-        {passwordValue.length > 0 && (
+        {passwordValue.length > 0 && !(has8Chars && hasUpper && hasNumber) && (
           <View style={styles.validationList}>
             <ValidationItem label="Password must have at least 8 characters" isValid={has8Chars} />
             <ValidationItem label="Password must have at least one uppercase letter" isValid={hasUpper} />
