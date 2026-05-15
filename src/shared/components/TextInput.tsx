@@ -71,6 +71,7 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
                 lineHeight: 21,
                 letterSpacing: -0.14,
                 paddingHorizontal: 20,
+                textAlignVertical: 'center',
               },
               isSecure && { color: 'transparent' },
               style,
@@ -93,6 +94,7 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
                   fontSize: 14,
                   lineHeight: 21,
                   letterSpacing: 2,
+                  textAlignVertical: 'center',
                 }}
               >
                 {displayValue}
@@ -102,7 +104,14 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
           {rightIcon && <View style={styles.rightIcon}>{rightIcon}</View>}
         </Pressable>
         {error && (
-          <Typography variant="label" color={colors.error} style={styles.error}>
+          <Typography
+            style={{
+              color: colors.error,
+              fontSize: 12,
+              marginTop: 4,
+              fontFamily: 'Inter_400Regular',
+            }}
+          >
             {error}
           </Typography>
         )}
@@ -124,6 +133,9 @@ const styles = StyleSheet.create({
   label: { marginBottom: 2 },
   input: { 
     height: '100%',
+    textAlignVertical: 'center',
+    paddingTop: 0,
+    paddingBottom: 0,
   },
   maskOverlay: {
     position: 'absolute',
@@ -132,6 +144,7 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     justifyContent: 'center',
+    alignItems: 'flex-start',
   },
   rightIcon: {
     position: 'absolute',
