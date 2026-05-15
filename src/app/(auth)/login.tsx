@@ -37,7 +37,15 @@ export default function LoginScreen() {
       
       <View style={styles.bannerContainer}>
         <Animated.View style={[styles.errorBanner, animatedBannerStyle]}>
-          <Typography variant="body2" color="#EF4444" align="center" style={{ fontWeight: '500' }}>
+          <Typography
+            style={{
+              color: '#494949',
+              fontFamily: 'Inter_400Regular',
+              fontSize: 12,
+              lineHeight: 18,
+              textAlign: 'center',
+            }}
+          >
             We couldn&apos;t sign you in right now. Please check your credentials and try again.
           </Typography>
         </Animated.View>
@@ -92,22 +100,22 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   bannerContainer: {
     position: 'absolute',
-    top: 50, // Below the safe area / notch
-    left: 20,
-    right: 20,
+    top: 54,
+    left: 0,
+    right: 0,
     zIndex: 1000,
   },
   errorBanner: {
-    padding: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    height: 56,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    backgroundColor: '#F5F5F5',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
   },
   footer: {
     flexDirection: 'row',
