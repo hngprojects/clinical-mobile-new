@@ -1,5 +1,5 @@
 import React, { forwardRef } from 'react';
-import { StyleSheet, TextInput as RNTextInput, TextInputProps, View } from 'react-native';
+import { StyleSheet, TextInput as RNTextInput, TextInputProps, View, Pressable } from 'react-native';
 
 import { useTheme } from '@/shared/theme';
 
@@ -38,7 +38,8 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
             {label}
           </Typography>
         )}
-        <View 
+        <Pressable 
+          onPress={() => (ref as any)?.current?.focus()}
           style={[
             styles.inputWrapper,
             {
@@ -99,7 +100,7 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
             </View>
           )}
           {rightIcon && <View style={styles.rightIcon}>{rightIcon}</View>}
-        </View>
+        </Pressable>
         {error && (
           <Typography variant="label" color={colors.error} style={styles.error}>
             {error}
@@ -118,6 +119,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     flexDirection: 'row',
     alignItems: 'center',
+    overflow: 'hidden',
   },
   label: { marginBottom: 2 },
   input: { 
