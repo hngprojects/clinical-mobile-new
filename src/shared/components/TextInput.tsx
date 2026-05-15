@@ -12,9 +12,12 @@ export interface AppTextInputProps extends TextInputProps {
 }
 
 export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
-  ({ label, error, rightIcon, style, ...props }, ref) => {
+  ({ label, error, rightIcon, style, secureTextEntry, value, ...props }, ref) => {
     const { colors, spacing, typography } = useTheme();
     const [isFocused, setIsFocused] = React.useState(false);
+
+    const isSecure = secureTextEntry;
+    const displayValue = isSecure && value ? '*'.repeat(value.length) : value;
 
     return (
       <View style={styles.container}>
@@ -38,7 +41,7 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
               styles.input,
               typography.body1,
               {
-                color: colors.text,
+                color: isSecure ? 'transparent' : colors.text,
                 backgroundColor: colors.inputBackground,
                 borderColor: error ? colors.error : isFocused ? colors.primary : colors.border,
                 paddingLeft: spacing.md,
@@ -51,8 +54,25 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
             placeholderTextColor={colors.textSecondary}
             autoCapitalize="none"
             autoCorrect={false}
+            secureTextEntry={false} // Disable native dots to use our overlay
+            value={value}
+            selectionColor={colors.primary}
             {...props}
           />
+          {isSecure && value && (
+            <View style={styles.maskOverlay} pointerEvents="none">
+              <Typography
+                variant="body1"
+                style={{
+                  color: colors.text,
+                  paddingLeft: spacing.md,
+                  letterSpacing: 2,
+                }}
+              >
+                {displayValue}
+              </Typography>
+            </View>
+          )}
           {rightIcon && <View style={styles.rightIcon}>{rightIcon}</View>}
         </View>
         {error && (
@@ -75,6 +95,12 @@ const styles = StyleSheet.create({
   },
   label: { marginBottom: 2 },
   input: { borderWidth: 1.5 },
+  maskOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 48, // Room for rightIcon
+    justifyContent: 'center',
+  },
   rightIcon: {
     position: 'absolute',
     right: 12,

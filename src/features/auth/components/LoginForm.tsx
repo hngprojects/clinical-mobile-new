@@ -59,7 +59,16 @@ export function LoginForm({ mutation }: { mutation: any }) {
             }
           />
           <Pressable style={styles.forgotPassword} onPress={() => {}}>
-            <Typography variant="body2" color="primary" style={{ fontWeight: '500' }}>
+            <Typography
+              variant="body2"
+              color={colors.primary}
+              style={{
+                fontWeight: '400',
+                textDecorationLine: 'underline',
+                lineHeight: 21,
+                letterSpacing: -0.14,
+              }}
+            >
               Forgot Password?
             </Typography>
           </Pressable>

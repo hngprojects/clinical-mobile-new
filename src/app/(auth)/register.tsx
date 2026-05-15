@@ -31,13 +31,18 @@ export default function RegisterScreen() {
         <RegisterForm />
 
         <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 40, marginBottom: 20 }}>
-          <Typography variant="body1" style={{ color: colors.textSecondary }}>
+          <Typography variant="body2" style={{ color: colors.textSecondary }}>
             Already have an account?{' '}
           </Typography>
           <Typography
-            variant="body1"
-            color="primary"
-            style={{ fontWeight: '600' }}
+            variant="body2"
+            color={colors.primary}
+            style={{
+              fontWeight: '400',
+              textDecorationLine: 'underline',
+              lineHeight: 21,
+              letterSpacing: -0.14,
+            }}
             onPress={() => router.push('/(auth)/login')}
           >
             Log In

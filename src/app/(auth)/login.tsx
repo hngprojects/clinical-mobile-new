@@ -61,13 +61,18 @@ export default function LoginScreen() {
         <LoginForm mutation={loginMutation} />
 
         <View style={styles.footer}>
-          <Typography variant="body1" style={{ color: colors.textSecondary }}>
+          <Typography variant="body2" style={{ color: colors.textSecondary }}>
             Don&apos;t have an account?{' '}
           </Typography>
           <Typography
-            variant="body1"
-            color="primary"
-            style={{ fontWeight: '600' }}
+            variant="body2"
+            color={colors.primary}
+            style={{
+              fontWeight: '400',
+              textDecorationLine: 'underline',
+              lineHeight: 21,
+              letterSpacing: -0.14,
+            }}
             onPress={() => router.push('/(auth)/register')}
           >
             Sign Up
