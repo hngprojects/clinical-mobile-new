@@ -38,7 +38,18 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
             {label}
           </Typography>
         )}
-        <View style={styles.inputWrapper}>
+        <View 
+          style={[
+            styles.inputWrapper,
+            {
+              borderColor: error ? colors.error : isFocused ? colors.primary : '#D0D0D0',
+              borderWidth: isFocused ? 2 : 1,
+              backgroundColor: colors.inputBackground,
+              borderRadius: 12,
+              height: 52,
+            }
+          ]}
+        >
           <RNTextInput
             ref={ref}
             onFocus={(e) => {
@@ -52,17 +63,13 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
             style={[
               styles.input,
               {
-                height: 52,
+                flex: 1,
                 color: '#1B1B1B',
                 fontFamily: 'Inter_400Regular',
                 fontSize: 14,
                 lineHeight: 21,
                 letterSpacing: -0.14,
-                backgroundColor: colors.inputBackground,
-                borderColor: error ? colors.error : isFocused ? colors.primary : '#D0D0D0',
                 paddingHorizontal: 20,
-                borderRadius: 12,
-                borderWidth: isFocused ? 2 : 1,
               },
               isSecure && { color: 'transparent' },
               style,
@@ -109,14 +116,19 @@ const styles = StyleSheet.create({
   container: { gap: 4 },
   inputWrapper: {
     position: 'relative',
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   label: { marginBottom: 2 },
-  input: { borderWidth: 1.5 },
+  input: { 
+    height: '100%',
+  },
   maskOverlay: {
     position: 'absolute',
     left: 0,
     right: 48, // Room for rightIcon
+    top: 0,
+    bottom: 0,
     justifyContent: 'center',
   },
   rightIcon: {

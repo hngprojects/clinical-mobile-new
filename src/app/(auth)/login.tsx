@@ -69,7 +69,18 @@ export default function LoginScreen() {
         </View>
 
         <View style={styles.footer}>
-          <Pressable onPress={() => router.push('/(auth)/register')} style={{ flexDirection: 'row' }}>
+          <Typography
+            style={{
+              color: colors.textSecondary,
+              fontFamily: 'Inter_400Regular',
+              fontSize: 14,
+              lineHeight: 21,
+              letterSpacing: -0.14,
+            }}
+          >
+            Don&apos;t have an account?{' '}
+          </Typography>
+          <Pressable onPress={() => router.push('/(auth)/register')}>
             <Typography
               style={{
                 color: colors.primary,
@@ -80,7 +91,7 @@ export default function LoginScreen() {
                 textDecorationLine: 'underline',
               }}
             >
-              Don&apos;t have an account? Sign Up
+              Sign Up
             </Typography>
           </Pressable>
         </View>

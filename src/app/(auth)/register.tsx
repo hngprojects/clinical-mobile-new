@@ -26,6 +26,17 @@ export default function RegisterScreen() {
         <RegisterForm />
 
         <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 16, marginBottom: 20 }}>
+          <Typography
+            style={{
+              color: colors.textSecondary,
+              fontFamily: 'Inter_400Regular',
+              fontSize: 14,
+              lineHeight: 21,
+              letterSpacing: -0.14,
+            }}
+          >
+            Already have an account?{' '}
+          </Typography>
           <Pressable onPress={() => router.push('/(auth)/login')}>
             <Typography
               style={{
@@ -37,7 +48,7 @@ export default function RegisterScreen() {
                 textDecorationLine: 'underline',
               }}
             >
-              Already have an account? Log In
+              Log In
             </Typography>
           </Pressable>
         </View>
