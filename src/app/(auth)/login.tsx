@@ -51,7 +51,7 @@ export default function LoginScreen() {
         </Animated.View>
       </View>
 
-      <Screen scrollable padding backgroundColor="#FFFFFF">
+      <Screen scrollable padding backgroundColor="#FFFFFF" keyboardAvoiding>
         <View style={{ marginTop: spacing.xxl }}>
           <Typography variant="h1" style={{ fontWeight: '700', marginBottom: 4 }}>
             Welcome Back

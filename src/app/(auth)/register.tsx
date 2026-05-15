@@ -13,7 +13,7 @@ export default function RegisterScreen() {
     <>
       <Stack.Screen options={{ title: 'Create Account', headerShown: false }} />
 
-      <Screen scrollable padding backgroundColor="#FFFFFF">
+      <Screen scrollable padding backgroundColor="#FFFFFF" keyboardAvoiding>
         <View style={{ marginTop: spacing.xxl, marginBottom: spacing.xl }}>
           <Typography variant="h1" style={{ fontWeight: '700', marginBottom: 4 }}>
             Create Account

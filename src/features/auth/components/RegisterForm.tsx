@@ -15,6 +15,11 @@ export function RegisterForm() {
   const { mutate: register, isPending, error } = useRegister();
   const [showPassword, setShowPassword] = useState(false);
 
+  const lastNameRef = useRef<any>(null);
+  const emailRef = useRef<any>(null);
+  const passwordRef = useRef<any>(null);
+  const confirmPasswordRef = useRef<any>(null);
+
   const { control, handleSubmit, watch } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -30,6 +35,10 @@ export function RegisterForm() {
   const passwordValue = watch('password');
   const onSubmit = (data: RegisterFormData) => register(data);
 
+  const handleSocialPress = (provider: string) => {
+    alert(`${provider} registration is coming soon!`);
+  };
+
   // Password validation logic
   const has8Chars = passwordValue.length >= 8;
   const hasUpper = /[A-Z]/.test(passwordValue);
@@ -39,28 +48,53 @@ export function RegisterForm() {
     <View style={[styles.container, { gap: spacing.md }]}>
       <View style={[styles.row, { gap: spacing.sm }]}>
         <View style={styles.flex}>
-          <FormField control={control} name="firstName" label="First name" placeholder="John" />
+          <FormField 
+            control={control} 
+            name="firstName" 
+            label="First name" 
+            placeholder="John" 
+            returnKeyType="next"
+            onSubmitEditing={() => lastNameRef.current?.focus()}
+            blurOnSubmit={false}
+          />
         </View>
         <View style={styles.flex}>
-          <FormField control={control} name="lastName" label="Last name" placeholder="Doe" />
+          <FormField 
+            ref={lastNameRef}
+            control={control} 
+            name="lastName" 
+            label="Last name" 
+            placeholder="Doe" 
+            returnKeyType="next"
+            onSubmitEditing={() => emailRef.current?.focus()}
+            blurOnSubmit={false}
+          />
         </View>
       </View>
 
       <FormField
+        ref={emailRef}
         control={control}
         name="email"
         label="Email"
         keyboardType="email-address"
         textContentType="emailAddress"
         placeholder="john@example.com"
+        returnKeyType="next"
+        onSubmitEditing={() => passwordRef.current?.focus()}
+        blurOnSubmit={false}
       />
       <FormField
+        ref={passwordRef}
         control={control}
         name="password"
         label="Password"
         secureTextEntry={!showPassword}
         textContentType="newPassword"
         placeholder="••••••••"
+        returnKeyType="next"
+        onSubmitEditing={() => confirmPasswordRef.current?.focus()}
+        blurOnSubmit={false}
         rightIcon={
           <Pressable onPress={() => setShowPassword(!showPassword)}>
             <Ionicons
@@ -81,12 +115,15 @@ export function RegisterForm() {
       )}
 
       <FormField
+        ref={confirmPasswordRef}
         control={control}
         name="confirmPassword"
         label="Confirm password"
         secureTextEntry={!showPassword}
         textContentType="newPassword"
         placeholder="••••••••"
+        returnKeyType="done"
+        onSubmitEditing={handleSubmit(onSubmit)}
       />
 
       {error && (
@@ -119,7 +156,7 @@ export function RegisterForm() {
         <Button
           label="Google"
           variant="outline"
-          onPress={() => {}}
+          onPress={() => handleSocialPress('Google')}
           style={styles.socialIconButton}
           leftIcon={
             <Image
@@ -133,7 +170,7 @@ export function RegisterForm() {
         <Button
           label="Continue as guest"
           variant="outline"
-          onPress={() => {}}
+          onPress={() => handleSocialPress('Guest')}
           style={styles.socialIconButton}
           textColor="#4B5563"
         />

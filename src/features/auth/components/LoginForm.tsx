@@ -19,6 +19,7 @@ export function LoginForm({
   const { spacing, colors } = useTheme();
   const { mutate: login, isPending } = mutation;
   const [showPassword, setShowPassword] = useState(false);
+  const passwordRef = useRef<any>(null);
 
   const { control, handleSubmit, watch } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -28,6 +29,10 @@ export function LoginForm({
 
   const passwordValue = watch('password');
   const onSubmit = (data: LoginFormData) => login(data);
+
+  const handleSocialPress = (provider: string) => {
+    alert(`${provider} login is coming soon!`);
+  };
 
   // Validation checks
   const has8Chars = passwordValue.length >= 8;
@@ -45,10 +50,14 @@ export function LoginForm({
           textContentType="emailAddress"
           placeholder="chioma@gmail.com"
           onFocus={onInteract}
+          returnKeyType="next"
+          onSubmitEditing={() => passwordRef.current?.focus()}
+          blurOnSubmit={false}
         />
 
         <View style={{ marginTop: 16 }}>
           <FormField
+            ref={passwordRef}
             control={control}
             name="password"
             label="Password"
@@ -56,6 +65,8 @@ export function LoginForm({
             textContentType="password"
             placeholder="Enter your password"
             onFocus={onInteract}
+            returnKeyType="done"
+            onSubmitEditing={handleSubmit(onSubmit)}
             rightIcon={
               <Pressable onPress={() => setShowPassword(!showPassword)}>
                 <Ionicons
@@ -125,7 +136,7 @@ export function LoginForm({
           <Button
             label="Google"
             variant="outline"
-            onPress={() => {}}
+            onPress={() => handleSocialPress('Google')}
             style={styles.socialIconButton}
             leftIcon={
               <Image
@@ -139,7 +150,7 @@ export function LoginForm({
           <Button
             label="Continue as guest"
             variant="outline"
-            onPress={() => {}}
+            onPress={() => handleSocialPress('Guest')}
             style={styles.socialIconButton}
             textColor="#5E5E5E"
           />
