@@ -15,9 +15,17 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
   ({ label, error, rightIcon, style, secureTextEntry, value, ...props }, ref) => {
     const { colors, spacing, typography } = useTheme();
     const [isFocused, setIsFocused] = React.useState(false);
+    const internalRef = React.useRef<RNTextInput>(null);
+
+    // Combine forwarded ref and internal ref
+    React.useImperativeHandle(ref, () => internalRef.current!);
 
     const isSecure = secureTextEntry;
     const displayValue = isSecure && value ? '*'.repeat(value.length) : value;
+
+    const handlePress = () => {
+      internalRef.current?.focus();
+    };
 
     return (
       <View style={styles.container}>
@@ -39,12 +47,12 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
           </Typography>
         )}
         <Pressable 
-          onPress={() => (ref as any)?.current?.focus()}
+          onPress={handlePress}
           style={[
             styles.inputWrapper,
             {
-              borderColor: error ? colors.error : isFocused ? colors.primary : '#D0D0D0',
-              borderWidth: isFocused ? 2 : 1,
+              borderColor: error ? colors.error : isFocused ? '#1565C0' : '#D0D0D0',
+              borderWidth: isFocused ? 2.5 : 1,
               backgroundColor: colors.inputBackground,
               borderRadius: 12,
               height: 52,
@@ -52,7 +60,7 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
           ]}
         >
           <RNTextInput
-            ref={ref}
+            ref={internalRef}
             onFocus={(e) => {
               setIsFocused(true);
               props.onFocus?.(e);
@@ -81,7 +89,7 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
             autoCorrect={false}
             secureTextEntry={false}
             value={value}
-            selectionColor={colors.primary}
+            selectionColor="#1565C0"
             {...props}
           />
           {isSecure && value && (
