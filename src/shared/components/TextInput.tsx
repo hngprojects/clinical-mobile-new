@@ -12,7 +12,7 @@ export interface AppTextInputProps extends TextInputProps {
 }
 
 export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
-  ({ label, error, rightIcon, style, secureTextEntry, value, ...props }, ref) => {
+  ({ label, error, rightIcon, style, secureTextEntry, value, onFocus, onBlur, ...restProps }, ref) => {
     const { colors, spacing, typography } = useTheme();
     const [isFocused, setIsFocused] = React.useState(false);
     const internalRef = React.useRef<RNTextInput>(null);
@@ -25,6 +25,16 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
 
     const handlePress = () => {
       internalRef.current?.focus();
+    };
+
+    const handleFocus = (e: any) => {
+      setIsFocused(true);
+      if (onFocus) onFocus(e);
+    };
+
+    const handleBlur = (e: any) => {
+      setIsFocused(false);
+      if (onBlur) onBlur(e);
     };
 
     return (
@@ -52,7 +62,7 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
             styles.inputWrapper,
             {
               borderColor: error ? colors.error : isFocused ? '#1565C0' : '#D0D0D0',
-              borderWidth: isFocused ? 2.5 : 1,
+              borderWidth: isFocused ? 2 : 1,
               backgroundColor: colors.inputBackground,
               borderRadius: 12,
               height: 52,
@@ -61,14 +71,8 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
         >
           <RNTextInput
             ref={internalRef}
-            onFocus={(e) => {
-              setIsFocused(true);
-              props.onFocus?.(e);
-            }}
-            onBlur={(e) => {
-              setIsFocused(false);
-              props.onBlur?.(e);
-            }}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
             style={[
               styles.input,
               {
@@ -90,7 +94,7 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
             secureTextEntry={false}
             value={value}
             selectionColor="#1565C0"
-            {...props}
+            {...restProps}
           />
           {isSecure && value && (
             <View style={styles.maskOverlay} pointerEvents="none">

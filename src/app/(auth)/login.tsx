@@ -64,7 +64,6 @@ export default function LoginScreen() {
         <View style={{ marginTop: 40 }}>
           <LoginForm 
             mutation={loginMutation} 
-            onInteract={() => loginMutation.reset()} 
           />
         </View>
 
