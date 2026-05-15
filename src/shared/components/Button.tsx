@@ -65,11 +65,12 @@ export function Button({
       {...props}
     >
       <View style={styles.content}>
-        {isLoading ? (
-          <ActivityIndicator color={textColor} size="small" />
-        ) : (
+        {isLoading && (
+          <ActivityIndicator color={colors.primary} size="small" />
+        )}
+        {(isLoading || !isLoading) && (
           <>
-            {leftIcon && <View style={styles.iconContainer}>{leftIcon}</View>}
+            {leftIcon && !isLoading && <View style={styles.iconContainer}>{leftIcon}</View>}
             <Typography
               variant="body1"
               color={textColor}
