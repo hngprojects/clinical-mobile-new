@@ -34,7 +34,6 @@ export default function LoginScreen() {
   return (
     <>
       <Stack.Screen options={{ title: 'Sign In', headerShown: false }} />
-      <PatternBackground opacity={0.06} />
       
       <View style={styles.bannerContainer}>
         <Animated.View style={[styles.errorBanner, animatedBannerStyle]}>
@@ -44,17 +43,13 @@ export default function LoginScreen() {
         </Animated.View>
       </View>
 
-      <Screen scrollable padding backgroundColor="transparent">
-        <View style={{ marginTop: spacing.xl, marginBottom: spacing.xl, alignItems: 'center' }}>
-          <ClinsightLogo size={80} />
-        </View>
-
-        <View style={{ marginBottom: spacing.xl }}>
+      <Screen scrollable padding backgroundColor="#FFFFFF">
+        <View style={{ marginTop: spacing.xxl, marginBottom: spacing.xl }}>
           <Typography variant="h1" style={{ fontWeight: '700', marginBottom: 4 }}>
             Welcome Back
           </Typography>
           <Typography variant="body1" style={{ color: colors.textSecondary }}>
-            Enter your details to access your account
+            Insert your details to login to Clinsight
           </Typography>
         </View>
 

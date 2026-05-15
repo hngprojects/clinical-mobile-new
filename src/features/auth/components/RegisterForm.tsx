@@ -74,9 +74,9 @@ export function RegisterForm() {
 
       {passwordValue.length > 0 && (
         <View style={styles.validationList}>
-          <ValidationItem label="At least 8 characters" isValid={has8Chars} />
-          <ValidationItem label="At least one uppercase letter" isValid={hasUpper} />
-          <ValidationItem label="At least one number" isValid={hasNumber} />
+          <ValidationItem label="Password must have 8characters" isValid={has8Chars} />
+          <ValidationItem label="Password must one upper case" isValid={hasUpper} />
+          <ValidationItem label="Password must one special character" isValid={hasNumber} />
         </View>
       )}
 
@@ -99,54 +99,60 @@ export function RegisterForm() {
         label="Create Account"
         onPress={handleSubmit(onSubmit)}
         isLoading={isPending}
-        style={{ marginTop: spacing.xs, height: 56 }}
+        style={{ 
+          marginTop: spacing.xs, 
+          height: 56,
+          backgroundColor: isPending || passwordValue.length === 0 ? '#F5F5F5' : colors.primary
+        }}
+        textColor={isPending || passwordValue.length === 0 ? '#9CA3AF' : '#FFFFFF'}
       />
 
       <View style={styles.separatorContainer}>
-        <View style={[styles.line, { backgroundColor: colors.border }]} />
+        <View style={[styles.line, { backgroundColor: '#F0F0F0' }]} />
         <Typography variant="body2" color="textSecondary" style={{ paddingHorizontal: 16 }}>
-          or continue with
+          or
         </Typography>
-        <View style={[styles.line, { backgroundColor: colors.border }]} />
+        <View style={[styles.line, { backgroundColor: '#F0F0F0' }]} />
       </View>
 
-      <View style={{ flexDirection: 'row', gap: spacing.md }}>
-        <Pressable style={[styles.socialIconButton, { flex: 1 }]}>
-          <Image
-            source={{ uri: 'https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png' }}
-            style={{ width: 24, height: 24 }}
-          />
-          <Typography variant="body2" style={{ fontWeight: '600', marginLeft: 8 }}>Google</Typography>
-        </Pressable>
+      <View style={{ gap: spacing.md }}>
+        <Button
+          label="Google"
+          variant="outline"
+          onPress={() => {}}
+          style={styles.socialIconButton}
+          leftIcon={
+            <Image
+              source={{ uri: 'https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png' }}
+              style={{ width: 20, height: 20 }}
+            />
+          }
+          textColor="#4B5563"
+        />
 
-        <Pressable style={[styles.socialIconButton, { flex: 1, backgroundColor: '#000000' }]}>
-          <Ionicons name="logo-apple" size={24} color="#FFFFFF" />
-          <Typography variant="body2" style={{ fontWeight: '600', color: '#FFFFFF', marginLeft: 8 }}>Apple</Typography>
-        </Pressable>
+        <Button
+          label="Continue as guest"
+          variant="outline"
+          onPress={() => {}}
+          style={styles.socialIconButton}
+          textColor="#4B5563"
+        />
       </View>
     </View>
   );
 }
 
 function ValidationItem({ label, isValid }: { label: string; isValid: boolean }) {
-  const { colors } = useTheme();
   return (
     <View style={styles.validationItem}>
-      <Ionicons
-        name={isValid ? 'checkmark-circle' : 'close-circle-outline'}
-        size={16}
-        color={isValid ? '#10B981' : colors.textSecondary}
-        style={{ marginRight: 8 }}
-      />
       <Typography
         variant="body2"
         style={{
-          color: isValid ? colors.text : colors.textSecondary,
+          color: '#6B7280',
           fontSize: 13,
-          fontWeight: isValid ? '500' : '400',
         }}
       >
-        {label}
+        {isValid ? '✓' : '✕'} {label}
       </Typography>
     </View>
   );
@@ -157,12 +163,9 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row' },
   flex: { flex: 1 },
   validationList: {
-    gap: 8,
+    gap: 4,
     marginTop: -8,
     marginBottom: 8,
-    padding: 12,
-    backgroundColor: '#F9FAFB',
-    borderRadius: 12,
   },
   validationItem: {
     flexDirection: 'row',
@@ -178,9 +181,6 @@ const styles = StyleSheet.create({
     height: 1,
   },
   socialIconButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
     height: 56,
     borderRadius: 12,
     borderWidth: 1,
