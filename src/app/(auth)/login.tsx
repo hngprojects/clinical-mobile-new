@@ -5,7 +5,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-na
 
 import { LoginForm } from '@/features/auth';
 import { useLogin } from '@/features/auth/hooks/useLogin';
-import { Screen, Typography } from '@/shared/components';
+import { Screen, Typography, PatternBackground, ClinsightLogo } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 export default function LoginScreen() {
@@ -34,21 +34,27 @@ export default function LoginScreen() {
   return (
     <>
       <Stack.Screen options={{ title: 'Sign In', headerShown: false }} />
+      <PatternBackground opacity={0.06} />
+      
       <View style={styles.bannerContainer}>
         <Animated.View style={[styles.errorBanner, animatedBannerStyle]}>
-          <Typography variant="body2" color={colors.textSecondary} align="center">
-            We couldn&apos;t sign you up right now. Please check your connection and try again.
+          <Typography variant="body2" color="#EF4444" align="center" style={{ fontWeight: '500' }}>
+            We couldn&apos;t sign you in right now. Please check your credentials and try again.
           </Typography>
         </Animated.View>
       </View>
 
-      <Screen scrollable padding>
-        <View style={{ marginTop: spacing.xxl, marginBottom: spacing.xl }}>
-          <Typography variant="h1" style={{ fontWeight: '700' }}>
+      <Screen scrollable padding backgroundColor="transparent">
+        <View style={{ marginTop: spacing.xl, marginBottom: spacing.xl, alignItems: 'center' }}>
+          <ClinsightLogo size={80} />
+        </View>
+
+        <View style={{ marginBottom: spacing.xl }}>
+          <Typography variant="h1" style={{ fontWeight: '700', marginBottom: 4 }}>
             Welcome Back
           </Typography>
-          <Typography variant="body1" style={{ color: colors.textSecondary, marginTop: 4 }}>
-            Insert your details to login to Clinsight
+          <Typography variant="body1" style={{ color: colors.textSecondary }}>
+            Enter your details to access your account
           </Typography>
         </View>
 
@@ -61,7 +67,7 @@ export default function LoginScreen() {
           <Typography
             variant="body1"
             color="primary"
-            style={{ textDecorationLine: 'underline', fontWeight: '500' }}
+            style={{ fontWeight: '600' }}
             onPress={() => router.push('/(auth)/register')}
           >
             Sign Up

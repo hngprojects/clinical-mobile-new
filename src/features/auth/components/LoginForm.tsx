@@ -26,7 +26,7 @@ export function LoginForm({ mutation }: { mutation: any }) {
   // Validation checks
   const has8Chars = passwordValue.length >= 8;
   const hasUpper = /[A-Z]/.test(passwordValue);
-  const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(passwordValue);
+  const hasNumber = /[0-9]/.test(passwordValue);
 
   return (
     <View style={styles.container}>
@@ -67,9 +67,9 @@ export function LoginForm({ mutation }: { mutation: any }) {
 
         {passwordValue.length > 0 && (
           <View style={styles.validationList}>
-            <ValidationItem label="Password must have 8characters" isValid={has8Chars} />
-            <ValidationItem label="Password must one upper case" isValid={hasUpper} />
-            <ValidationItem label="Password must one special character" isValid={hasSpecial} />
+            <ValidationItem label="At least 8 characters" isValid={has8Chars} />
+            <ValidationItem label="At least one uppercase letter" isValid={hasUpper} />
+            <ValidationItem label="At least one number" isValid={hasNumber} />
           </View>
         )}
 
@@ -77,35 +77,38 @@ export function LoginForm({ mutation }: { mutation: any }) {
           label={isPending ? 'Logging in...' : 'Login'}
           onPress={handleSubmit(onSubmit)}
           isLoading={isPending}
-          style={{ marginTop: spacing.xs }}
+          style={{ marginTop: spacing.xs, height: 56 }}
         />
 
         <View style={styles.separatorContainer}>
           <View style={[styles.line, { backgroundColor: colors.border }]} />
-          <Typography variant="body2" color="textSecondary" style={{ paddingHorizontal: 10 }}>
-            or
+          <Typography variant="body2" color="textSecondary" style={{ paddingHorizontal: 16 }}>
+            or continue with
           </Typography>
           <View style={[styles.line, { backgroundColor: colors.border }]} />
         </View>
 
-        <Button
-          label="Google"
-          variant="outline"
-          onPress={() => {}}
-          style={styles.socialButton}
-          leftIcon={
+        <View style={{ flexDirection: 'row', gap: spacing.md, marginTop: spacing.xs }}>
+          <Pressable style={[styles.socialIconButton, { flex: 1 }]}>
             <Image
               source={{ uri: 'https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png' }}
               style={{ width: 24, height: 24 }}
             />
-          }
-        />
+            <Typography variant="body2" style={{ fontWeight: '600', marginLeft: 8 }}>Google</Typography>
+          </Pressable>
+
+          <Pressable style={[styles.socialIconButton, { flex: 1, backgroundColor: '#000000' }]}>
+            <Ionicons name="logo-apple" size={24} color="#FFFFFF" />
+            <Typography variant="body2" style={{ fontWeight: '600', color: '#FFFFFF', marginLeft: 8 }}>Apple</Typography>
+          </Pressable>
+        </View>
 
         <Button
           label="Continue as guest"
-          variant="outline"
+          variant="ghost"
           onPress={() => {}}
-          style={{ borderColor: '#E5E7EB' }}
+          style={{ marginTop: spacing.sm }}
+          textColor={colors.textSecondary}
         />
       </View>
     </View>
@@ -116,8 +119,21 @@ function ValidationItem({ label, isValid }: { label: string; isValid: boolean })
   const { colors } = useTheme();
   return (
     <View style={styles.validationItem}>
-      <Typography variant="body2" style={{ color: colors.textSecondary, fontSize: 13 }}>
-        {isValid ? '✓' : '✕'} {label}
+      <Ionicons
+        name={isValid ? 'checkmark-circle' : 'close-circle-outline'}
+        size={16}
+        color={isValid ? '#10B981' : colors.textSecondary}
+        style={{ marginRight: 8 }}
+      />
+      <Typography
+        variant="body2"
+        style={{
+          color: isValid ? colors.text : colors.textSecondary,
+          fontSize: 13,
+          fontWeight: isValid ? '500' : '400',
+        }}
+      >
+        {label}
       </Typography>
     </View>
   );
@@ -130,9 +146,12 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   validationList: {
-    gap: 4,
+    gap: 8,
     marginTop: 8,
-    marginBottom: 8,
+    marginBottom: 16,
+    padding: 12,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
   },
   validationItem: {
     flexDirection: 'row',
@@ -141,14 +160,20 @@ const styles = StyleSheet.create({
   separatorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 10,
+    marginVertical: 24,
   },
   line: {
     flex: 1,
     height: 1,
   },
-  socialButton: {
-    backgroundColor: '#FFFFFF',
+  socialIconButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 56,
+    borderRadius: 12,
+    borderWidth: 1,
     borderColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
   },
 });
