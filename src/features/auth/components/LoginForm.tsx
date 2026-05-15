@@ -30,7 +30,7 @@ export function LoginForm({ mutation }: { mutation: any }) {
 
   return (
     <View style={styles.container}>
-      <View style={{ gap: spacing.md }}>
+      <View>
         <FormField
           control={control}
           name="email"
@@ -40,7 +40,7 @@ export function LoginForm({ mutation }: { mutation: any }) {
           placeholder="chioma@gmail.com"
         />
 
-        <View>
+        <View style={{ marginTop: 16 }}>
           <FormField
             control={control}
             name="password"
@@ -67,6 +67,7 @@ export function LoginForm({ mutation }: { mutation: any }) {
                 textDecorationLine: 'underline',
                 lineHeight: 21,
                 letterSpacing: -0.14,
+                marginTop: 6,
               }}
             >
               Forgot Password?
@@ -87,22 +88,32 @@ export function LoginForm({ mutation }: { mutation: any }) {
           onPress={handleSubmit(onSubmit)}
           isLoading={isPending}
           style={{ 
-            marginTop: spacing.xs, 
-            height: 56,
+            marginTop: 32, 
+            height: 45,
+            borderRadius: 12,
             backgroundColor: isPending || passwordValue.length === 0 ? '#F5F5F5' : colors.primary
           }}
-          textColor={isPending || passwordValue.length === 0 ? '#9CA3AF' : '#FFFFFF'}
+          textColor={isPending || passwordValue.length === 0 ? '#767676' : '#FFFFFF'}
         />
 
         <View style={styles.separatorContainer}>
           <View style={[styles.line, { backgroundColor: '#F0F0F0' }]} />
-          <Typography variant="body2" color="textSecondary" style={{ paddingHorizontal: 16 }}>
+          <Typography
+            style={{
+              paddingHorizontal: 16,
+              color: '#767676',
+              fontFamily: 'Inter_500Medium',
+              fontSize: 14,
+              lineHeight: 21,
+              letterSpacing: -0.14,
+            }}
+          >
             or
           </Typography>
           <View style={[styles.line, { backgroundColor: '#F0F0F0' }]} />
         </View>
 
-        <View style={{ gap: spacing.md }}>
+        <View style={{ gap: 16 }}>
           <Button
             label="Google"
             variant="outline"
@@ -111,10 +122,10 @@ export function LoginForm({ mutation }: { mutation: any }) {
             leftIcon={
               <Image
                 source={{ uri: 'https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png' }}
-                style={{ width: 20, height: 20 }}
+                style={{ width: 24, height: 24 }}
               />
             }
-            textColor="#4B5563"
+            textColor="#5E5E5E"
           />
 
           <Button
@@ -122,7 +133,7 @@ export function LoginForm({ mutation }: { mutation: any }) {
             variant="outline"
             onPress={() => {}}
             style={styles.socialIconButton}
-            textColor="#4B5563"
+            textColor="#5E5E5E"
           />
         </View>
       </View>
@@ -131,14 +142,15 @@ export function LoginForm({ mutation }: { mutation: any }) {
 }
 
 function ValidationItem({ label, isValid }: { label: string; isValid: boolean }) {
-  const { colors } = useTheme();
   return (
     <View style={styles.validationItem}>
       <Typography
-        variant="body2"
         style={{
-          color: '#6B7280',
+          color: '#767676',
+          fontFamily: 'Inter_400Regular',
           fontSize: 13,
+          lineHeight: 19.5,
+          letterSpacing: -0.13,
         }}
       >
         {isValid ? '✓' : '✕'} {label}
@@ -151,12 +163,11 @@ const styles = StyleSheet.create({
   container: { width: '100%' },
   forgotPassword: {
     alignSelf: 'flex-end',
-    marginTop: 8,
   },
   validationList: {
     gap: 4,
     marginTop: 8,
-    marginBottom: 16,
+    marginBottom: 0,
   },
   validationItem: {
     flexDirection: 'row',
@@ -165,17 +176,18 @@ const styles = StyleSheet.create({
   separatorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 24,
+    marginTop: 16,
+    marginBottom: 16,
   },
   line: {
     flex: 1,
     height: 1,
   },
   socialIconButton: {
-    height: 56,
+    height: 52, // Based on input field height usually, but let's keep it consistent
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#D0D0D0',
     backgroundColor: '#FFFFFF',
   },
 });

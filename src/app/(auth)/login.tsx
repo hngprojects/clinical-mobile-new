@@ -44,7 +44,7 @@ export default function LoginScreen() {
       </View>
 
       <Screen scrollable padding backgroundColor="#FFFFFF">
-        <View style={{ marginTop: spacing.xxl, marginBottom: spacing.xl }}>
+        <View style={{ marginTop: spacing.xxl }}>
           <Typography variant="h1" style={{ fontWeight: '700', marginBottom: 4 }}>
             Welcome Back
           </Typography>
@@ -53,18 +53,29 @@ export default function LoginScreen() {
           </Typography>
         </View>
 
-        <LoginForm mutation={loginMutation} />
+        <View style={{ marginTop: 40 }}>
+          <LoginForm mutation={loginMutation} />
+        </View>
 
         <View style={styles.footer}>
-          <Typography variant="body2" style={{ color: colors.textSecondary }}>
+          <Typography
+            style={{
+              color: colors.textSecondary,
+              fontFamily: 'Inter_400Regular',
+              fontSize: 14,
+              lineHeight: 21,
+              letterSpacing: -0.14,
+            }}
+          >
             Don&apos;t have an account?{' '}
           </Typography>
           <Typography
-            variant="body2"
             color={colors.primary}
             style={{
               fontWeight: '400',
               textDecorationLine: 'underline',
+              fontFamily: 'Inter_400Regular',
+              fontSize: 14,
               lineHeight: 21,
               letterSpacing: -0.14,
             }}
@@ -102,7 +113,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 40,
+    marginTop: 16,
     marginBottom: 20,
   },
 });

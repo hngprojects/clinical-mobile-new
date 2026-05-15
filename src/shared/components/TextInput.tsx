@@ -22,7 +22,19 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
     return (
       <View style={styles.container}>
         {label && (
-          <Typography variant="label" style={styles.label}>
+          <Typography
+            variant="label"
+            style={[
+              styles.label,
+              {
+                color: '#1B1B1B',
+                fontFamily: 'Inter_400Regular',
+                fontSize: 14,
+                lineHeight: 21,
+                letterSpacing: -0.14,
+              },
+            ]}
+          >
             {label}
           </Typography>
         )}
@@ -39,22 +51,26 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
             }}
             style={[
               styles.input,
-              typography.body1,
               {
-                color: isSecure ? 'transparent' : colors.text,
+                height: 52,
+                color: '#1B1B1B',
+                fontFamily: 'Inter_400Regular',
+                fontSize: 14,
+                lineHeight: 21,
+                letterSpacing: -0.14,
                 backgroundColor: colors.inputBackground,
-                borderColor: error ? colors.error : isFocused ? colors.primary : colors.border,
-                paddingLeft: spacing.md,
-                paddingRight: rightIcon ? spacing.xl * 1.5 : spacing.md,
-                paddingVertical: spacing.sm + 4,
-                borderRadius: spacing.sm,
+                borderColor: error ? colors.error : isFocused ? colors.primary : '#D0D0D0',
+                paddingHorizontal: 20,
+                borderRadius: 12,
+                borderWidth: 1,
               },
+              isSecure && { color: 'transparent' },
               style,
             ]}
-            placeholderTextColor={colors.textSecondary}
+            placeholderTextColor="#767676"
             autoCapitalize="none"
             autoCorrect={false}
-            secureTextEntry={false} // Disable native dots to use our overlay
+            secureTextEntry={false}
             value={value}
             selectionColor={colors.primary}
             {...props}
@@ -62,10 +78,12 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
           {isSecure && value && (
             <View style={styles.maskOverlay} pointerEvents="none">
               <Typography
-                variant="body1"
                 style={{
-                  color: colors.text,
-                  paddingLeft: spacing.md,
+                  color: '#1B1B1B',
+                  paddingLeft: 20,
+                  fontFamily: 'Inter_400Regular',
+                  fontSize: 14,
+                  lineHeight: 21,
                   letterSpacing: 2,
                 }}
               >
