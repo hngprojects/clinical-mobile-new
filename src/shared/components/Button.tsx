@@ -65,9 +65,7 @@ export function Button({
       {...props}
     >
       <View style={styles.content}>
-        {isLoading && (
-          <ActivityIndicator color={colors.primary} size="small" />
-        )}
+        {isLoading && <ActivityIndicator color={colors.primary} size="small" />}
         {(isLoading || !isLoading) && (
           <>
             {leftIcon && !isLoading && <View style={styles.iconContainer}>{leftIcon}</View>}

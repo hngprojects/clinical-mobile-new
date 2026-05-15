@@ -1,5 +1,11 @@
 import React, { forwardRef } from 'react';
-import { StyleSheet, TextInput as RNTextInput, TextInputProps, View, Pressable } from 'react-native';
+import {
+  StyleSheet,
+  TextInput as RNTextInput,
+  TextInputProps,
+  View,
+  Pressable,
+} from 'react-native';
 
 import { useTheme } from '@/shared/theme';
 
@@ -12,8 +18,11 @@ export interface AppTextInputProps extends TextInputProps {
 }
 
 export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
-  ({ label, error, rightIcon, style, secureTextEntry, value, onFocus, onBlur, ...restProps }, ref) => {
-    const { colors, spacing, typography } = useTheme();
+  (
+    { label, error, rightIcon, style, secureTextEntry, value, onFocus, onBlur, ...restProps },
+    ref,
+  ) => {
+    const { colors } = useTheme();
     const [isFocused, setIsFocused] = React.useState(false);
     const internalRef = React.useRef<RNTextInput>(null);
 
@@ -56,7 +65,7 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
             {label}
           </Typography>
         )}
-        <Pressable 
+        <Pressable
           onPress={handlePress}
           style={[
             styles.inputWrapper,
@@ -66,7 +75,7 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
               backgroundColor: colors.inputBackground,
               borderRadius: 12,
               height: 52,
-            }
+            },
           ]}
         >
           <RNTextInput
@@ -143,7 +152,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   label: { marginBottom: 2 },
-  input: { 
+  input: {
     height: '100%',
     textAlignVertical: 'center',
     paddingTop: 0,

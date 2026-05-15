@@ -48,23 +48,23 @@ export function RegisterForm() {
     <View style={[styles.container, { gap: spacing.md }]}>
       <View style={[styles.row, { gap: spacing.sm }]}>
         <View style={styles.flex}>
-          <FormField 
-            control={control} 
-            name="firstName" 
-            label="First name" 
-            placeholder="John" 
+          <FormField
+            control={control}
+            name="firstName"
+            label="First name"
+            placeholder="John"
             returnKeyType="next"
             onSubmitEditing={() => lastNameRef.current?.focus()}
             blurOnSubmit={false}
           />
         </View>
         <View style={styles.flex}>
-          <FormField 
+          <FormField
             ref={lastNameRef}
-            control={control} 
-            name="lastName" 
-            label="Last name" 
-            placeholder="Doe" 
+            control={control}
+            name="lastName"
+            label="Last name"
+            placeholder="Doe"
             returnKeyType="next"
             onSubmitEditing={() => emailRef.current?.focus()}
             blurOnSubmit={false}
@@ -109,7 +109,10 @@ export function RegisterForm() {
       {passwordValue.length > 0 && !(has8Chars && hasUpper && hasNumber) && (
         <View style={styles.validationList}>
           <ValidationItem label="Password must have at least 8 characters" isValid={has8Chars} />
-          <ValidationItem label="Password must have at least one uppercase letter" isValid={hasUpper} />
+          <ValidationItem
+            label="Password must have at least one uppercase letter"
+            isValid={hasUpper}
+          />
           <ValidationItem label="Password must have at least one number" isValid={hasNumber} />
         </View>
       )}
@@ -136,10 +139,10 @@ export function RegisterForm() {
         label="Create Account"
         onPress={handleSubmit(onSubmit)}
         isLoading={isPending}
-        style={{ 
-          marginTop: spacing.xs, 
+        style={{
+          marginTop: spacing.xs,
           height: 56,
-          backgroundColor: isPending || passwordValue.length === 0 ? '#F5F5F5' : colors.primary
+          backgroundColor: isPending || passwordValue.length === 0 ? '#F5F5F5' : colors.primary,
         }}
         textColor={isPending || passwordValue.length === 0 ? '#9CA3AF' : '#FFFFFF'}
       />
@@ -160,7 +163,9 @@ export function RegisterForm() {
           style={styles.socialIconButton}
           leftIcon={
             <Image
-              source={{ uri: 'https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png' }}
+              source={{
+                uri: 'https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png',
+              }}
               style={{ width: 20, height: 20 }}
             />
           }

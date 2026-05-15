@@ -9,14 +9,8 @@ import { useTheme } from '@/shared/theme';
 
 import { LoginFormData, loginSchema } from '../schemas/auth.schemas';
 
-export function LoginForm({ 
-  mutation, 
-  onInteract 
-}: { 
-  mutation: any; 
-  onInteract?: () => void; 
-}) {
-  const { spacing, colors } = useTheme();
+export function LoginForm({ mutation, onInteract }: { mutation: any; onInteract?: () => void }) {
+  const { colors } = useTheme();
   const { mutate: login, isPending } = mutation;
   const [showPassword, setShowPassword] = useState(false);
   const passwordRef = useRef<any>(null);
@@ -97,7 +91,10 @@ export function LoginForm({
         {passwordValue.length > 0 && !(has8Chars && hasUpper && hasNumber) && (
           <View style={styles.validationList}>
             <ValidationItem label="Password must have at least 8 characters" isValid={has8Chars} />
-            <ValidationItem label="Password must have at least one uppercase letter" isValid={hasUpper} />
+            <ValidationItem
+              label="Password must have at least one uppercase letter"
+              isValid={hasUpper}
+            />
             <ValidationItem label="Password must have at least one number" isValid={hasNumber} />
           </View>
         )}
@@ -106,11 +103,11 @@ export function LoginForm({
           label={isPending ? 'Logging in...' : 'Login'}
           onPress={handleSubmit(onSubmit)}
           isLoading={isPending}
-          style={{ 
-            marginTop: 32, 
+          style={{
+            marginTop: 32,
             height: 45,
             borderRadius: 12,
-            backgroundColor: isPending || passwordValue.length === 0 ? '#F5F5F5' : colors.primary
+            backgroundColor: isPending || passwordValue.length === 0 ? '#F5F5F5' : colors.primary,
           }}
           textColor={isPending || passwordValue.length === 0 ? '#767676' : '#FFFFFF'}
         />
@@ -140,7 +137,9 @@ export function LoginForm({
             style={styles.socialIconButton}
             leftIcon={
               <Image
-                source={{ uri: 'https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png' }}
+                source={{
+                  uri: 'https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png',
+                }}
                 style={{ width: 24, height: 24 }}
               />
             }
@@ -203,7 +202,7 @@ const styles = StyleSheet.create({
     height: 1,
   },
   socialIconButton: {
-    height: 52, // Based on input field height usually, but let's keep it consistent
+    height: 52,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#D0D0D0',

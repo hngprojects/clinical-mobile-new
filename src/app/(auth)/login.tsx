@@ -5,7 +5,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-na
 
 import { LoginForm } from '@/features/auth';
 import { useLogin } from '@/features/auth/hooks/useLogin';
-import { Screen, Typography, PatternBackground, ClinsightLogo } from '@/shared/components';
+import { Screen, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 export default function LoginScreen() {
@@ -34,7 +34,7 @@ export default function LoginScreen() {
   return (
     <>
       <Stack.Screen options={{ title: 'Sign In', headerShown: false }} />
-      
+
       <View style={styles.bannerContainer}>
         <Animated.View style={[styles.errorBanner, animatedBannerStyle]}>
           <Typography
@@ -46,12 +46,12 @@ export default function LoginScreen() {
               textAlign: 'center',
             }}
           >
-            {loginMutation.error?.message || "Something went wrong. Please check your credentials."}
+            {loginMutation.error?.message || 'Something went wrong. Please check your credentials.'}
           </Typography>
         </Animated.View>
       </View>
 
-      <Screen scrollable padding backgroundColor="#FFFFFF" keyboardAvoiding>
+      <Screen scrollable padding style={{ backgroundColor: '#FFFFFF' }} keyboardAvoiding>
         <View style={{ marginTop: spacing.xxl }}>
           <Typography variant="h1" style={{ fontWeight: '700', marginBottom: 4 }}>
             Welcome Back
@@ -62,9 +62,7 @@ export default function LoginScreen() {
         </View>
 
         <View style={{ marginTop: 40 }}>
-          <LoginForm 
-            mutation={loginMutation} 
-          />
+          <LoginForm mutation={loginMutation} onInteract={() => loginMutation.reset()} />
         </View>
 
         <View style={styles.footer}>

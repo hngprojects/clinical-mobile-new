@@ -3,7 +3,7 @@ import React from 'react';
 import { View, Pressable } from 'react-native';
 
 import { RegisterForm } from '@/features/auth';
-import { Screen, Typography, PatternBackground, ClinsightLogo } from '@/shared/components';
+import { Screen, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 export default function RegisterScreen() {
@@ -13,7 +13,7 @@ export default function RegisterScreen() {
     <>
       <Stack.Screen options={{ title: 'Create Account', headerShown: false }} />
 
-      <Screen scrollable padding backgroundColor="#FFFFFF" keyboardAvoiding>
+      <Screen scrollable padding style={{ backgroundColor: '#FFFFFF' }} keyboardAvoiding>
         <View style={{ marginTop: spacing.xxl, marginBottom: spacing.xl }}>
           <Typography variant="h1" style={{ fontWeight: '700', marginBottom: 4 }}>
             Create Account
@@ -25,7 +25,14 @@ export default function RegisterScreen() {
 
         <RegisterForm />
 
-        <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 16, marginBottom: 20 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'center',
+            marginTop: 16,
+            marginBottom: 20,
+          }}
+        >
           <Typography
             style={{
               color: colors.textSecondary,
