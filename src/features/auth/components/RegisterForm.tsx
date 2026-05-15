@@ -74,9 +74,9 @@ export function RegisterForm() {
 
       {passwordValue.length > 0 && (
         <View style={styles.validationList}>
-          <ValidationItem label="Password must have 8characters" isValid={has8Chars} />
-          <ValidationItem label="Password must one upper case" isValid={hasUpper} />
-          <ValidationItem label="Password must one special character" isValid={hasNumber} />
+          <ValidationItem label="Password must have at least 8 characters" isValid={has8Chars} />
+          <ValidationItem label="Password must have at least one uppercase letter" isValid={hasUpper} />
+          <ValidationItem label="Password must have at least one number" isValid={hasNumber} />
         </View>
       )}
 
@@ -146,10 +146,12 @@ function ValidationItem({ label, isValid }: { label: string; isValid: boolean })
   return (
     <View style={styles.validationItem}>
       <Typography
-        variant="body2"
         style={{
-          color: '#6B7280',
+          color: isValid ? '#10B981' : '#767676',
+          fontFamily: 'Inter_400Regular',
           fontSize: 13,
+          lineHeight: 19.5,
+          letterSpacing: -0.13,
         }}
       >
         {isValid ? '✓' : '✕'} {label}

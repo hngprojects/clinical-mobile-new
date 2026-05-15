@@ -77,9 +77,9 @@ export function LoginForm({ mutation }: { mutation: any }) {
 
         {passwordValue.length > 0 && (
           <View style={styles.validationList}>
-            <ValidationItem label="Password must have 8characters" isValid={has8Chars} />
-            <ValidationItem label="Password must one upper case" isValid={hasUpper} />
-            <ValidationItem label="Password must one special character" isValid={hasNumber} />
+            <ValidationItem label="Password must have at least 8 characters" isValid={has8Chars} />
+            <ValidationItem label="Password must have at least one uppercase letter" isValid={hasUpper} />
+            <ValidationItem label="Password must have at least one number" isValid={hasNumber} />
           </View>
         )}
 
@@ -146,7 +146,7 @@ function ValidationItem({ label, isValid }: { label: string; isValid: boolean })
     <View style={styles.validationItem}>
       <Typography
         style={{
-          color: '#767676',
+          color: isValid ? '#10B981' : '#767676',
           fontFamily: 'Inter_400Regular',
           fontSize: 13,
           lineHeight: 19.5,
