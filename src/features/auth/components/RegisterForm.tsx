@@ -79,7 +79,7 @@ export function RegisterForm() {
         label="Email"
         keyboardType="email-address"
         textContentType="emailAddress"
-        placeholder="john@example.com"
+        placeholder="Enter your email"
         returnKeyType="next"
         onSubmitEditing={() => passwordRef.current?.focus()}
         blurOnSubmit={false}

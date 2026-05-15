@@ -48,7 +48,7 @@ export function LoginForm({
           label="Email"
           keyboardType="email-address"
           textContentType="emailAddress"
-          placeholder="chioma@gmail.com"
+          placeholder="Enter your email"
           onFocus={onInteract}
           returnKeyType="next"
           onSubmitEditing={() => passwordRef.current?.focus()}
