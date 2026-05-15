@@ -1,0 +1,35 @@
+name: Shai-Hulud Scan
+
+on:
+  push:
+    branches: [main, staging, dev]
+  pull_request:
+    branches: [main, staging, dev]
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: shai-hulud-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    name: Shai-Hulud IOC Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+          disable-sudo: true
+
+      - uses: actions/checkout@v6
+
+      - name: Run IOC scan
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: bash scripts/check-shai-hulud.sh
