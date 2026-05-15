@@ -25,23 +25,21 @@ export default function RegisterScreen() {
 
         <RegisterForm />
 
-        <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 40, marginBottom: 20 }}>
-          <Typography variant="body2" style={{ color: colors.textSecondary }}>
-            Already have an account?{' '}
-          </Typography>
-          <Typography
-            variant="body2"
-            color={colors.primary}
-            style={{
-              fontWeight: '400',
-              textDecorationLine: 'underline',
-              lineHeight: 21,
-              letterSpacing: -0.14,
-            }}
-            onPress={() => router.push('/(auth)/login')}
-          >
-            Log In
-          </Typography>
+        <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 16, marginBottom: 20 }}>
+          <Pressable onPress={() => router.push('/(auth)/login')}>
+            <Typography
+              style={{
+                color: colors.primary,
+                fontFamily: 'Inter_400Regular',
+                fontSize: 14,
+                lineHeight: 21,
+                letterSpacing: -0.14,
+                textDecorationLine: 'underline',
+              }}
+            >
+              Already have an account? Log In
+            </Typography>
+          </Pressable>
         </View>
       </Screen>
     </>

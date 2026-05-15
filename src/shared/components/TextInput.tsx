@@ -62,7 +62,7 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
                 borderColor: error ? colors.error : isFocused ? colors.primary : '#D0D0D0',
                 paddingHorizontal: 20,
                 borderRadius: 12,
-                borderWidth: 1,
+                borderWidth: isFocused ? 2 : 1,
               },
               isSecure && { color: 'transparent' },
               style,

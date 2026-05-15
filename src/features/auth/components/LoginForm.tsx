@@ -72,7 +72,7 @@ export function LoginForm({
                 <Ionicons
                   name={showPassword ? 'eye-outline' : 'eye-off-outline'}
                   size={20}
-                  color={colors.textSecondary}
+                  color="#1B1B1B"
                 />
               </Pressable>
             }
