@@ -1,7 +1,7 @@
 import { router, Stack } from 'expo-router';
 import React, { useEffect } from 'react';
-import { StyleSheet, View, Pressable } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import { Pressable, StyleSheet, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { LoginForm } from '@/features/auth';
 import { useLogin } from '@/features/auth/hooks/useLogin';
@@ -16,14 +16,13 @@ export default function LoginScreen() {
   useEffect(() => {
     if (loginMutation.error) {
       bannerY.value = withTiming(0, { duration: 300 });
-      // Automatically hide after 5 seconds
       const timeout = setTimeout(() => {
         bannerY.value = withTiming(-100, { duration: 300 });
       }, 5000);
       return () => clearTimeout(timeout);
-    } else {
-      bannerY.value = withTiming(-100, { duration: 300 });
     }
+
+    bannerY.value = withTiming(-100, { duration: 300 });
   }, [loginMutation.error, bannerY]);
 
   const animatedBannerStyle = useAnimatedStyle(() => ({
@@ -52,18 +51,16 @@ export default function LoginScreen() {
       </View>
 
       <Screen scrollable padding style={{ backgroundColor: '#FFFFFF' }} keyboardAvoiding>
-        <View style={{ marginTop: spacing.xxl }}>
-          <Typography variant="h1" style={{ fontWeight: '700', marginBottom: 4 }}>
+        <View style={{ marginTop: spacing.xxl, marginBottom: spacing.xl }}>
+          <Typography variant="h1" style={{ fontWeight: '700' }}>
             Welcome Back
           </Typography>
-          <Typography variant="body1" style={{ color: colors.textSecondary }}>
+          <Typography variant="body1" style={{ color: colors.textSecondary, marginTop: 4 }}>
             Insert your details to login to Clinsight
           </Typography>
         </View>
 
-        <View style={{ marginTop: 40 }}>
-          <LoginForm mutation={loginMutation} onInteract={() => loginMutation.reset()} />
-        </View>
+        <LoginForm mutation={loginMutation} onInteract={() => loginMutation.reset()} />
 
         <View style={styles.footer}>
           <Typography
@@ -121,7 +118,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: 40,
     marginBottom: 20,
   },
 });

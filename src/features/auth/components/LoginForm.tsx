@@ -1,8 +1,8 @@
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState, useRef } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import React, { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { StyleSheet, View, Pressable, Image } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 
 import { Button, FormField, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
@@ -10,7 +10,7 @@ import { useTheme } from '@/shared/theme';
 import { LoginFormData, loginSchema } from '../schemas/auth.schemas';
 
 export function LoginForm({ mutation, onInteract }: { mutation: any; onInteract?: () => void }) {
-  const { colors } = useTheme();
+  const { colors, spacing } = useTheme();
   const { mutate: login, isPending } = mutation;
   const [showPassword, setShowPassword] = useState(false);
   const passwordRef = useRef<any>(null);
@@ -28,14 +28,13 @@ export function LoginForm({ mutation, onInteract }: { mutation: any; onInteract?
     alert(`${provider} login is coming soon!`);
   };
 
-  // Validation checks
   const has8Chars = passwordValue.length >= 8;
   const hasUpper = /[A-Z]/.test(passwordValue);
   const hasNumber = /[0-9]/.test(passwordValue);
 
   return (
     <View style={styles.container}>
-      <View>
+      <View style={{ gap: spacing.md }}>
         <FormField
           control={control}
           name="email"
@@ -49,7 +48,7 @@ export function LoginForm({ mutation, onInteract }: { mutation: any; onInteract?
           blurOnSubmit={false}
         />
 
-        <View style={{ marginTop: 16 }}>
+        <View>
           <FormField
             ref={passwordRef}
             control={control}

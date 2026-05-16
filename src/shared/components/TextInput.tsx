@@ -1,10 +1,10 @@
 import React, { forwardRef } from 'react';
 import {
+  Pressable,
   StyleSheet,
   TextInput as RNTextInput,
   TextInputProps,
   View,
-  Pressable,
 } from 'react-native';
 
 import { useTheme } from '@/shared/theme';
@@ -18,32 +18,15 @@ export interface AppTextInputProps extends TextInputProps {
 }
 
 export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
-  (
-    { label, error, rightIcon, style, secureTextEntry, value, onFocus, onBlur, ...restProps },
-    ref,
-  ) => {
-    const { colors } = useTheme();
+  ({ label, error, rightIcon, style, onFocus, onBlur, ...props }, ref) => {
+    const { colors, typography } = useTheme();
     const [isFocused, setIsFocused] = React.useState(false);
     const internalRef = React.useRef<RNTextInput>(null);
 
-    // Combine forwarded ref and internal ref
-    React.useImperativeHandle(ref, () => internalRef.current!);
-
-    const isSecure = secureTextEntry;
-    const displayValue = isSecure && value ? '*'.repeat(value.length) : value;
+    React.useImperativeHandle(ref, () => internalRef.current as RNTextInput);
 
     const handlePress = () => {
       internalRef.current?.focus();
-    };
-
-    const handleFocus = (e: any) => {
-      setIsFocused(true);
-      if (onFocus) onFocus(e);
-    };
-
-    const handleBlur = (e: any) => {
-      setIsFocused(false);
-      if (onBlur) onBlur(e);
     };
 
     return (
@@ -80,10 +63,17 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
         >
           <RNTextInput
             ref={internalRef}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
+            onFocus={(e) => {
+              setIsFocused(true);
+              onFocus?.(e);
+            }}
+            onBlur={(e) => {
+              setIsFocused(false);
+              onBlur?.(e);
+            }}
             style={[
               styles.input,
+              typography.body1,
               {
                 flex: 1,
                 color: '#1B1B1B',
@@ -92,36 +82,17 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
                 lineHeight: 21,
                 letterSpacing: -0.14,
                 paddingHorizontal: 20,
+                paddingRight: rightIcon ? 48 : 20,
                 textAlignVertical: 'center',
               },
-              isSecure && { color: 'transparent' },
               style,
             ]}
             placeholderTextColor="#767676"
             autoCapitalize="none"
             autoCorrect={false}
-            secureTextEntry={false}
-            value={value}
             selectionColor="#1565C0"
-            {...restProps}
+            {...props}
           />
-          {isSecure && value && (
-            <View style={styles.maskOverlay} pointerEvents="none">
-              <Typography
-                style={{
-                  color: '#1B1B1B',
-                  paddingLeft: 20,
-                  fontFamily: 'Inter_400Regular',
-                  fontSize: 14,
-                  lineHeight: 21,
-                  letterSpacing: 2,
-                  textAlignVertical: 'center',
-                }}
-              >
-                {displayValue}
-              </Typography>
-            </View>
-          )}
           {rightIcon && <View style={styles.rightIcon}>{rightIcon}</View>}
         </Pressable>
         {error && (
@@ -157,15 +128,6 @@ const styles = StyleSheet.create({
     textAlignVertical: 'center',
     paddingTop: 0,
     paddingBottom: 0,
-  },
-  maskOverlay: {
-    position: 'absolute',
-    left: 0,
-    right: 48, // Room for rightIcon
-    top: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'flex-start',
   },
   rightIcon: {
     position: 'absolute',
