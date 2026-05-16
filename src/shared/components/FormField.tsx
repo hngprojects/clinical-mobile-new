@@ -1,16 +1,14 @@
 import React from 'react';
 import { Control, Controller, FieldPath, FieldValues } from 'react-hook-form';
-import { TextInputProps } from 'react-native';
 
-import { TextInput } from './TextInput';
+import { AppTextInputProps, TextInput } from './TextInput';
 
 interface FormFieldProps<
   TFieldValues extends FieldValues,
   TName extends FieldPath<TFieldValues>,
-> extends Omit<TextInputProps, 'value' | 'onChangeText'> {
+> extends Omit<AppTextInputProps, 'value' | 'onChangeText'> {
   control: Control<TFieldValues>;
   name: TName;
-  label?: string;
 }
 
 export function FormField<TFieldValues extends FieldValues, TName extends FieldPath<TFieldValues>>({
