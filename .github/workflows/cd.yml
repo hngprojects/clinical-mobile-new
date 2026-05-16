@@ -15,6 +15,7 @@ jobs:
     env:
       APPETIZE_API_TOKEN: ${{ secrets.APPETIZE_API_TOKEN }}
       API_BASE_URL: ${{ github.ref_name == 'main' && vars.API_BASE_URL_PROD || vars.API_BASE_URL_STAGING }}
+      APP_ENV: ${{ github.ref_name == 'main' && 'production' || github.ref_name == 'staging' && 'staging' || 'development' }}
 
     steps:
       - name: Checkout
@@ -53,6 +54,7 @@ jobs:
       - name: Create .env file
         run: |
           echo "EXPO_PUBLIC_API_BASE_URL=${{ env.API_BASE_URL }}" >> .env
+          echo "EXPO_PUBLIC_APP_ENV=${{ env.APP_ENV }}" >> .env
 
       - name: Expo Prebuild
         run: npx expo prebuild --platform android --no-install

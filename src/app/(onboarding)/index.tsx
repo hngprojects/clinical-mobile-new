@@ -5,5 +5,5 @@ import { SplashSequenceScreen } from '@/features/onboarding/components/SplashSeq
 
 export default function SplashScreen() {
   const router = useRouter();
-  return <SplashSequenceScreen onComplete={() => router.replace('./slides')} />;
+  return <SplashSequenceScreen onComplete={() => router.replace('/(onboarding)/slides')} />;
 }

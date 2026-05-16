@@ -19,10 +19,10 @@ describe('useOnboardingStore', () => {
     expect(useOnboardingStore.getState().isLoading).toBe(false);
   });
 
-  it('loadFromStorage reads persisted value', async () => {
+  it('loadFromStorage ignores persisted value outside production', async () => {
     await useOnboardingStore.getState().completeOnboarding();
     useOnboardingStore.setState({ hasCompleted: false });
     await useOnboardingStore.getState().loadFromStorage();
-    expect(useOnboardingStore.getState().hasCompleted).toBe(true);
+    expect(useOnboardingStore.getState().hasCompleted).toBe(false);
   });
 });
