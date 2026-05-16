@@ -1,4 +1,5 @@
 const palette = {
+  primaryDefault: '#1565C0',
   primary500: '#11519A',
   primary600: '#0D3F78',
   primary100: '#E8EFF8',
@@ -23,7 +24,7 @@ export const lightColors = {
   surface: palette.white,
   surfaceMuted: palette.backgroundSecondary,
   borderSubtle: palette.outlineBorderSubtle,
-  primary: palette.primary500,
+  primary: palette.primaryDefault,
   primaryPressed: palette.primary600,
   primarySubtle: palette.primary100,
   text: palette.grey900,

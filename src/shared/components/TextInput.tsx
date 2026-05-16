@@ -1,5 +1,11 @@
 import React, { forwardRef } from 'react';
-import { StyleSheet, TextInput as RNTextInput, TextInputProps, View } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  TextInput as RNTextInput,
+  TextInputProps,
+  View,
+} from 'react-native';
 
 import { useTheme } from '@/shared/theme';
 
@@ -12,51 +18,92 @@ export interface AppTextInputProps extends TextInputProps {
 }
 
 export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
-  ({ label, error, rightIcon, style, ...props }, ref) => {
-    const { colors, spacing, typography } = useTheme();
+  ({ label, error, rightIcon, style, onFocus, onBlur, ...props }, ref) => {
+    const { colors, typography } = useTheme();
     const [isFocused, setIsFocused] = React.useState(false);
+    const internalRef = React.useRef<RNTextInput>(null);
+
+    React.useImperativeHandle(ref, () => internalRef.current as RNTextInput);
+
+    const handlePress = () => {
+      internalRef.current?.focus();
+    };
 
     return (
       <View style={styles.container}>
         {label && (
-          <Typography variant="label" style={styles.label}>
+          <Typography
+            variant="label"
+            style={[
+              styles.label,
+              {
+                color: '#1B1B1B',
+                fontFamily: 'Inter_400Regular',
+                fontSize: 14,
+                lineHeight: 21,
+                letterSpacing: -0.14,
+              },
+            ]}
+          >
             {label}
           </Typography>
         )}
-        <View style={styles.inputWrapper}>
+        <Pressable
+          onPress={handlePress}
+          style={[
+            styles.inputWrapper,
+            {
+              borderColor: error ? colors.error : isFocused ? '#1565C0' : '#D0D0D0',
+              borderWidth: isFocused ? 2 : 1,
+              backgroundColor: colors.inputBackground,
+              borderRadius: 12,
+              height: 52,
+            },
+          ]}
+        >
           <RNTextInput
-            ref={ref}
+            ref={internalRef}
             onFocus={(e) => {
               setIsFocused(true);
-              props.onFocus?.(e);
+              onFocus?.(e);
             }}
             onBlur={(e) => {
               setIsFocused(false);
-              props.onBlur?.(e);
+              onBlur?.(e);
             }}
             style={[
               styles.input,
               typography.body1,
               {
-                color: colors.text,
-                backgroundColor: colors.inputBackground,
-                borderColor: error ? colors.error : isFocused ? colors.primary : colors.border,
-                paddingLeft: spacing.md,
-                paddingRight: rightIcon ? spacing.xl * 1.5 : spacing.md,
-                paddingVertical: spacing.sm + 4,
-                borderRadius: spacing.sm,
+                flex: 1,
+                color: '#1B1B1B',
+                fontFamily: 'Inter_400Regular',
+                fontSize: 14,
+                lineHeight: 21,
+                letterSpacing: -0.14,
+                paddingHorizontal: 20,
+                paddingRight: rightIcon ? 48 : 20,
+                textAlignVertical: 'center',
               },
               style,
             ]}
-            placeholderTextColor={colors.textSecondary}
+            placeholderTextColor="#767676"
             autoCapitalize="none"
             autoCorrect={false}
+            selectionColor="#1565C0"
             {...props}
           />
           {rightIcon && <View style={styles.rightIcon}>{rightIcon}</View>}
-        </View>
+        </Pressable>
         {error && (
-          <Typography variant="label" color={colors.error} style={styles.error}>
+          <Typography
+            style={{
+              color: colors.error,
+              fontSize: 12,
+              marginTop: 4,
+              fontFamily: 'Inter_400Regular',
+            }}
+          >
             {error}
           </Typography>
         )}
@@ -71,10 +118,17 @@ const styles = StyleSheet.create({
   container: { gap: 4 },
   inputWrapper: {
     position: 'relative',
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    overflow: 'hidden',
   },
   label: { marginBottom: 2 },
-  input: { borderWidth: 1.5 },
+  input: {
+    height: '100%',
+    textAlignVertical: 'center',
+    paddingTop: 0,
+    paddingBottom: 0,
+  },
   rightIcon: {
     position: 'absolute',
     right: 12,
