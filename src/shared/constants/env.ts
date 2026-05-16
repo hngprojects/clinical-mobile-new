@@ -1,3 +1,7 @@
+declare const process: {
+  env: Record<string, string | undefined>;
+};
+
 export const env = {
   APP_ENV:
     process.env.EXPO_PUBLIC_APP_ENV ??
