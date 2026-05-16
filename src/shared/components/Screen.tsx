@@ -1,5 +1,14 @@
 import React from 'react';
-import { ScrollView, StyleSheet, View, ViewProps } from 'react-native';
+import {
+  ScrollView,
+  StyleSheet,
+  StyleProp,
+  View,
+  ViewProps,
+  KeyboardAvoidingView,
+  Platform,
+  ViewStyle,
+} from 'react-native';
 import { SafeAreaView, Edge } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/shared/theme';
@@ -9,14 +18,18 @@ interface ScreenProps extends ViewProps {
   scrollable?: boolean;
   edges?: Edge[];
   padding?: boolean;
+  keyboardAvoiding?: boolean;
+  scrollContentContainerStyle?: StyleProp<ViewStyle>;
 }
 
 export function Screen({
   children,
   scrollable = false,
   edges = ['top', 'bottom'],
-  padding = true,
+  padding = false,
+  scrollContentContainerStyle,
   style,
+  keyboardAvoiding = false,
   ...props
 }: ScreenProps) {
   const { colors, spacing } = useTheme();
@@ -24,7 +37,7 @@ export function Screen({
   const inner = scrollable ? (
     <ScrollView
       style={styles.fill}
-      contentContainerStyle={[padding && { padding: spacing.md }]}
+      contentContainerStyle={[padding && { padding: spacing.md }, scrollContentContainerStyle]}
       showsVerticalScrollIndicator={false}
     >
       {children}
@@ -37,7 +50,16 @@ export function Screen({
 
   return (
     <SafeAreaView style={[styles.fill, { backgroundColor: colors.background }]} edges={edges}>
-      {inner}
+      {keyboardAvoiding ? (
+        <KeyboardAvoidingView
+          style={styles.fill}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          {inner}
+        </KeyboardAvoidingView>
+      ) : (
+        inner
+      )}
     </SafeAreaView>
   );
 }

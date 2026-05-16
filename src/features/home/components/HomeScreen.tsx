@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Toast from 'react-native-toast-message';
 
 import { useTheme } from '@/shared/theme';
 
@@ -23,29 +22,11 @@ export function HomeScreen() {
   const [insights, setInsights] = useState<Insight[]>(MOCK_INSIGHTS);
 
   const handleRename = (id: string, newTitle: string) => {
-    try {
-      setInsights((prev) => prev.map((i) => (i.id === id ? { ...i, title: newTitle } : i)));
-      Toast.show({
-        type: 'success',
-        text1: `You have successfully renamed your Insight to ${newTitle}`,
-        topOffset: 60,
-      });
-    } catch {
-      Toast.show({
-        type: 'error',
-        text1: "Sorry! We've encountered a problem renaming your Insight. Kindly try again.",
-        topOffset: 60,
-      });
-    }
+    setInsights((prev) => prev.map((i) => (i.id === id ? { ...i, title: newTitle } : i)));
   };
 
   const handleDelete = (id: string) => {
     setInsights((prev) => prev.filter((i) => i.id !== id));
-    Toast.show({
-      type: 'success',
-      text1: 'Your Insight message has been successfully deleted',
-      topOffset: 60,
-    });
   };
 
   return (

@@ -1,10 +1,8 @@
 import React from 'react';
-import { Dimensions, StyleSheet, View } from 'react-native';
-
-import { Typography } from '@/shared/components';
-import { useTheme } from '@/shared/theme';
+import { Dimensions, Image, StyleSheet, Text, View } from 'react-native';
 
 import { OnboardingSlideData } from '../data/slides';
+import { useOnboardingLayout } from '../hooks/useOnboardingLayout';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -13,45 +11,106 @@ interface OnboardingSlideProps {
 }
 
 export function OnboardingSlide({ slide }: OnboardingSlideProps) {
-  const { colors, spacing } = useTheme();
-
   return (
-    <View style={[styles.container, { width: SCREEN_WIDTH, paddingHorizontal: spacing.xl }]}>
-      <View style={[styles.illustrationContainer, { backgroundColor: slide.accentColor + '20' }]}>
-        <Typography style={styles.emoji}>{slide.emoji}</Typography>
+    <View style={[styles.container, { width: SCREEN_WIDTH }]}>
+      <View style={styles.illustrationWrapper}>
+        <SlideIllustration id={slide.id} />
       </View>
-
-      <Typography variant="h2" align="center" style={{ marginTop: spacing.xl }}>
-        {slide.title}
-      </Typography>
-
-      <Typography
-        variant="body1"
-        color={colors.textSecondary}
-        align="center"
-        style={{ marginTop: spacing.sm }}
-      >
-        {slide.subtitle}
-      </Typography>
+      <View style={styles.textSection}>
+        <Text style={styles.title}>{slide.title}</Text>
+        <Text style={styles.subtitle}>{slide.subtitle}</Text>
+      </View>
     </View>
   );
 }
 
+function SlideIllustration({ id }: { id: OnboardingSlideData['id'] }) {
+  if (id === 'lab-results') return <LabResultsIllustration />;
+  if (id === 'no-guessing') return <NoGuessingIllustration />;
+  return <DoctorOpinionIllustration />;
+}
+
+// ─── Slide 1: Feature Cards — asset assessment-cards.png ────────────────────
+
+function LabResultsIllustration() {
+  const { layoutScale } = useOnboardingLayout();
+  const imgWidth = Math.min(320 * layoutScale, SCREEN_WIDTH - 48);
+  const imgHeight = imgWidth * 0.65;
+
+  return (
+    <Image
+      source={require('../../../../assets/images/onboarding/assessment-cards.png')}
+      style={{ width: imgWidth, height: imgHeight }}
+      resizeMode="contain"
+    />
+  );
+}
+
+// ─── Slide 2: Before/After — asset before-after.png ──────────────────────────
+
+function NoGuessingIllustration() {
+  const { layoutScale } = useOnboardingLayout();
+  const imgWidth = Math.min(320 * layoutScale, SCREEN_WIDTH - 40);
+  const imgHeight = imgWidth * 1.2;
+
+  return (
+    <Image
+      source={require('../../../../assets/images/onboarding/before-after.png')}
+      style={{ width: imgWidth, height: imgHeight }}
+      resizeMode="contain"
+    />
+  );
+}
+
+// ─── Slide 3: Doctor Orbit — asset doctor-orbit.png ──────────────────────────
+
+function DoctorOpinionIllustration() {
+  const { layoutScale } = useOnboardingLayout();
+  const size = Math.min(335 * layoutScale, SCREEN_WIDTH - 32);
+
+  return (
+    <Image
+      source={require('../../../../assets/images/onboarding/doctor-orbit.png')}
+      style={{ width: size, height: size }}
+      resizeMode="contain"
+    />
+  );
+}
+
+// ─── Shared styles ────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   container: {
-    alignItems: 'center',
-    justifyContent: 'center',
     flex: 1,
+    alignItems: 'center',
   },
-  illustrationContainer: {
-    width: 180,
-    height: 180,
-    borderRadius: 90,
+  illustrationWrapper: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    width: '100%',
   },
-  emoji: {
-    fontSize: 80,
-    lineHeight: 96,
+  textSection: {
+    width: '100%',
+    paddingHorizontal: 28,
+    paddingBottom: 20,
+    alignItems: 'center',
+    gap: 8,
+  },
+  title: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 24,
+    lineHeight: 24 * 1.3,
+    letterSpacing: 24 * -0.02,
+    textAlign: 'center',
+    color: '#111827',
+  },
+  subtitle: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 12,
+    lineHeight: 12 * 1.5,
+    letterSpacing: 12 * -0.01,
+    textAlign: 'center',
+    color: '#6B7280',
   },
 });

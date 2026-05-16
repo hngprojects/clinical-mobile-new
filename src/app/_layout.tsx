@@ -1,3 +1,11 @@
+import {
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+  useFonts,
+} from '@expo-google-fonts/inter';
+import { PlayfairDisplay_500Medium } from '@expo-google-fonts/playfair-display';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect } from 'react';
@@ -7,31 +15,42 @@ import { useOnboardingStore } from '@/features/onboarding/store/onboarding.store
 import { AppProviders } from '@/providers/AppProviders';
 import { useAppReady } from '@/shared/hooks/useAppReady';
 
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync().catch(() => {
+  /* Reloading the app might cause this to fail, ignore */
+});
 
 function RootLayoutNav() {
-  const { isReady } = useAppReady();
+  const { isReady: isAppReady } = useAppReady();
   const { isLoggedIn } = useAuthSession();
   const hasCompleted = useOnboardingStore((s) => s.hasCompleted);
 
-  // Hide splash only AFTER React has painted the navigation tree.
-  // useEffect fires post-render/paint, so the correct screen is visible
-  // underneath before the splash fades — no blank flash.
+  const [fontsLoaded] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    PlayfairDisplay_500Medium,
+  });
+
+  const isReady = isAppReady && fontsLoaded;
+
   useEffect(() => {
     if (isReady) {
-      SplashScreen.hideAsync();
+      SplashScreen.hideAsync().catch(() => {
+        /* Ignore */
+      });
     }
   }, [isReady]);
 
-  if (!isReady) return null;
-
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      {!hasCompleted && <Stack.Screen name="(onboarding)" options={{ animation: 'fade' }} />}
-      {hasCompleted && !isLoggedIn && (
+      {hasCompleted && isLoggedIn ? (
+        <Stack.Screen name="(main)" options={{ animation: 'fade' }} />
+      ) : hasCompleted && !isLoggedIn ? (
         <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
+      ) : (
+        <Stack.Screen name="(onboarding)" options={{ animation: 'fade' }} />
       )}
-      {isLoggedIn && <Stack.Screen name="(main)" options={{ animation: 'fade' }} />}
       <Stack.Screen name="+not-found" />
     </Stack>
   );

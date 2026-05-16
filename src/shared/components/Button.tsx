@@ -19,15 +19,19 @@ interface ButtonProps extends Omit<PressableProps, 'style'> {
   label: string;
   variant?: ButtonVariant;
   isLoading?: boolean;
+  leftIcon?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
+  textColor?: string;
 }
 
 export function Button({
   label,
   variant = 'primary',
   isLoading = false,
+  leftIcon,
   disabled,
   style,
+  textColor: customTextColor,
   ...props
 }: ButtonProps) {
   const { colors, spacing } = useTheme();
@@ -51,7 +55,7 @@ export function Button({
     style,
   ];
 
-  const textColor = variant === 'primary' ? '#FFFFFF' : colors.primary;
+  const textColor = customTextColor ?? (variant === 'primary' ? '#FFFFFF' : colors.primary);
 
   return (
     <Pressable
@@ -64,9 +68,16 @@ export function Button({
         {isLoading ? (
           <ActivityIndicator color={textColor} size="small" />
         ) : (
-          <Typography variant="body1" color={textColor} style={styles.label}>
-            {label}
-          </Typography>
+          <>
+            {leftIcon && <View style={styles.iconContainer}>{leftIcon}</View>}
+            <Typography
+              variant="body1"
+              color={textColor}
+              style={[styles.label, variant === 'outline' && { fontWeight: '500' }]}
+            >
+              {label}
+            </Typography>
+          </>
         )}
       </View>
     </Pressable>
@@ -81,7 +92,11 @@ const styles = StyleSheet.create({
   content: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
+    gap: 12,
+  },
+  iconContainer: {
+    marginRight: 0,
   },
   label: {
     fontWeight: '600',
