@@ -25,10 +25,8 @@ export function InsightSearchBar({
   style: textInputStyleFromProps,
   ...inputProps
 }: InsightSearchBarProps) {
-  const { colors, spacing, typography, isDark } = useTheme();
+  const { colors, spacing, typography } = useTheme();
 
-  const backgroundColor = isDark ? colors.inputBackground : INSIGHT_SEARCH_BACKGROUND;
-  const borderColor = isDark ? colors.border : INSIGHT_SEARCH_BORDER;
   const leftPad = spacing.md + ICON_SIZE + ICON_GAP;
 
   const showClear = value.length > 0;
@@ -53,8 +51,8 @@ export function InsightSearchBar({
           styles.inputField,
           {
             color: colors.text,
-            backgroundColor,
-            borderColor,
+            backgroundColor: INSIGHT_SEARCH_BACKGROUND,
+            borderColor: INSIGHT_SEARCH_BORDER,
             borderWidth: 1,
             borderRadius: INSIGHT_CARD_RADIUS,
             paddingVertical: spacing.md + 2,

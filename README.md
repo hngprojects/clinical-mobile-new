@@ -14,7 +14,7 @@ Production-ready Expo starter for HNG teams using **Vertical Slice Architecture*
 | Data fetching   | TanStack Query v5 + Axios                         |
 | Forms           | React Hook Form v7 + Zod v3                       |
 | Storage         | expo-secure-store (tokens) · AsyncStorage (prefs) |
-| Theming         | Custom ThemeContext · light / dark / system       |
+| Theming         | Custom ThemeContext · light design tokens         |
 | Linting         | ESLint (eslint-config-expo flat)                  |
 | Formatting      | Prettier                                          |
 | CI              | GitHub Actions → APK → Appetize + artifact        |
@@ -53,13 +53,13 @@ src/
 ├── features/               # Vertical slices — one folder per domain
 │   ├── auth/               # JWT auth: api, store, hooks, forms, schemas
 │   ├── onboarding/         # 3-slide pager with skip/complete tracking
-│   └── home/               # Main screen with theme toggle + logout
+│   └── home/               # Main screen with logout
 │
 ├── shared/                 # Cross-cutting concerns (no feature deps)
 │   ├── api/                # Axios client + interceptors + TanStack wrappers
 │   ├── components/         # Button, TextInput, FormField, Screen, Typography…
 │   ├── constants/          # Storage keys, env vars
-│   ├── hooks/              # useAppReady, useColorScheme
+│   ├── hooks/              # useAppReady
 │   ├── storage/            # Typed AsyncStorage + SecureStore wrappers
 │   ├── store/              # createStore factory (Zustand)
 │   └── theme/              # Colors, typography, spacing, ThemeContext
@@ -138,7 +138,7 @@ Guards are reactive — completing onboarding or logging in causes the root layo
 ## Theming
 
 ```ts
-const { colors, spacing, typography, isDark, mode, setMode } = useTheme();
+const { colors, spacing, typography } = useTheme();
 
 const styles = StyleSheet.create({
   container: { backgroundColor: colors.background, padding: spacing.md },
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
 });
 ```
 
-Toggle modes: `'system'` (default) · `'light'` · `'dark'`. Preference persisted to AsyncStorage automatically.
+The app uses the light design palette only.
 
 ---
 
