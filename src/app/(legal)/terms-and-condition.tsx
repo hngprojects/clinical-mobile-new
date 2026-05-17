@@ -21,13 +21,13 @@ export default function TermsAndCondition() {
           />
           <Typography
             variant="h1"
-            style={{ color: colors.text, textAlign: 'center', ...styles.title }}
+            style={{ color: '#FFFFFF', textAlign: 'center', ...styles.title }}
           >
             Terms and Conditions
           </Typography>
           <Typography
             variant="body1"
-            style={{ color: colors.text, textAlign: 'center', ...styles.subtitle }}
+            style={{ color: '#FFFFFF', textAlign: 'center', ...styles.subtitle }}
           >
             Last Updated, May 2026
           </Typography>
