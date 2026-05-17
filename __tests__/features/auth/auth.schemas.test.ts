@@ -1,4 +1,8 @@
-import { loginSchema, registerSchema } from '@/features/auth/schemas/auth.schemas';
+import {
+  completePasswordResetSchema,
+  loginSchema,
+  registerSchema,
+} from '@/features/auth/schemas/auth.schemas';
 
 describe('loginSchema', () => {
   it('passes valid credentials', () => {
@@ -50,6 +54,41 @@ describe('registerSchema', () => {
     expect(
       registerSchema.safeParse({ ...valid, password: 'PasswordA', confirmPassword: 'PasswordA' })
         .success,
+    ).toBe(false);
+  });
+});
+
+describe('completePasswordResetSchema', () => {
+  const valid = {
+    password: 'Password1',
+    confirmPassword: 'Password1',
+  };
+
+  it('passes valid password reset data', () => {
+    expect(completePasswordResetSchema.safeParse(valid).success).toBe(true);
+  });
+
+  it('rejects mismatched passwords', () => {
+    expect(
+      completePasswordResetSchema.safeParse({ ...valid, confirmPassword: 'Different1' }).success,
+    ).toBe(false);
+  });
+
+  it('rejects password without uppercase', () => {
+    expect(
+      completePasswordResetSchema.safeParse({
+        password: 'password1',
+        confirmPassword: 'password1',
+      }).success,
+    ).toBe(false);
+  });
+
+  it('rejects password without number', () => {
+    expect(
+      completePasswordResetSchema.safeParse({
+        password: 'PasswordA',
+        confirmPassword: 'PasswordA',
+      }).success,
     ).toBe(false);
   });
 });

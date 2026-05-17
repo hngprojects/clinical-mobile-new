@@ -1,6 +1,15 @@
 import { ApiError } from '@/shared/api/types';
 
-import type { AuthResponse, AuthTokens, LoginRequest, RegisterRequest } from './auth.types';
+import type {
+  AuthResponse,
+  AuthTokens,
+  CompletePasswordResetRequest,
+  CompletePasswordResetResponse,
+  LoginRequest,
+  RegisterRequest,
+  ResetPasswordRequest,
+  ResetPasswordResponse,
+} from './auth.types';
 
 const DUMMY_USER = {
   id: 'logickoder',
@@ -52,4 +61,26 @@ async function refreshTokens(refreshToken: string): Promise<AuthTokens> {
   throw new ApiError('Refresh token invalid', 401);
 }
 
-export const authApi = { login, register, refreshTokens };
+async function resetPassword(data: ResetPasswordRequest): Promise<ResetPasswordResponse> {
+  await delay(800);
+  if (!data.email) {
+    throw new ApiError('Email is required', 400);
+  }
+  return {
+    message: 'If an account exists for this email, reset instructions have been sent.',
+  };
+}
+
+async function completePasswordReset(
+  data: CompletePasswordResetRequest,
+): Promise<CompletePasswordResetResponse> {
+  await delay(800);
+  if (!data.password) {
+    throw new ApiError('Password is required', 400);
+  }
+  return {
+    message: 'Password reset successfully. You can now log in.',
+  };
+}
+
+export const authApi = { login, register, refreshTokens, resetPassword, completePasswordReset };

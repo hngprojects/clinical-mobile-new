@@ -9,7 +9,15 @@ import { useTheme } from '@/shared/theme';
 
 import { LoginFormData, loginSchema } from '../schemas/auth.schemas';
 
-export function LoginForm({ mutation, onInteract }: { mutation: any; onInteract?: () => void }) {
+export function LoginForm({
+  mutation,
+  onForgotPassword,
+  onInteract,
+}: {
+  mutation: any;
+  onForgotPassword?: () => void;
+  onInteract?: () => void;
+}) {
   const { colors, spacing } = useTheme();
   const { mutate: login, isPending } = mutation;
   const [showPassword, setShowPassword] = useState(false);
@@ -70,7 +78,7 @@ export function LoginForm({ mutation, onInteract }: { mutation: any; onInteract?
               </Pressable>
             }
           />
-          <Pressable style={styles.forgotPassword} onPress={() => {}}>
+          <Pressable style={styles.forgotPassword} onPress={onForgotPassword}>
             <Typography
               variant="body2"
               color={colors.primary}
