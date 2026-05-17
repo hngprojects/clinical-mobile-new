@@ -9,7 +9,11 @@ import { useTheme } from '@/shared/theme';
 import { ResetPasswordFormData, resetPasswordSchema } from '../schemas/auth.schemas';
 
 interface ResetPasswordFormProps {
-  mutation: any;
+  mutation: {
+    mutate: (data: ResetPasswordFormData) => void;
+    isPending: boolean;
+    reset: () => void;
+  };
 }
 
 export function ResetPasswordForm({ mutation }: ResetPasswordFormProps) {

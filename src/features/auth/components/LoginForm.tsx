@@ -9,15 +9,16 @@ import { useTheme } from '@/shared/theme';
 
 import { LoginFormData, loginSchema } from '../schemas/auth.schemas';
 
-export function LoginForm({
-  mutation,
-  onForgotPassword,
-  onInteract,
-}: {
-  mutation: any;
+interface LoginFormProps {
+  mutation: {
+    mutate: (data: LoginFormData) => void;
+    isPending: boolean;
+  };
   onForgotPassword?: () => void;
   onInteract?: () => void;
-}) {
+}
+
+export function LoginForm({ mutation, onForgotPassword, onInteract }: LoginFormProps) {
   const { colors, spacing } = useTheme();
   const { mutate: login, isPending } = mutation;
   const [showPassword, setShowPassword] = useState(false);

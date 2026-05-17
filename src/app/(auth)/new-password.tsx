@@ -35,10 +35,9 @@ export default function NewPasswordScreen() {
     opacity: withTiming(bannerY.value === 0 ? 1 : 0),
   }));
 
-  const notificationMessage =
-    completeResetMutation.error?.message ||
-    completeResetMutation.data?.message ||
-    'Password reset successfully. You can now log in.';
+  const notificationMessage = completeResetMutation.error
+    ? 'We could not reset your password. Please request a new link and try again.'
+    : completeResetMutation.data?.message || 'Password reset successfully. You can now log in.';
 
   return (
     <>
@@ -84,7 +83,7 @@ export default function NewPasswordScreen() {
           >
             Remember your password?{' '}
           </Typography>
-          <Pressable onPress={() => router.push('/(auth)/login')}>
+          <Pressable onPress={() => router.replace('/(auth)/login')}>
             <Typography
               style={{
                 color: colors.primary,

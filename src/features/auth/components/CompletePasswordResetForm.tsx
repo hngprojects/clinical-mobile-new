@@ -7,13 +7,17 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Button, FormField, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
+import { CompletePasswordResetRequest } from '../api/auth.types';
 import {
   CompletePasswordResetFormData,
   completePasswordResetSchema,
 } from '../schemas/auth.schemas';
 
 interface CompletePasswordResetFormProps {
-  mutation: any;
+  mutation: {
+    mutate: (data: CompletePasswordResetRequest) => void;
+    isPending: boolean;
+  };
   resetToken: string;
 }
 

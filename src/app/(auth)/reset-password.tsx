@@ -30,10 +30,10 @@ export default function ResetPasswordScreen() {
     opacity: withTiming(bannerY.value === 0 ? 1 : 0),
   }));
 
-  const notificationMessage =
-    resetPasswordMutation.error?.message ||
-    resetPasswordMutation.data?.message ||
-    'If an account exists for this email, reset instructions have been sent.';
+  const notificationMessage = resetPasswordMutation.error
+    ? 'We could not send reset instructions. Please try again.'
+    : resetPasswordMutation.data?.message ||
+      'If an account exists for this email, reset instructions have been sent.';
 
   return (
     <>
@@ -79,7 +79,7 @@ export default function ResetPasswordScreen() {
           >
             Remember your password?{' '}
           </Typography>
-          <Pressable onPress={() => router.push('/(auth)/login')}>
+          <Pressable onPress={() => router.replace('/(auth)/login')}>
             <Typography
               style={{
                 color: colors.primary,
