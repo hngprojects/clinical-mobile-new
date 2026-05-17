@@ -51,7 +51,6 @@ export function ResetPasswordForm({ mutation }: ResetPasswordFormProps) {
         style={[styles.submitButton, { backgroundColor: isDisabled ? '#F5F5F5' : colors.primary }]}
         textColor={isDisabled ? '#767676' : '#FFFFFF'}
       />
-
     </View>
   );
 }
