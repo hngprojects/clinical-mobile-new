@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import { Control, Controller, FieldPath, FieldValues } from 'react-hook-form';
+import { TextInput as RNTextInput } from 'react-native';
 
 import { AppTextInputProps, TextInput } from './TextInput';
 
@@ -11,18 +12,17 @@ interface FormFieldProps<
   name: TName;
 }
 
-export function FormField<TFieldValues extends FieldValues, TName extends FieldPath<TFieldValues>>({
-  control,
-  name,
-  label,
-  ...inputProps
-}: FormFieldProps<TFieldValues, TName>) {
+function FormFieldInner<TFieldValues extends FieldValues, TName extends FieldPath<TFieldValues>>(
+  { control, name, label, ...inputProps }: FormFieldProps<TFieldValues, TName>,
+  ref: React.ForwardedRef<RNTextInput>,
+) {
   return (
     <Controller
       control={control}
       name={name}
       render={({ field: { value, onChange, onBlur }, fieldState: { error } }) => (
         <TextInput
+          ref={ref}
           label={label}
           value={value as string}
           onChangeText={onChange}
@@ -34,3 +34,12 @@ export function FormField<TFieldValues extends FieldValues, TName extends FieldP
     />
   );
 }
+
+export const FormField = forwardRef(FormFieldInner) as <
+  TFieldValues extends FieldValues,
+  TName extends FieldPath<TFieldValues>,
+>(
+  props: FormFieldProps<TFieldValues, TName> & {
+    ref?: React.ForwardedRef<RNTextInput>;
+  },
+) => React.ReactElement;

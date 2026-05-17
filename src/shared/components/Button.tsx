@@ -21,6 +21,7 @@ interface ButtonProps extends Omit<PressableProps, 'style'> {
   isLoading?: boolean;
   leftIcon?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
+  textColor?: string;
 }
 
 export function Button({
@@ -30,6 +31,7 @@ export function Button({
   leftIcon,
   disabled,
   style,
+  textColor: customTextColor,
   ...props
 }: ButtonProps) {
   const { colors, spacing } = useTheme();
@@ -53,7 +55,7 @@ export function Button({
     style,
   ];
 
-  const textColor = variant === 'primary' ? '#FFFFFF' : colors.primary;
+  const textColor = customTextColor ?? (variant === 'primary' ? '#FFFFFF' : colors.primary);
 
   return (
     <Pressable
@@ -71,10 +73,7 @@ export function Button({
             <Typography
               variant="body1"
               color={textColor}
-              style={[
-                styles.label,
-                variant === 'outline' && { fontWeight: '500', color: colors.textSecondary },
-              ]}
+              style={[styles.label, variant === 'outline' && { fontWeight: '500' }]}
             >
               {label}
             </Typography>

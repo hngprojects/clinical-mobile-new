@@ -1,7 +1,7 @@
 import { router, Stack } from 'expo-router';
 import React, { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import { Pressable, StyleSheet, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { LoginForm } from '@/features/auth';
 import { useLogin } from '@/features/auth/hooks/useLogin';
@@ -16,14 +16,13 @@ export default function LoginScreen() {
   useEffect(() => {
     if (loginMutation.error) {
       bannerY.value = withTiming(0, { duration: 300 });
-      // Automatically hide after 5 seconds
       const timeout = setTimeout(() => {
         bannerY.value = withTiming(-100, { duration: 300 });
       }, 5000);
       return () => clearTimeout(timeout);
-    } else {
-      bannerY.value = withTiming(-100, { duration: 300 });
     }
+
+    bannerY.value = withTiming(-100, { duration: 300 });
   }, [loginMutation.error, bannerY]);
 
   const animatedBannerStyle = useAnimatedStyle(() => ({
@@ -34,15 +33,24 @@ export default function LoginScreen() {
   return (
     <>
       <Stack.Screen options={{ title: 'Sign In', headerShown: false }} />
+
       <View style={styles.bannerContainer}>
         <Animated.View style={[styles.errorBanner, animatedBannerStyle]}>
-          <Typography variant="body2" color={colors.textSecondary} align="center">
-            We couldn&apos;t sign you up right now. Please check your connection and try again.
+          <Typography
+            style={{
+              color: '#494949',
+              fontFamily: 'Inter_400Regular',
+              fontSize: 12,
+              lineHeight: 18,
+              textAlign: 'center',
+            }}
+          >
+            {loginMutation.error?.message || 'Something went wrong. Please check your credentials.'}
           </Typography>
         </Animated.View>
       </View>
 
-      <Screen scrollable padding>
+      <Screen scrollable padding style={{ backgroundColor: '#FFFFFF' }} keyboardAvoiding>
         <View style={{ marginTop: spacing.xxl, marginBottom: spacing.xl }}>
           <Typography variant="h1" style={{ fontWeight: '700' }}>
             Welcome Back
@@ -52,20 +60,34 @@ export default function LoginScreen() {
           </Typography>
         </View>
 
-        <LoginForm mutation={loginMutation} />
+        <LoginForm mutation={loginMutation} onInteract={() => loginMutation.reset()} />
 
         <View style={styles.footer}>
-          <Typography variant="body1" style={{ color: colors.textSecondary }}>
+          <Typography
+            style={{
+              color: colors.textSecondary,
+              fontFamily: 'Inter_400Regular',
+              fontSize: 14,
+              lineHeight: 21,
+              letterSpacing: -0.14,
+            }}
+          >
             Don&apos;t have an account?{' '}
           </Typography>
-          <Typography
-            variant="body1"
-            color="primary"
-            style={{ textDecorationLine: 'underline', fontWeight: '500' }}
-            onPress={() => router.push('/(auth)/register')}
-          >
-            Sign Up
-          </Typography>
+          <Pressable onPress={() => router.push('/(auth)/register')}>
+            <Typography
+              style={{
+                color: colors.primary,
+                fontFamily: 'Inter_400Regular',
+                fontSize: 14,
+                lineHeight: 21,
+                letterSpacing: -0.14,
+                textDecorationLine: 'underline',
+              }}
+            >
+              Sign Up
+            </Typography>
+          </Pressable>
         </View>
       </Screen>
     </>
@@ -75,22 +97,22 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   bannerContainer: {
     position: 'absolute',
-    top: 50, // Below the safe area / notch
-    left: 20,
-    right: 20,
+    top: 54,
+    left: 0,
+    right: 0,
     zIndex: 1000,
   },
   errorBanner: {
-    padding: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    height: 56,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    backgroundColor: '#F5F5F5',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
   },
   footer: {
     flexDirection: 'row',
