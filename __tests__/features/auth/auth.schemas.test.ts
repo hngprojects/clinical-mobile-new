@@ -2,6 +2,7 @@ import {
   completePasswordResetSchema,
   loginSchema,
   registerSchema,
+  resetPasswordSchema,
 } from '@/features/auth/schemas/auth.schemas';
 
 describe('loginSchema', () => {
@@ -58,6 +59,16 @@ describe('registerSchema', () => {
   });
 });
 
+describe('resetPasswordSchema', () => {
+  it('passes valid reset request data', () => {
+    expect(resetPasswordSchema.safeParse({ email: 'test@example.com' }).success).toBe(true);
+  });
+
+  it('rejects invalid reset request email', () => {
+    expect(resetPasswordSchema.safeParse({ email: 'not-an-email' }).success).toBe(false);
+  });
+});
+
 describe('completePasswordResetSchema', () => {
   const valid = {
     password: 'Password1',
@@ -66,6 +77,15 @@ describe('completePasswordResetSchema', () => {
 
   it('passes valid password reset data', () => {
     expect(completePasswordResetSchema.safeParse(valid).success).toBe(true);
+  });
+
+  it('rejects password under 8 chars', () => {
+    expect(
+      completePasswordResetSchema.safeParse({
+        password: 'Pass1',
+        confirmPassword: 'Pass1',
+      }).success,
+    ).toBe(false);
   });
 
   it('rejects mismatched passwords', () => {

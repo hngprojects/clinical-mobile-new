@@ -19,6 +19,7 @@ export interface ResetPasswordResponse {
 }
 
 export interface CompletePasswordResetRequest {
+  token: string;
   password: string;
 }
 

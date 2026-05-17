@@ -1,4 +1,4 @@
-import { router, Stack } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import React, { useEffect } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -10,8 +10,10 @@ import { useTheme } from '@/shared/theme';
 
 export default function NewPasswordScreen() {
   const { colors, spacing } = useTheme();
+  const { token } = useLocalSearchParams<{ token?: string | string[] }>();
   const completeResetMutation = useCompletePasswordReset();
   const bannerY = useSharedValue(-100);
+  const resetToken = Array.isArray(token) ? (token[0] ?? '') : (token ?? '');
 
   useEffect(() => {
     if (completeResetMutation.error || completeResetMutation.isSuccess) {
@@ -68,7 +70,7 @@ export default function NewPasswordScreen() {
           </Typography>
         </View>
 
-        <CompletePasswordResetForm mutation={completeResetMutation} />
+        <CompletePasswordResetForm mutation={completeResetMutation} resetToken={resetToken} />
 
         <View style={styles.footer}>
           <Typography

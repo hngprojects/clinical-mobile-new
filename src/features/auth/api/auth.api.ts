@@ -10,6 +10,7 @@ import type {
   ResetPasswordRequest,
   ResetPasswordResponse,
 } from './auth.types';
+import { passwordPolicySchema, resetPasswordSchema } from '../schemas/auth.schemas';
 
 const DUMMY_USER = {
   id: 'logickoder',
@@ -63,8 +64,9 @@ async function refreshTokens(refreshToken: string): Promise<AuthTokens> {
 
 async function resetPassword(data: ResetPasswordRequest): Promise<ResetPasswordResponse> {
   await delay(800);
-  if (!data.email) {
-    throw new ApiError('Email is required', 400);
+  const result = resetPasswordSchema.safeParse(data);
+  if (!result.success) {
+    throw new ApiError(result.error.issues[0]?.message ?? 'Enter a valid email', 400);
   }
   return {
     message: 'If an account exists for this email, reset instructions have been sent.',
@@ -75,9 +77,15 @@ async function completePasswordReset(
   data: CompletePasswordResetRequest,
 ): Promise<CompletePasswordResetResponse> {
   await delay(800);
-  if (!data.password) {
-    throw new ApiError('Password is required', 400);
+  if (!data.token) {
+    throw new ApiError('Reset link is invalid or expired', 400);
   }
+
+  const passwordResult = passwordPolicySchema.safeParse(data.password);
+  if (!passwordResult.success) {
+    throw new ApiError(passwordResult.error.issues[0]?.message ?? 'Password is invalid', 400);
+  }
+
   return {
     message: 'Password reset successfully. You can now log in.',
   };
