@@ -11,8 +11,6 @@ const palette = {
   grey50: '#F9FAFB',
   outlineBorderSubtle: '#F0F0F0',
   backgroundSecondary: '#FAFAFA',
-  outlineBorderSubtleDark: '#2D3B4D',
-  surfaceMutedDark: '#252F3F',
   white: '#FFFFFF',
   error500: '#EF4444',
   success500: '#22C55E',
@@ -40,23 +38,3 @@ export const lightColors = {
 };
 
 export type Colors = Record<keyof typeof lightColors, string>;
-
-export const darkColors: Colors = {
-  background: '#0F172A',
-  surface: '#1E293B',
-  surfaceMuted: palette.surfaceMutedDark,
-  borderSubtle: palette.outlineBorderSubtleDark,
-  primary: '#818CF8',
-  primaryPressed: '#6C63FF',
-  primarySubtle: '#1E1B4B',
-  text: '#F1F5F9',
-  textSecondary: '#94A3B8',
-  border: '#334155',
-  inputBackground: '#1E293B',
-  error: '#F87171',
-  success: '#4ADE80',
-  warning: '#FCD34D',
-  tabBar: '#1E293B',
-  tabBarActive: '#818CF8',
-  tabBarInactive: '#64748B',
-};
