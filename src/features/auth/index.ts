@@ -8,6 +8,7 @@ export type {
 } from './api/auth.types';
 export { LoginForm } from './components/LoginForm';
 export { RegisterForm } from './components/RegisterForm';
+export { VerifyOtp } from './components/VerifyOtp';
 export { useAuthSession } from './hooks/useAuthSession';
 export { useLogin } from './hooks/useLogin';
 export { useRegister } from './hooks/useRegister';
