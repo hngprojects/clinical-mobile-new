@@ -11,18 +11,29 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.pull_request.user.login != 'dependabot[bot]' && github.event.pull_request.draft == false
     steps:
-      - name: Check PR body for an image or video
+      - name: Check PR body for a real screenshot or recording
         env:
           BODY: ${{ github.event.pull_request.body }}
         run: |
           if [ -z "$BODY" ]; then
-            echo "::error::PR description is empty. Add a screenshot or video of your change."
+            echo "::error::PR description is empty. Drag a screenshot or recording into the description."
             exit 1
           fi
-          pattern='!\[[^]]*\]\([^)]+\)|<img[^>]+src=|<video[^>]+src=|user-attachments/(assets|files)/|github\.com/[^ )]+\.(png|jpe?g|gif|webp|svg|mp4|mov|webm)'
-          if echo "$BODY" | grep -Eqi "$pattern"; then
-            echo "Screenshot or video found."
+
+          # Strip CodeRabbit's auto-generated block so its badge doesn't satisfy the check
+          stripped=$(printf '%s' "$BODY" | sed -E '/<!-- This is an auto-generated comment: release notes by coderabbit\.ai -->/,/<!-- end of auto-generated comment: release notes by coderabbit\.ai -->/d')
+
+          # Real drag-and-drop uploads land at github.com/user-attachments/{assets,files}/...
+          if echo "$stripped" | grep -Eqi 'github\.com/user-attachments/(assets|files)/[^ )"]+\.(png|jpe?g|gif|webp|mp4|mov|webm)'; then
+            echo "Real screenshot/recording found."
             exit 0
           fi
-          echo "::error::No screenshot or video found in the PR description. Drag in an image or video before requesting review."
+
+          # Also accept markdown/HTML image or video tags pointing at raster or video (not SVG)
+          if echo "$stripped" | grep -Eqi '(!\[[^]]*\]\([^)]+\.(png|jpe?g|gif|webp|mp4|mov|webm)[^)]*\)|<(img|video)[^>]+src=["'"'"'][^"'"'"']+\.(png|jpe?g|gif|webp|mp4|mov|webm))'; then
+            echo "Screenshot/recording found."
+            exit 0
+          fi
+
+          echo "::error::No real screenshot or recording in the PR description (bot badges and SVGs don't count). Drag a PNG/JPG/GIF/MP4 of your change into the description before requesting review."
           exit 1
