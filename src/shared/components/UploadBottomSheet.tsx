@@ -22,20 +22,18 @@ export function UploadBottomSheet({ visible, onClose, onUpload }: UploadBottomSh
   
   // Primary Sheet State & Animation
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
-  const [sheetHeight, setSheetHeight] = useState(300);
 
   // Secondary Options Sheet State & Animation
   const [showOptions, setShowOptions] = useState(false);
   const optionsSlideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
-  const [optionsHeight, setOptionsHeight] = useState(380);
 
   // Primary Sheet PanResponder (Swipe to dismiss)
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: (evt, gestureState) => {
-        const touchStartedInSheet = evt.nativeEvent.pageY > (SCREEN_HEIGHT - sheetHeight - 20);
-        return touchStartedInSheet && Math.abs(gestureState.dy) > 5 && gestureState.dy > 0;
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        // Any downward drag gesture that starts on the sheet card (including top drag handle)
+        return Math.abs(gestureState.dy) > 5 && gestureState.dy > 0;
       },
       onPanResponderMove: (_, gestureState) => {
         if (gestureState.dy > 0) {
@@ -61,9 +59,9 @@ export function UploadBottomSheet({ visible, onClose, onUpload }: UploadBottomSh
   const optionsPanResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: (evt, gestureState) => {
-        const touchStartedInOptions = evt.nativeEvent.pageY > (SCREEN_HEIGHT - optionsHeight - 20);
-        return touchStartedInOptions && Math.abs(gestureState.dy) > 5 && gestureState.dy > 0;
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        // Any downward drag gesture that starts on the secondary sheet card
+        return Math.abs(gestureState.dy) > 5 && gestureState.dy > 0;
       },
       onPanResponderMove: (_, gestureState) => {
         if (gestureState.dy > 0) {
@@ -245,9 +243,6 @@ export function UploadBottomSheet({ visible, onClose, onUpload }: UploadBottomSh
           
           <Animated.View
             {...panResponder.panHandlers}
-            onLayout={(event) => {
-              setSheetHeight(event.nativeEvent.layout.height);
-            }}
             style={[
               styles.sheet,
               {
@@ -300,9 +295,6 @@ export function UploadBottomSheet({ visible, onClose, onUpload }: UploadBottomSh
           
           <Animated.View
             {...optionsPanResponder.panHandlers}
-            onLayout={(event) => {
-              setOptionsHeight(event.nativeEvent.layout.height);
-            }}
             style={[
               styles.sheet,
               styles.optionsSheet,
