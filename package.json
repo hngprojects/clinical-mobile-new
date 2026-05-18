@@ -43,6 +43,7 @@
     "expo": "~54.0.34",
     "expo-constants": "~18.0.13",
     "expo-document-picker": "^55.0.13",
+    "expo-image-picker": "^55.0.20",
     "expo-linking": "~8.0.12",
     "expo-router": "~6.0.23",
     "expo-secure-store": "~15.0.8",
