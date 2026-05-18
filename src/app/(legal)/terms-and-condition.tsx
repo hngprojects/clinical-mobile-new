@@ -3,16 +3,15 @@ import React from 'react';
 import { StyleSheet, View, Image } from 'react-native';
 
 import { Screen, Typography } from '@/shared/components';
-import { useTheme } from '@/shared/theme';
 import { TermsAndConditions } from '@/features/legal';
 
-export default function TermsAndCondition() {
-  const { colors } = useTheme();
+const HEADER_TEXT_COLOR = '`#FFFFFF`';
 
+export default function TermsAndCondition() {
   return (
     <>
       <Stack.Screen options={{ title: 'Terms and Conditions', headerShown: false }} />
-      <Screen padding={false} style={{ backgroundColor: '#FFFFFF' }}>
+      <Screen padding={false} style={{ backgroundColor: HEADER_TEXT_COLOR }}>
         <View style={styles.container}>
           <Image
             source={require('@/../assets/images/Circle.png')}
@@ -21,13 +20,13 @@ export default function TermsAndCondition() {
           />
           <Typography
             variant="h1"
-            style={{ color: colors.text, textAlign: 'center', ...styles.title }}
+            style={{ color: HEADER_TEXT_COLOR, textAlign: 'center', ...styles.title }}
           >
             Terms and Conditions
           </Typography>
           <Typography
             variant="body1"
-            style={{ color: colors.text, textAlign: 'center', ...styles.subtitle }}
+            style={{ color: HEADER_TEXT_COLOR, textAlign: 'center', ...styles.subtitle }}
           >
             Last Updated, May 2026
           </Typography>
