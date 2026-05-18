@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as DocumentPicker from 'expo-document-picker';
 import React, { useEffect, useRef } from 'react';
 import { Animated, Dimensions, Modal, PanResponder, Pressable, StyleSheet, View } from 'react-native';
 
@@ -26,8 +27,11 @@ export function UploadBottomSheet({ visible, onClose, onUpload }: UploadBottomSh
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
       onMoveShouldSetPanResponder: (_, gestureState) => {
-        // Activate if the user drags down by more than 8 pixels
-        return gestureState.dy > 8;
+        // Only activate swipe responder if:
+        // 1. The user drags downwards (dy > 8)
+        // 2. The gesture started within the sheet boundaries (y0 > SCREEN_HEIGHT - 340)
+        // This prevents drags starting on the dark backdrop overlay from sliding the sheet.
+        return gestureState.dy > 8 && gestureState.y0 > SCREEN_HEIGHT - 340;
       },
       onPanResponderGrant: () => {
         // Optional: do any prep if needed
@@ -82,9 +86,8 @@ export function UploadBottomSheet({ visible, onClose, onUpload }: UploadBottomSh
 
   const handleUploadPress = async () => {
     try {
-      const DocumentPicker = await import('expo-document-picker');
       const result = await DocumentPicker.getDocumentAsync({
-        type: ['image/*', 'application/pdf'],
+        type: '*/*',
         copyToCacheDirectory: true,
       });
 
