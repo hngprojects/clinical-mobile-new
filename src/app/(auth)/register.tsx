@@ -1,13 +1,29 @@
 import { router, Stack } from 'expo-router';
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Pressable } from 'react-native';
 
 import { RegisterForm } from '@/features/auth';
-import { Screen, Typography } from '@/shared/components';
+import { useAuthStore } from '@/features/auth/store/auth.store';
+import { Screen, Typography, UploadBottomSheet } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 export default function RegisterScreen() {
   const { spacing, colors } = useTheme();
+  const startGuestSession = useAuthStore((s) => s.startGuestSession);
+  const [showUploadSheet, setShowUploadSheet] = useState(false);
+
+  const handleContinueAsGuest = () => {
+    setShowUploadSheet(true);
+  };
+
+  const handleUpload = (fileName: string, fileSize: string) => {
+    startGuestSession();
+    router.replace({
+      pathname: '/(main)/preview-upload',
+      params: { name: fileName, size: fileSize },
+    });
+  };
+
 
   return (
     <>
@@ -23,7 +39,7 @@ export default function RegisterScreen() {
           </Typography>
         </View>
 
-        <RegisterForm />
+        <RegisterForm onContinueAsGuest={handleContinueAsGuest} />
 
         <View
           style={{
@@ -59,6 +75,7 @@ export default function RegisterScreen() {
             </Typography>
           </Pressable>
         </View>
+
         <View
           style={{
             alignItems: 'center',
@@ -95,6 +112,13 @@ export default function RegisterScreen() {
           </Pressable>
         </View>
       </Screen>
+
+      <UploadBottomSheet
+        visible={showUploadSheet}
+        onClose={() => setShowUploadSheet(false)}
+        onUpload={handleUpload}
+      />
     </>
   );
 }
+

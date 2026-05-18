@@ -1,17 +1,33 @@
 import { router, Stack } from 'expo-router';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { LoginForm } from '@/features/auth';
 import { useLogin } from '@/features/auth/hooks/useLogin';
-import { Screen, Typography } from '@/shared/components';
+import { useAuthStore } from '@/features/auth/store/auth.store';
+import { Screen, Typography, UploadBottomSheet } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 export default function LoginScreen() {
   const { spacing, colors } = useTheme();
   const loginMutation = useLogin();
+  const startGuestSession = useAuthStore((s) => s.startGuestSession);
+  const [showUploadSheet, setShowUploadSheet] = useState(false);
   const bannerY = useSharedValue(-100);
+
+  const handleContinueAsGuest = () => {
+    setShowUploadSheet(true);
+  };
+
+  const handleUpload = (fileName: string, fileSize: string) => {
+    startGuestSession();
+    router.replace({
+      pathname: '/(main)/preview-upload',
+      params: { name: fileName, size: fileSize },
+    });
+  };
+
 
   useEffect(() => {
     if (loginMutation.error) {
@@ -60,7 +76,11 @@ export default function LoginScreen() {
           </Typography>
         </View>
 
-        <LoginForm mutation={loginMutation} onInteract={() => loginMutation.reset()} />
+        <LoginForm
+          mutation={loginMutation}
+          onContinueAsGuest={handleContinueAsGuest}
+          onInteract={() => loginMutation.reset()}
+        />
 
         <View style={styles.footer}>
           <Typography
@@ -90,9 +110,16 @@ export default function LoginScreen() {
           </Pressable>
         </View>
       </Screen>
+
+      <UploadBottomSheet
+        visible={showUploadSheet}
+        onClose={() => setShowUploadSheet(false)}
+        onUpload={handleUpload}
+      />
     </>
   );
 }
+
 
 const styles = StyleSheet.create({
   bannerContainer: {

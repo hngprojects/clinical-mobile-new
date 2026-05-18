@@ -10,7 +10,11 @@ import { useTheme } from '@/shared/theme';
 import { useRegister } from '../hooks/useRegister';
 import { registerSchema, RegisterFormData } from '../schemas/auth.schemas';
 
-export function RegisterForm() {
+interface RegisterFormProps {
+  onContinueAsGuest?: () => void;
+}
+
+export function RegisterForm({ onContinueAsGuest }: RegisterFormProps) {
   const { spacing, colors } = useTheme();
   const { mutate: register, isPending, error } = useRegister();
   const [showPassword, setShowPassword] = useState(false);
@@ -166,7 +170,7 @@ export function RegisterForm() {
         <Button
           label="Continue as guest"
           variant="outline"
-          onPress={() => handleSocialPress('Guest')}
+          onPress={onContinueAsGuest}
           style={styles.socialIconButton}
           textColor={colors.textSecondary}
         />

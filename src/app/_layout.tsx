@@ -21,7 +21,7 @@ SplashScreen.preventAutoHideAsync().catch(() => {
 
 function RootLayoutNav() {
   const { isReady: isAppReady } = useAppReady();
-  const { isLoggedIn } = useAuthSession();
+  const { isAuthenticated } = useAuthSession();
   const hasCompleted = useOnboardingStore((s) => s.hasCompleted);
 
   const [fontsLoaded] = useFonts({
@@ -44,9 +44,9 @@ function RootLayoutNav() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      {hasCompleted && isLoggedIn ? (
+      {hasCompleted && isAuthenticated ? (
         <Stack.Screen name="(main)" options={{ animation: 'fade' }} />
-      ) : hasCompleted && !isLoggedIn ? (
+      ) : hasCompleted && !isAuthenticated ? (
         <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
       ) : (
         <Stack.Screen name="(onboarding)" options={{ animation: 'fade' }} />

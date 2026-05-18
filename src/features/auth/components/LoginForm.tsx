@@ -9,7 +9,13 @@ import { useTheme } from '@/shared/theme';
 
 import { LoginFormData, loginSchema } from '../schemas/auth.schemas';
 
-export function LoginForm({ mutation, onInteract }: { mutation: any; onInteract?: () => void }) {
+interface LoginFormProps {
+  mutation: any;
+  onContinueAsGuest?: () => void;
+  onInteract?: () => void;
+}
+
+export function LoginForm({ mutation, onContinueAsGuest, onInteract }: LoginFormProps) {
   const { colors, spacing } = useTheme();
   const { mutate: login, isPending } = mutation;
   const [showPassword, setShowPassword] = useState(false);
@@ -146,7 +152,7 @@ export function LoginForm({ mutation, onInteract }: { mutation: any; onInteract?
           <Button
             label="Continue as guest"
             variant="outline"
-            onPress={() => handleSocialPress('Guest')}
+            onPress={onContinueAsGuest}
             style={styles.socialIconButton}
             textColor={colors.textSecondary}
           />

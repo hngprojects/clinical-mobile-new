@@ -28,9 +28,9 @@ function ProfileTabIcon({ color, focused }: { color: string; focused: boolean })
 
 export default function MainLayout() {
   const { colors } = useTheme();
-  const { isLoggedIn } = useAuthSession();
+  const { isAuthenticated } = useAuthSession();
 
-  if (!isLoggedIn) return <Redirect href="/(auth)/login" />;
+  if (!isAuthenticated) return <Redirect href="/(auth)/login" />;
 
   return (
     <Tabs
@@ -82,9 +82,16 @@ export default function MainLayout() {
         }}
       />
       <Tabs.Screen
-        name="insights"
+        name="preview-upload"
         options={{
-          title: 'Insights',
+          href: null,
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
+        name="ai-review"
+        options={{
+          href: null,
           headerShown: false,
         }}
       />

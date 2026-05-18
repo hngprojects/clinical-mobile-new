@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -12,13 +13,14 @@ import { UploadCard } from './UploadCard';
 
 const MOCK_INSIGHTS: Insight[] = [
   { id: '1', title: 'Hormone Health Discussion', timestamp: '2 mins ago' },
-  { id: '2', title: 'Hormone Health Discussion', timestamp: '2 mins ago' },
-  { id: '3', title: 'Hormone Health Discussion', timestamp: '2 mins ago' },
+  { id: '2', title: 'Pregnancy Test Update', timestamp: '15 mins ago' },
+  { id: '3', title: 'Menstrual Cycle Complications', timestamp: '40 mins ago' },
 ];
 
 export function HomeScreen() {
   const { colors, spacing } = useTheme();
-  const { user } = useHome();
+  const { user, isGuest } = useHome();
+  const router = useRouter();
   const [insights, setInsights] = useState<Insight[]>(MOCK_INSIGHTS);
 
   const handleRename = (id: string, newTitle: string) => {
@@ -31,15 +33,16 @@ export function HomeScreen() {
 
   return (
     <SafeAreaView style={[styles.fill, { backgroundColor: colors.background }]} edges={['top']}>
-      <HomeHeader name={user?.firstName ?? 'User'} />
+      <HomeHeader name={isGuest ? 'Guest' : (user?.firstName ?? 'User')} />
       <ScrollView
         style={styles.fill}
         contentContainerStyle={{ gap: spacing.lg, paddingBottom: spacing.xl }}
         showsVerticalScrollIndicator={false}
       >
-        <UploadCard />
+        <UploadCard onUpload={() => router.push('/(main)/preview-upload')} />
         <RecentInsightsSection
           insights={insights}
+          onViewAll={() => router.push('/(main)/insights')}
           onRename={handleRename}
           onDelete={handleDelete}
         />
@@ -51,3 +54,4 @@ export function HomeScreen() {
 const styles = StyleSheet.create({
   fill: { flex: 1 },
 });
+
