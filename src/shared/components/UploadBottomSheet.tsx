@@ -277,11 +277,11 @@ export function UploadBottomSheet({ visible, onClose, onUpload }: UploadBottomSh
               style={({ pressed }) => [
                 styles.uploadButton,
                 {
-                  backgroundColor: pressed ? colors.primaryPressed : colors.primary,
+                  backgroundColor: pressed ? '#0F4C92' : '#1565C0',
                 }
               ]}
             >
-              <Feather name="upload" size={20} color="#FFFFFF" />
+              <Feather name="upload" size={18} color="#FFFFFF" />
               <Typography style={styles.uploadButtonText}>Upload Result</Typography>
             </Pressable>
           </Animated.View>
@@ -314,11 +314,11 @@ export function UploadBottomSheet({ visible, onClose, onUpload }: UploadBottomSh
           >
             <View style={styles.sheetHandle} />
             
-            <Typography variant="h2" align="center" style={styles.sheetTitle}>
+            <Typography variant="h2" align="center" style={styles.optionsSheetTitle}>
               Select Upload Source
             </Typography>
             
-            <Typography variant="body1" align="center" color={colors.textSecondary} style={styles.sheetSubtitle}>
+            <Typography variant="body1" align="center" color={colors.textSecondary} style={styles.optionsSheetSubtitle}>
               Choose how you would like to select your report
             </Typography>
 
@@ -439,39 +439,63 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   sheetTitle: {
-    fontSize: 22,
-    lineHeight: 28,
-    fontWeight: '700',
+    fontFamily: 'Inter_500Medium',
+    fontWeight: '500',
+    fontSize: 20,
+    lineHeight: 26,
+    letterSpacing: 0,
     textAlign: 'center',
     color: '#000000',
   },
   sheetSubtitle: {
-    fontSize: 15,
-    lineHeight: 20,
+    fontFamily: 'Inter_400Regular',
+    fontWeight: '400',
+    fontSize: 14,
+    lineHeight: 21,
+    letterSpacing: -0.14,
     textAlign: 'center',
-    color: '#5E5E5E',
+    color: '#494949',
   },
   sheetFormat: {
-    fontSize: 13,
+    fontFamily: 'Inter_400Regular',
+    fontWeight: '400',
+    fontSize: 12,
     lineHeight: 18,
+    letterSpacing: -0.12,
     textAlign: 'center',
-    color: '#8E8E93',
+    color: '#767676',
   },
   uploadButton: {
+    width: 167,
+    height: 45,
+    borderRadius: 8,
+    paddingTop: 12,
+    paddingBottom: 12,
+    paddingLeft: 24,
+    paddingRight: 24,
+    gap: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 28,
-    borderRadius: 12,
-    gap: 8,
-    minWidth: 180,
     alignSelf: 'center',
   },
   uploadButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'Inter_500Medium',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  optionsSheetTitle: {
+    fontSize: 22,
+    lineHeight: 28,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  optionsSheetSubtitle: {
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
+    marginBottom: 12,
   },
   optionsContainer: {
     alignSelf: 'stretch',
