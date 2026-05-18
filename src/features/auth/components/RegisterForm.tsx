@@ -46,32 +46,25 @@ export function RegisterForm() {
 
   return (
     <View style={[styles.container, { gap: spacing.md }]}>
-      <View style={[styles.row, { gap: spacing.sm }]}>
-        <View style={styles.flex}>
-          <FormField
-            control={control}
-            name="firstName"
-            label="First name"
-            placeholder="John"
-            returnKeyType="next"
-            onSubmitEditing={() => lastNameRef.current?.focus()}
-            blurOnSubmit={false}
-          />
-        </View>
-        <View style={styles.flex}>
-          <FormField
-            ref={lastNameRef}
-            control={control}
-            name="lastName"
-            label="Last name"
-            placeholder="Doe"
-            returnKeyType="next"
-            onSubmitEditing={() => emailRef.current?.focus()}
-            blurOnSubmit={false}
-          />
-        </View>
-      </View>
-
+      <FormField
+        control={control}
+        name="firstName"
+        label="First name"
+        placeholder="Enter your name"
+        returnKeyType="next"
+        onSubmitEditing={() => lastNameRef.current?.focus()}
+        blurOnSubmit={false}
+      />
+      <FormField
+        ref={lastNameRef}
+        control={control}
+        name="lastName"
+        label="Last name"
+        placeholder="Enter your name"
+        returnKeyType="next"
+        onSubmitEditing={() => emailRef.current?.focus()}
+        blurOnSubmit={false}
+      />
       <FormField
         ref={emailRef}
         control={control}
@@ -91,7 +84,7 @@ export function RegisterForm() {
         label="Password"
         secureTextEntry={!showPassword}
         textContentType="newPassword"
-        placeholder="••••••••"
+        placeholder="Enter your password"
         returnKeyType="next"
         onSubmitEditing={() => confirmPasswordRef.current?.focus()}
         blurOnSubmit={false}
@@ -124,7 +117,7 @@ export function RegisterForm() {
         label="Confirm password"
         secureTextEntry={!showPassword}
         textContentType="newPassword"
-        placeholder="••••••••"
+        placeholder="Retype your password"
         returnKeyType="done"
         onSubmitEditing={handleSubmit(onSubmit)}
       />
@@ -136,7 +129,7 @@ export function RegisterForm() {
       )}
 
       <Button
-        label="Create Account"
+        label="Continue"
         onPress={handleSubmit(onSubmit)}
         isLoading={isPending}
         style={{
@@ -163,13 +156,11 @@ export function RegisterForm() {
           style={styles.socialIconButton}
           leftIcon={
             <Image
-              source={{
-                uri: 'https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png',
-              }}
+              source={require('../../../../assets/images/auth/Google.png')}
               style={{ width: 20, height: 20 }}
             />
           }
-          textColor="#4B5563"
+          textColor={colors.textSecondary}
         />
 
         <Button
@@ -177,7 +168,7 @@ export function RegisterForm() {
           variant="outline"
           onPress={() => handleSocialPress('Guest')}
           style={styles.socialIconButton}
-          textColor="#4B5563"
+          textColor={colors.textSecondary}
         />
       </View>
     </View>
