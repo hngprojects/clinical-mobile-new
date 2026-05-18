@@ -54,4 +54,3 @@ export function HomeScreen() {
 const styles = StyleSheet.create({
   fill: { flex: 1 },
 });
-

@@ -24,7 +24,6 @@ export default function RegisterScreen() {
     });
   };
 
-
   return (
     <>
       <Stack.Screen options={{ title: 'Create Account', headerShown: false }} />
@@ -121,4 +120,3 @@ export default function RegisterScreen() {
     </>
   );
 }
-

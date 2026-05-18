@@ -1,12 +1,19 @@
-import { Feather, Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Dimensions, Modal, PanResponder, Pressable, StyleSheet, View } from 'react-native';
+import {
+  Animated,
+  Dimensions,
+  Modal,
+  PanResponder,
+  Pressable,
+  StyleSheet,
+  View,
+} from 'react-native';
 
 import { useTheme } from '@/shared/theme';
 
-import { Button } from './Button';
 import { Typography } from './Typography';
 
 interface UploadBottomSheetProps {
@@ -19,67 +26,60 @@ const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export function UploadBottomSheet({ visible, onClose, onUpload }: UploadBottomSheetProps) {
   const { colors } = useTheme();
-  
+  const [showSourceSheet, setShowSourceSheet] = useState(false);
+
   // Primary Sheet State & Animation
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+  const handleActiveAnim = useRef(new Animated.Value(0)).current;
 
-  // Secondary Options Sheet State & Animation
-  const [showOptions, setShowOptions] = useState(false);
-  const optionsSlideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+  const handleColor = handleActiveAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['#C7C7C7', '#9CA3AF'],
+  });
 
-  // Primary Sheet PanResponder (Smooth, standard JS-to-Native gestures)
+  const animateHandle = (animatedValue: Animated.Value, isActive: boolean) => {
+    Animated.timing(animatedValue, {
+      toValue: isActive ? 1 : 0,
+      duration: 120,
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const springSheetBack = (animatedValue: Animated.Value) => {
+    Animated.spring(animatedValue, {
+      toValue: 0,
+      useNativeDriver: true,
+      bounciness: 4,
+      speed: 12,
+    }).start();
+  };
+
+  // Primary Sheet PanResponder. It is attached to the top handle only.
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        // Active when dragging down vertically by more than 10px (prevents button click conflict)
-        return Math.abs(gestureState.dy) > 10 && gestureState.dy > 0;
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => {
+        animateHandle(handleActiveAnim, true);
+        slideAnim.stopAnimation();
+        slideAnim.setValue(0);
       },
       onPanResponderMove: (_, gestureState) => {
-        if (gestureState.dy > 0) {
-          slideAnim.setValue(gestureState.dy);
-        }
+        slideAnim.setValue(Math.max(gestureState.dy, 0));
       },
       onPanResponderRelease: (_, gestureState) => {
+        animateHandle(handleActiveAnim, false);
         if (gestureState.dy > 100 || gestureState.vy > 0.4) {
           handleDismiss();
         } else {
-          Animated.spring(slideAnim, {
-            toValue: 0,
-            useNativeDriver: true,
-            bounciness: 4,
-            speed: 12,
-          }).start();
+          springSheetBack(slideAnim);
         }
       },
-    })
-  ).current;
-
-  // Secondary Options Sheet PanResponder (Smooth, standard JS-to-Native gestures)
-  const optionsPanResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        return Math.abs(gestureState.dy) > 10 && gestureState.dy > 0;
+      onPanResponderTerminate: () => {
+        animateHandle(handleActiveAnim, false);
+        springSheetBack(slideAnim);
       },
-      onPanResponderMove: (_, gestureState) => {
-        if (gestureState.dy > 0) {
-          optionsSlideAnim.setValue(gestureState.dy);
-        }
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        if (gestureState.dy > 100 || gestureState.vy > 0.4) {
-          handleDismissOptions();
-        } else {
-          Animated.spring(optionsSlideAnim, {
-            toValue: 0,
-            useNativeDriver: true,
-            bounciness: 4,
-            speed: 12,
-          }).start();
-        }
-      },
-    })
+    }),
   ).current;
 
   useEffect(() => {
@@ -92,23 +92,9 @@ export function UploadBottomSheet({ visible, onClose, onUpload }: UploadBottomSh
       }).start();
     } else {
       slideAnim.setValue(SCREEN_HEIGHT);
-      setShowOptions(false);
-      optionsSlideAnim.setValue(SCREEN_HEIGHT);
+      setShowSourceSheet(false);
     }
-  }, [visible, slideAnim, optionsSlideAnim]);
-
-  useEffect(() => {
-    if (showOptions) {
-      optionsSlideAnim.setValue(SCREEN_HEIGHT); // Ensure starts off-screen
-      Animated.timing(optionsSlideAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
-    } else {
-      optionsSlideAnim.setValue(SCREEN_HEIGHT);
-    }
-  }, [showOptions, optionsSlideAnim]);
+  }, [visible, slideAnim]);
 
   const handleDismiss = () => {
     Animated.timing(slideAnim, {
@@ -120,30 +106,12 @@ export function UploadBottomSheet({ visible, onClose, onUpload }: UploadBottomSh
     });
   };
 
-  const handleDismissOptions = () => {
-    Animated.timing(optionsSlideAnim, {
+  const dismissAllAndUpload = (fileName: string, fileSize: string) => {
+    Animated.timing(slideAnim, {
       toValue: SCREEN_HEIGHT,
       duration: 220,
       useNativeDriver: true,
     }).start(() => {
-      setShowOptions(false);
-    });
-  };
-
-  const dismissAllAndUpload = (fileName: string, fileSize: string) => {
-    Animated.parallel([
-      Animated.timing(slideAnim, {
-        toValue: SCREEN_HEIGHT,
-        duration: 220,
-        useNativeDriver: true,
-      }),
-      Animated.timing(optionsSlideAnim, {
-        toValue: SCREEN_HEIGHT,
-        duration: 220,
-        useNativeDriver: true,
-      })
-    ]).start(() => {
-      setShowOptions(false);
       onClose();
       onUpload(fileName, fileSize);
     });
@@ -166,10 +134,10 @@ export function UploadBottomSheet({ visible, onClose, onUpload }: UploadBottomSh
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const asset = result.assets[0];
         const fileName = asset.fileName || 'camera_photo.jpg';
-        const fileSize = asset.fileSize 
-          ? `${(asset.fileSize / (1024 * 1024)).toFixed(1)}MB` 
+        const fileSize = asset.fileSize
+          ? `${(asset.fileSize / (1024 * 1024)).toFixed(1)}MB`
           : '1.2MB';
-        
+
         dismissAllAndUpload(fileName, fileSize);
       }
     } catch (err) {
@@ -194,10 +162,10 @@ export function UploadBottomSheet({ visible, onClose, onUpload }: UploadBottomSh
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const asset = result.assets[0];
         const fileName = asset.fileName || 'gallery_photo.jpg';
-        const fileSize = asset.fileSize 
-          ? `${(asset.fileSize / (1024 * 1024)).toFixed(1)}MB` 
+        const fileSize = asset.fileSize
+          ? `${(asset.fileSize / (1024 * 1024)).toFixed(1)}MB`
           : '1.5MB';
-        
+
         dismissAllAndUpload(fileName, fileSize);
       }
     } catch (err) {
@@ -215,9 +183,7 @@ export function UploadBottomSheet({ visible, onClose, onUpload }: UploadBottomSh
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const file = result.assets[0];
         const fileName = file.name;
-        const fileSize = file.size 
-          ? `${(file.size / (1024 * 1024)).toFixed(1)}MB` 
-          : '0.8MB';
+        const fileSize = file.size ? `${(file.size / (1024 * 1024)).toFixed(1)}MB` : '0.8MB';
 
         dismissAllAndUpload(fileName, fileSize);
       }
@@ -227,7 +193,21 @@ export function UploadBottomSheet({ visible, onClose, onUpload }: UploadBottomSh
   };
 
   const handleUploadClick = () => {
-    setShowOptions(true);
+    setShowSourceSheet(true);
+  };
+
+  const selectUploadSource = (onSelect: () => void) => {
+    setShowSourceSheet(false);
+    onSelect();
+  };
+
+  const handleBackdropPress = () => {
+    if (showSourceSheet) {
+      setShowSourceSheet(false);
+      return;
+    }
+
+    handleDismiss();
   };
 
   // Clamp translation so sheets cannot be dragged higher than their perfect layout positions
@@ -237,165 +217,106 @@ export function UploadBottomSheet({ visible, onClose, onUpload }: UploadBottomSh
     extrapolateLeft: 'clamp',
   });
 
-  const optionsTranslateY = optionsSlideAnim.interpolate({
-    inputRange: [0, SCREEN_HEIGHT],
-    outputRange: [0, SCREEN_HEIGHT],
-    extrapolateLeft: 'clamp',
-  });
-
   return (
     <>
       {/* Primary Bottom Sheet: Original Upload Design */}
-      <Modal
-        visible={visible}
-        transparent
-        animationType="fade"
-        onRequestClose={handleDismiss}
-      >
+      <Modal visible={visible} transparent animationType="fade" onRequestClose={handleDismiss}>
         <View style={styles.container}>
-          <Pressable style={styles.backdrop} onPress={handleDismiss} />
-          
+          <Pressable style={styles.backdrop} onPress={handleBackdropPress} />
+
           <Animated.View
-            {...panResponder.panHandlers}
             style={[
               styles.sheet,
+              showSourceSheet && styles.sourceSheetFrame,
               {
                 backgroundColor: colors.surface,
                 transform: [{ translateY }],
               },
             ]}
           >
-            <View style={styles.sheetHandle} />
-            
-            <View style={styles.contentContainer}>
-              <Typography style={styles.sheetTitle}>
-                Upload Your Lab Result
-              </Typography>
-              
-              <Typography style={styles.sheetSubtitle}>
-                Upload your first lab report to get started
-              </Typography>
-              
-              <Typography style={styles.sheetFormat}>
-                JPEG, PDF and PNG formats up to 5-10 MB
-              </Typography>
+            <View {...panResponder.panHandlers} style={styles.handleGrabArea}>
+              <Animated.View style={[styles.sheetHandle, { backgroundColor: handleColor }]} />
             </View>
 
-            <Pressable
-              onPress={handleUploadClick}
-              style={({ pressed }) => [
-                styles.uploadButton,
-                {
-                  backgroundColor: pressed ? '#0F4C92' : '#1565C0',
-                }
-              ]}
-            >
-              <Feather name="upload" size={18} color="#FFFFFF" />
-              <Typography style={styles.uploadButtonText}>Upload Result</Typography>
-            </Pressable>
-          </Animated.View>
-        </View>
-      </Modal>
+            {showSourceSheet ? (
+              <View style={styles.sourceSheetContent}>
+                <View style={styles.sourceSheetGroup}>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.sourceSheetOption,
+                      pressed && styles.sourceSheetOptionPressed,
+                    ]}
+                    onPress={() => selectUploadSource(handleTakePhoto)}
+                  >
+                    <Feather name="camera" size={21} color="#1B1B1B" />
+                    <Typography style={styles.sourceSheetOptionText}>Take Photo</Typography>
+                  </Pressable>
 
-      {/* Secondary Bottom Sheet: Premium Options Source Selector */}
-      <Modal
-        visible={showOptions}
-        transparent
-        animationType="fade"
-        onRequestClose={handleDismissOptions}
-      >
-        <View style={styles.container}>
-          <Pressable style={styles.backdrop} onPress={handleDismissOptions} />
-          
-          <Animated.View
-            {...optionsPanResponder.panHandlers}
-            style={[
-              styles.sheet,
-              styles.optionsSheet,
-              {
-                backgroundColor: colors.surface,
-                transform: [{ translateY: optionsTranslateY }],
-              },
-            ]}
-          >
-            <View style={styles.sheetHandle} />
-            
-            <Typography variant="h2" align="center" style={styles.optionsSheetTitle}>
-              Select Upload Source
-            </Typography>
-            
-            <Typography variant="body1" align="center" color={colors.textSecondary} style={styles.optionsSheetSubtitle}>
-              Choose how you would like to select your report
-            </Typography>
+                  <View style={styles.sourceSheetDivider} />
 
-            <View style={styles.optionsContainer}>
-              <Pressable
-                onPress={handleTakePhoto}
-                style={({ pressed }) => [
-                  styles.optionRow,
-                  { 
-                    borderColor: colors.border, 
-                    backgroundColor: pressed ? colors.surfaceMuted : 'transparent' 
-                  }
-                ]}
-              >
-                <View style={[styles.iconWrapper, { backgroundColor: '#E0F2FE' }]}>
-                  <Ionicons name="camera" size={24} color="#0284C7" />
-                </View>
-                <View style={styles.optionTextContainer}>
-                  <Typography style={styles.optionTitle}>Take Photo</Typography>
-                  <Typography variant="body2" color={colors.textSecondary}>Use camera to capture report</Typography>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-              </Pressable>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.sourceSheetOption,
+                      pressed && styles.sourceSheetOptionPressed,
+                    ]}
+                    onPress={() => selectUploadSource(handlePhotoLibrary)}
+                  >
+                    <Feather name="image" size={21} color="#1B1B1B" />
+                    <Typography style={styles.sourceSheetOptionText}>Photo Library</Typography>
+                  </Pressable>
 
-              <Pressable
-                onPress={handlePhotoLibrary}
-                style={({ pressed }) => [
-                  styles.optionRow,
-                  { 
-                    borderColor: colors.border, 
-                    backgroundColor: pressed ? colors.surfaceMuted : 'transparent' 
-                  }
-                ]}
-              >
-                <View style={[styles.iconWrapper, { backgroundColor: '#F0FDF4' }]}>
-                  <Ionicons name="images" size={24} color="#22C55E" />
-                </View>
-                <View style={styles.optionTextContainer}>
-                  <Typography style={styles.optionTitle}>Photo Library</Typography>
-                  <Typography variant="body2" color={colors.textSecondary}>Select from gallery images</Typography>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-              </Pressable>
+                  <View style={styles.sourceSheetDivider} />
 
-              <Pressable
-                onPress={handleBrowseFiles}
-                style={({ pressed }) => [
-                  styles.optionRow,
-                  { 
-                    borderColor: colors.border, 
-                    backgroundColor: pressed ? colors.surfaceMuted : 'transparent' 
-                  }
-                ]}
-              >
-                <View style={[styles.iconWrapper, { backgroundColor: '#EEF2F6' }]}>
-                  <Ionicons name="document-text" size={24} color="#64748B" />
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.sourceSheetOption,
+                      pressed && styles.sourceSheetOptionPressed,
+                    ]}
+                    onPress={() => selectUploadSource(handleBrowseFiles)}
+                  >
+                    <Feather name="folder" size={21} color="#1B1B1B" />
+                    <Typography style={styles.sourceSheetOptionText}>Browse Files</Typography>
+                  </Pressable>
                 </View>
-                <View style={styles.optionTextContainer}>
-                  <Typography style={styles.optionTitle}>Browse Files</Typography>
-                  <Typography variant="body2" color={colors.textSecondary}>Choose PDF, PNG or JPEG files</Typography>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-              </Pressable>
-            </View>
 
-            <Button
-              label="Cancel"
-              variant="outline"
-              onPress={handleDismissOptions}
-              style={styles.cancelButton}
-            />
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.sourceSheetCancel,
+                    pressed && styles.sourceSheetOptionPressed,
+                  ]}
+                  onPress={() => setShowSourceSheet(false)}
+                >
+                  <Typography style={styles.sourceSheetCancelText}>Cancel</Typography>
+                </Pressable>
+              </View>
+            ) : (
+              <>
+                <View style={styles.contentContainer}>
+                  <Typography style={styles.sheetTitle}>Upload Your Lab Result</Typography>
+
+                  <Typography style={styles.sheetSubtitle}>
+                    Upload your first lab report to get started
+                  </Typography>
+
+                  <Typography style={styles.sheetFormat}>
+                    JPEG, PDF and PNG formats up to 5-10 MB
+                  </Typography>
+                </View>
+
+                <Pressable
+                  onPress={handleUploadClick}
+                  style={({ pressed }) => [
+                    styles.uploadButton,
+                    {
+                      backgroundColor: pressed ? '#0F4C92' : '#1565C0',
+                    },
+                  ]}
+                >
+                  <Feather name="upload" size={18} color="#FFFFFF" />
+                  <Typography style={styles.uploadButtonText}>Upload Result</Typography>
+                </Pressable>
+              </>
+            )}
           </Animated.View>
         </View>
       </Modal>
@@ -425,17 +346,20 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: -4 },
     elevation: 5,
   },
-  optionsSheet: {
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 40,
+  sourceSheetFrame: {
+    paddingHorizontal: 16,
+    paddingBottom: 24,
+  },
+  handleGrabArea: {
+    width: 120,
+    height: 37,
+    alignItems: 'center',
+    alignSelf: 'center',
   },
   sheetHandle: {
     width: 64,
     height: 5,
     borderRadius: 999,
-    backgroundColor: '#C7C7C7',
-    marginBottom: 32,
     alignSelf: 'center',
   },
   contentContainer: {
@@ -491,51 +415,47 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
-  optionsSheetTitle: {
-    fontSize: 22,
-    lineHeight: 28,
-    fontWeight: '700',
-    textAlign: 'center',
+  sourceSheetContent: {
+    width: '100%',
   },
-  optionsSheetSubtitle: {
-    fontSize: 14,
-    lineHeight: 20,
-    textAlign: 'center',
-    marginBottom: 12,
+  sourceSheetGroup: {
+    borderRadius: 14,
+    overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
   },
-  optionsContainer: {
-    alignSelf: 'stretch',
-    gap: 12,
-    marginTop: 8,
-    marginBottom: 16,
-  },
-  optionRow: {
+  sourceSheetOption: {
+    height: 40,
+    paddingHorizontal: 16,
+    backgroundColor: '#FFFFFF',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 16,
-    borderWidth: 1,
-    gap: 16,
+    gap: 12,
   },
-  iconWrapper: {
-    width: 46,
-    height: 46,
-    borderRadius: 12,
+  sourceSheetOptionPressed: {
+    backgroundColor: '#F5F5F5',
+  },
+  sourceSheetOptionText: {
+    color: '#1B1B1B',
+    fontFamily: 'Inter_400Regular',
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  sourceSheetDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: '#E5E7EB',
+  },
+  sourceSheetCancel: {
+    height: 40,
+    marginTop: 8,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  optionTextContainer: {
-    flex: 1,
-    gap: 2,
-  },
-  optionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  cancelButton: {
-    alignSelf: 'stretch',
-    height: 50,
-    borderRadius: 14,
+  sourceSheetCancelText: {
+    color: '#1565C0',
+    fontFamily: 'Inter_500Medium',
+    fontSize: 15,
+    lineHeight: 22,
   },
 });

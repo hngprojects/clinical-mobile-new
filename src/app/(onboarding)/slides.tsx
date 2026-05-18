@@ -31,7 +31,6 @@ export default function SlidesScreen() {
     });
   };
 
-
   const handleLogin = async () => {
     await completeOnboarding();
     router.replace('/(auth)/login');
@@ -55,4 +54,3 @@ export default function SlidesScreen() {
     </Screen>
   );
 }
-

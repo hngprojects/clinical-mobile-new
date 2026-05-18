@@ -48,7 +48,6 @@ export function UploadPreviewScreen() {
             {fileType} • {fileSize}
           </Typography>
 
-
           <View style={[styles.reportFrame, { backgroundColor: '#E5E5E5' }]}>
             <View style={styles.reportPaper}>
               <Typography variant="h3" color="#0F2A4A" align="center" style={styles.reportLogo}>

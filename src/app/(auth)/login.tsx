@@ -28,7 +28,6 @@ export default function LoginScreen() {
     });
   };
 
-
   useEffect(() => {
     if (loginMutation.error) {
       bannerY.value = withTiming(0, { duration: 300 });
@@ -119,7 +118,6 @@ export default function LoginScreen() {
     </>
   );
 }
-
 
 const styles = StyleSheet.create({
   bannerContainer: {
