@@ -13,7 +13,13 @@ export default function NewPasswordScreen() {
   const { token } = useLocalSearchParams<{ token?: string | string[] }>();
   const completeResetMutation = useCompletePasswordReset();
   const bannerY = useSharedValue(-100);
-  const resetToken = Array.isArray(token) ? (token[0] ?? '') : (token ?? '');
+  const resetToken = (Array.isArray(token) ? (token[0] ?? '') : (token ?? '')).trim();
+
+  useEffect(() => {
+    if (!resetToken) {
+      router.replace('/(auth)/reset-password');
+    }
+  }, [resetToken]);
 
   useEffect(() => {
     if (completeResetMutation.error || completeResetMutation.isSuccess) {
@@ -38,6 +44,8 @@ export default function NewPasswordScreen() {
   const notificationMessage = completeResetMutation.error
     ? 'We could not reset your password. Please request a new link and try again.'
     : completeResetMutation.data?.message || 'Password reset successfully. You can now log in.';
+
+  if (!resetToken) return null;
 
   return (
     <>

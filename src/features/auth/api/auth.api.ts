@@ -77,7 +77,7 @@ async function completePasswordReset(
   data: CompletePasswordResetRequest,
 ): Promise<CompletePasswordResetResponse> {
   await delay(800);
-  if (!data.token) {
+  if (!data.token.trim()) {
     throw new ApiError('Reset link is invalid or expired', 400);
   }
 
