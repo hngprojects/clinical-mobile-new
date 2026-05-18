@@ -1,5 +1,5 @@
 import React from 'react';
-import Svg, { ClipPath, Defs, Path, Rect } from 'react-native-svg';
+import Svg, { ClipPath, Path, Rect } from 'react-native-svg';
 
 interface RenameIconProps {
   size?: number;

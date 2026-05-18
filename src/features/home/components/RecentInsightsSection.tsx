@@ -13,7 +13,12 @@ interface RecentInsightsSectionProps {
   onDelete?: (id: string) => void;
 }
 
-export function RecentInsightsSection({ insights, onViewAll, onRename, onDelete }: RecentInsightsSectionProps) {
+export function RecentInsightsSection({
+  insights,
+  onViewAll,
+  onRename,
+  onDelete,
+}: RecentInsightsSectionProps) {
   const { colors, spacing } = useTheme();
 
   return (
