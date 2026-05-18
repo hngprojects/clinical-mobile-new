@@ -76,7 +76,10 @@ export default function RegisterScreen() {
           >
             By continuing, you have read and agreed to ClinSight&apos;s.{' '}
           </Typography>
-          <Pressable onPress={() => router.push('/(legal)/terms-and-condition')}>
+          <Pressable
+            onPress={() => router.push('/(legal)/terms-and-condition')}
+            accessibilityRole="link"
+          >
             <Typography
               style={{
                 color: colors.primary,
