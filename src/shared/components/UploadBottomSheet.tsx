@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useRef, useState } from 'react';
@@ -22,7 +22,7 @@ export function UploadBottomSheet({ visible, onClose, onUpload }: UploadBottomSh
   
   // Primary Sheet State & Animation
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
-  const [sheetHeight, setSheetHeight] = useState(330);
+  const [sheetHeight, setSheetHeight] = useState(300);
 
   // Secondary Options Sheet State & Animation
   const [showOptions, setShowOptions] = useState(false);
@@ -258,24 +258,32 @@ export function UploadBottomSheet({ visible, onClose, onUpload }: UploadBottomSh
           >
             <View style={styles.sheetHandle} />
             
-            <Typography variant="h1" align="center" style={styles.sheetTitle}>
-              Upload Your Lab Result
-            </Typography>
-            
-            <Typography variant="h3" align="center" color={colors.textSecondary} style={styles.sheetSubtitle}>
-              Upload your first lab report to get started
-            </Typography>
-            
-            <Typography variant="h3" align="center" color="#7C7C7C" style={styles.sheetFormat}>
-              JPEG, PDF and PNG formats up to 5-10 MB
-            </Typography>
+            <View style={styles.contentContainer}>
+              <Typography style={styles.sheetTitle}>
+                Upload Your Lab Result
+              </Typography>
+              
+              <Typography style={styles.sheetSubtitle}>
+                Upload your first lab report to get started
+              </Typography>
+              
+              <Typography style={styles.sheetFormat}>
+                JPEG, PDF and PNG formats up to 5-10 MB
+              </Typography>
+            </View>
 
-            <Button
-              label="Upload Result"
+            <Pressable
               onPress={handleUploadClick}
-              style={styles.uploadButton}
-              leftIcon={<Ionicons name="cloud-upload-outline" size={24} color="#FFFFFF" />}
-            />
+              style={({ pressed }) => [
+                styles.uploadButton,
+                {
+                  backgroundColor: pressed ? colors.primaryPressed : colors.primary,
+                }
+              ]}
+            >
+              <Feather name="upload" size={20} color="#FFFFFF" />
+              <Typography style={styles.uploadButtonText}>Upload Result</Typography>
+            </Pressable>
           </Animated.View>
         </View>
       </Modal>
@@ -399,13 +407,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   sheet: {
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
     alignItems: 'center',
-    paddingHorizontal: 28,
-    paddingTop: 28,
-    paddingBottom: 44,
-    gap: 18,
+    paddingHorizontal: 24,
+    paddingTop: 10,
+    paddingBottom: 48,
     shadowColor: '#000000',
     shadowOpacity: 0.15,
     shadowRadius: 10,
@@ -414,43 +421,63 @@ const styles = StyleSheet.create({
   },
   optionsSheet: {
     paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingTop: 10,
     paddingBottom: 40,
-    gap: 12,
   },
   sheetHandle: {
-    width: 92,
-    height: 6,
+    width: 64,
+    height: 5,
     borderRadius: 999,
     backgroundColor: '#C7C7C7',
-    marginBottom: 20,
+    marginBottom: 32,
+    alignSelf: 'center',
+  },
+  contentContainer: {
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 24,
+    width: '100%',
   },
   sheetTitle: {
-    fontSize: 24,
-    lineHeight: 30,
+    fontSize: 22,
+    lineHeight: 28,
     fontWeight: '700',
+    textAlign: 'center',
+    color: '#000000',
   },
   sheetSubtitle: {
     fontSize: 15,
-    lineHeight: 22,
-    maxWidth: '85%',
+    lineHeight: 20,
+    textAlign: 'center',
+    color: '#5E5E5E',
   },
   sheetFormat: {
     fontSize: 13,
     lineHeight: 18,
-    color: '#7C7C7C',
-    marginBottom: 8,
+    textAlign: 'center',
+    color: '#8E8E93',
   },
   uploadButton: {
-    minHeight: 64,
-    minWidth: 248,
-    borderRadius: 14,
-    marginTop: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 12,
+    gap: 8,
+    minWidth: 180,
+    alignSelf: 'center',
+  },
+  uploadButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
   optionsContainer: {
     alignSelf: 'stretch',
     gap: 12,
     marginTop: 8,
+    marginBottom: 16,
   },
   optionRow: {
     flexDirection: 'row',
@@ -478,7 +505,6 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     alignSelf: 'stretch',
-    marginTop: 16,
     height: 50,
     borderRadius: 14,
   },
