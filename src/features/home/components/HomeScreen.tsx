@@ -1,38 +1,53 @@
-import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { useState } from 'react';
+import { ScrollView, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Button, Screen, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 import { useHome } from '../hooks/useHome';
+import { HomeHeader } from './HomeHeader';
+import { Insight } from './InsightCard';
+import { RecentInsightsSection } from './RecentInsightsSection';
+import { UploadCard } from './UploadCard';
+
+const MOCK_INSIGHTS: Insight[] = [
+  { id: '1', title: 'Hormone Health Discussion', timestamp: '2 mins ago' },
+  { id: '2', title: 'Hormone Health Discussion', timestamp: '2 mins ago' },
+  { id: '3', title: 'Hormone Health Discussion', timestamp: '2 mins ago' },
+];
 
 export function HomeScreen() {
   const { colors, spacing } = useTheme();
-  const { user, logout } = useHome();
+  const { user } = useHome();
+  const [insights, setInsights] = useState<Insight[]>(MOCK_INSIGHTS);
 
-  const greeting = user ? `Welcome back, ${user.firstName}!` : 'Welcome!';
+  const handleRename = (id: string, newTitle: string) => {
+    setInsights((prev) => prev.map((i) => (i.id === id ? { ...i, title: newTitle } : i)));
+  };
+
+  const handleDelete = (id: string) => {
+    setInsights((prev) => prev.filter((i) => i.id !== id));
+  };
 
   return (
-    <Screen>
-      <View style={[styles.container, { gap: spacing.xl }]}>
-        <View style={styles.center}>
-          <Typography variant="h1" align="center">
-            {greeting}
-          </Typography>
-          {user && (
-            <Typography variant="body1" color={colors.textSecondary} align="center">
-              {user.email}
-            </Typography>
-          )}
-        </View>
-
-        <Button label="Sign Out" variant="outline" onPress={logout} />
-      </View>
-    </Screen>
+    <SafeAreaView style={[styles.fill, { backgroundColor: colors.background }]} edges={['top']}>
+      <HomeHeader name={user?.firstName ?? 'User'} />
+      <ScrollView
+        style={styles.fill}
+        contentContainerStyle={{ gap: spacing.lg, paddingBottom: spacing.xl }}
+        showsVerticalScrollIndicator={false}
+      >
+        <UploadCard />
+        <RecentInsightsSection
+          insights={insights}
+          onRename={handleRename}
+          onDelete={handleDelete}
+        />
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center' },
-  center: { alignItems: 'center', gap: 8 },
+  fill: { flex: 1 },
 });
