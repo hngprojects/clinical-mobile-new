@@ -20,27 +20,31 @@ const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 export function UploadBottomSheet({ visible, onClose, onUpload }: UploadBottomSheetProps) {
   const { colors } = useTheme();
   
-  // Primary Sheet State & Animation
+  // Primary Sheet State & Animation (Hardware-accelerated)
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
 
-  // Secondary Options Sheet State & Animation
+  // Secondary Options Sheet State & Animation (Hardware-accelerated)
   const [showOptions, setShowOptions] = useState(false);
   const optionsSlideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
 
-  // Primary Sheet PanResponder (Swipe to dismiss)
+  // Primary Sheet PanResponder (Ultra-smooth 60fps native gestures)
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
       onMoveShouldSetPanResponder: (_, gestureState) => {
-        // Any downward drag gesture that starts on the sheet card (including top drag handle)
-        return Math.abs(gestureState.dy) > 5 && gestureState.dy > 0;
+        // Active when dragging downwards vertically
+        return Math.abs(gestureState.dy) > 2 && gestureState.dy > 0;
       },
-      onPanResponderMove: (_, gestureState) => {
-        if (gestureState.dy > 0) {
-          slideAnim.setValue(gestureState.dy);
-        }
+      onPanResponderGrant: () => {
+        slideAnim.setOffset(0);
+        slideAnim.setValue(0);
       },
+      onPanResponderMove: Animated.event(
+        [null, { dy: slideAnim }],
+        { useNativeDriver: true }
+      ),
       onPanResponderRelease: (_, gestureState) => {
+        slideAnim.flattenOffset();
         if (gestureState.dy > 100 || gestureState.vy > 0.4) {
           handleDismiss();
         } else {
@@ -55,20 +59,23 @@ export function UploadBottomSheet({ visible, onClose, onUpload }: UploadBottomSh
     })
   ).current;
 
-  // Secondary Options Sheet PanResponder (Swipe to dismiss)
+  // Secondary Options Sheet PanResponder (Ultra-smooth 60fps native gestures)
   const optionsPanResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
       onMoveShouldSetPanResponder: (_, gestureState) => {
-        // Any downward drag gesture that starts on the secondary sheet card
-        return Math.abs(gestureState.dy) > 5 && gestureState.dy > 0;
+        return Math.abs(gestureState.dy) > 2 && gestureState.dy > 0;
       },
-      onPanResponderMove: (_, gestureState) => {
-        if (gestureState.dy > 0) {
-          optionsSlideAnim.setValue(gestureState.dy);
-        }
+      onPanResponderGrant: () => {
+        optionsSlideAnim.setOffset(0);
+        optionsSlideAnim.setValue(0);
       },
+      onPanResponderMove: Animated.event(
+        [null, { dy: optionsSlideAnim }],
+        { useNativeDriver: true }
+      ),
       onPanResponderRelease: (_, gestureState) => {
+        optionsSlideAnim.flattenOffset();
         if (gestureState.dy > 100 || gestureState.vy > 0.4) {
           handleDismissOptions();
         } else {
@@ -85,6 +92,7 @@ export function UploadBottomSheet({ visible, onClose, onUpload }: UploadBottomSh
 
   useEffect(() => {
     if (visible) {
+      slideAnim.setValue(0);
       Animated.timing(slideAnim, {
         toValue: 0,
         duration: 300,
@@ -99,6 +107,7 @@ export function UploadBottomSheet({ visible, onClose, onUpload }: UploadBottomSh
 
   useEffect(() => {
     if (showOptions) {
+      optionsSlideAnim.setValue(0);
       Animated.timing(optionsSlideAnim, {
         toValue: 0,
         duration: 300,
@@ -229,6 +238,19 @@ export function UploadBottomSheet({ visible, onClose, onUpload }: UploadBottomSh
     setShowOptions(true);
   };
 
+  // Clamp translation so sheets cannot be dragged higher than their perfect layout positions
+  const translateY = slideAnim.interpolate({
+    inputRange: [0, SCREEN_HEIGHT],
+    outputRange: [0, SCREEN_HEIGHT],
+    extrapolateLeft: 'clamp',
+  });
+
+  const optionsTranslateY = optionsSlideAnim.interpolate({
+    inputRange: [0, SCREEN_HEIGHT],
+    outputRange: [0, SCREEN_HEIGHT],
+    extrapolateLeft: 'clamp',
+  });
+
   return (
     <>
       {/* Primary Bottom Sheet: Original Upload Design */}
@@ -247,7 +269,7 @@ export function UploadBottomSheet({ visible, onClose, onUpload }: UploadBottomSh
               styles.sheet,
               {
                 backgroundColor: colors.surface,
-                transform: [{ translateY: slideAnim }],
+                transform: [{ translateY }],
               },
             ]}
           >
@@ -300,7 +322,7 @@ export function UploadBottomSheet({ visible, onClose, onUpload }: UploadBottomSh
               styles.optionsSheet,
               {
                 backgroundColor: colors.surface,
-                transform: [{ translateY: optionsSlideAnim }],
+                transform: [{ translateY: optionsTranslateY }],
               },
             ]}
           >
