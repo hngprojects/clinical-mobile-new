@@ -5,7 +5,8 @@ const palette = {
   primary100: '#E8EFF8',
   grey900: '#111827',
   grey700: '#374151',
-  grey500: '#6B7280',
+  grey500: '#5E5E5E',
+  // grey500: '#6B7280',
   grey300: '#D1D5DB',
   grey100: '#F3F4F6',
   grey50: '#F9FAFB',
@@ -29,6 +30,7 @@ export const lightColors = {
   textSecondary: palette.grey500,
   border: palette.grey300,
   inputBackground: palette.white,
+  cardBackground: '#FAFAFA',
   error: palette.error500,
   success: palette.success500,
   warning: palette.warning500,
@@ -38,3 +40,24 @@ export const lightColors = {
 };
 
 export type Colors = Record<keyof typeof lightColors, string>;
+
+export const darkColors: Colors = {
+  background: '#0F172A',
+  surface: '#1E293B',
+  surfaceMuted: '#1A2332',
+  borderSubtle: '#1E293B',
+  primary: '#818CF8',
+  primaryPressed: '#6C63FF',
+  primarySubtle: '#1E1B4B',
+  text: '#F1F5F9',
+  textSecondary: '#94A3B8',
+  border: '#334155',
+  inputBackground: '#1E293B',
+  cardBackground: '#1E293B',
+  error: '#F87171',
+  success: '#4ADE80',
+  warning: '#FCD34D',
+  tabBar: '#1E293B',
+  tabBarActive: '#818CF8',
+  tabBarInactive: '#64748B',
+};

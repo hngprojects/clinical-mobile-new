@@ -30,7 +30,7 @@ export default function RegisterScreen() {
             flexDirection: 'row',
             justifyContent: 'center',
             marginTop: 16,
-            marginBottom: 20,
+            marginBottom: 40,
           }}
         >
           <Typography
@@ -56,6 +56,41 @@ export default function RegisterScreen() {
               }}
             >
               Log In
+            </Typography>
+          </Pressable>
+        </View>
+        <View
+          style={{
+            alignItems: 'center',
+            marginTop: 10,
+            marginBottom: 20,
+          }}
+        >
+          <Typography
+            style={{
+              fontFamily: 'Inter_400Regular',
+              fontSize: 14,
+              lineHeight: 21,
+              letterSpacing: -0.14,
+            }}
+          >
+            By continuing, you have read and agreed to ClinSight&apos;s.{' '}
+          </Typography>
+          <Pressable
+            onPress={() => router.push('/(legal)/terms-and-condition')}
+            accessibilityRole="link"
+          >
+            <Typography
+              style={{
+                color: colors.primary,
+                fontFamily: 'Inter_400Regular',
+                fontSize: 14,
+                lineHeight: 21,
+                letterSpacing: -0.14,
+                textDecorationLine: 'underline',
+              }}
+            >
+              Terms and Conditions
             </Typography>
           </Pressable>
         </View>

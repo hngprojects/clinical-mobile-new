@@ -145,13 +145,11 @@ export function LoginForm({ mutation, onForgotPassword, onInteract }: LoginFormP
             style={styles.socialIconButton}
             leftIcon={
               <Image
-                source={{
-                  uri: 'https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png',
-                }}
+                source={require('../../../../assets/images/auth/Google.png')}
                 style={{ width: 24, height: 24 }}
               />
             }
-            textColor="#5E5E5E"
+            textColor={colors.textSecondary}
           />
 
           <Button
@@ -159,7 +157,7 @@ export function LoginForm({ mutation, onForgotPassword, onInteract }: LoginFormP
             variant="outline"
             onPress={() => handleSocialPress('Guest')}
             style={styles.socialIconButton}
-            textColor="#5E5E5E"
+            textColor={colors.textSecondary}
           />
         </View>
       </View>
