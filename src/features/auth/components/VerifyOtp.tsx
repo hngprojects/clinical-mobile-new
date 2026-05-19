@@ -6,27 +6,32 @@ import {
   Keyboard,
   Modal,
   Pressable,
-  StyleSheet,
   TextInput as RNTextInput,
+  StyleSheet,
   View,
 } from 'react-native';
 
-import { useVerifyOtp } from '@/features/auth/hooks/useVerifyOtp';
 import { useResendOtp } from '@/features/auth/hooks/useResendOtp';
+import { useVerifyOtp } from '@/features/auth/hooks/useVerifyOtp';
 import { useAuthStore } from '@/features/auth/store/auth.store';
-import { Typography } from '@/shared/components';
 import type { ApiError } from '@/shared/api/types';
+import { Typography } from '@/shared/components';
 
 const CODE_LENGTH = 6;
 
-export function VerifyOtp({ email }: { email?: string }) {
+export function VerifyOtp({
+  email,
+  expiresInSeconds,
+}: {
+  email?: string;
+  expiresInSeconds?: number;
+}) {
   const verifyOtpMutation = useVerifyOtp();
   const resendOtpMutation = useResendOtp();
 
   const [code, setCode] = useState('');
 
-  // 30 seconds visual countdown (or matching backend value dynamically if desired)
-  const initialCooldown = 30;
+  const initialCooldown = expiresInSeconds && expiresInSeconds > 0 ? expiresInSeconds : 30;
   const [timer, setTimer] = useState(initialCooldown);
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -35,6 +40,10 @@ export function VerifyOtp({ email }: { email?: string }) {
 
   const inputRef = useRef<RNTextInput>(null);
   const [isFocused, setIsFocused] = useState(false);
+
+  useEffect(() => {
+    setTimer(initialCooldown);
+  }, [initialCooldown]);
 
   useEffect(() => {
     if (timer > 0) {
