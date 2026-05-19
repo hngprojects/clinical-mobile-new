@@ -76,6 +76,6 @@ export const useAuthStore = createStore<AuthState & AuthActions>((set, get) => (
 registerAuthStore(() => ({
   accessToken: useAuthStore.getState().accessToken,
   refreshToken: useAuthStore.getState().refreshToken,
-  setSession: useAuthStore.getState().setSession,
+  setTokens: useAuthStore.getState().setTokens,
   clearSession: useAuthStore.getState().clearSession,
 }));

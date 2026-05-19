@@ -7,6 +7,7 @@ import { secureStorage } from '@/shared/storage/secureStorage';
 export function useAppReady() {
   const [isReady, setIsReady] = useState(false);
 
+  // 1. Session Restoration on App Launch
   useEffect(() => {
     async function init() {
       try {
@@ -21,7 +22,15 @@ export function useAppReady() {
         ]);
 
         if (tokens) {
-          useAuthStore.getState().setTokens(tokens);
+          try {
+            // Restore full user profile
+            const { authApi } = await import('@/features/auth/api/auth.api');
+            const userProfile = await authApi.getMe();
+            useAuthStore.getState().setSession(tokens, userProfile);
+          } catch (e) {
+            console.warn('Launch session restore failed, clearing tokens:', e);
+            useAuthStore.getState().clearSession();
+          }
         } else if (isGuest) {
           useAuthStore.getState().setGuestSession(true, guestSessionId);
         }

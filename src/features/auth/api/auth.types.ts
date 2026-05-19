@@ -20,9 +20,20 @@ export interface UserProfile {
   email: string;
   firstName: string;
   lastName: string;
+  role?: string;
+  isEmailVerified?: boolean;
+  isActive?: boolean;
+  googleId?: string | null;
+  createdAt?: string;
+  lastLoginAt?: string | null;
 }
 
 export interface AuthResponse {
   user: UserProfile;
   tokens: AuthTokens;
+}
+
+export interface OtpDispatchResponse {
+  email: string;
+  expiresInSeconds: number;
 }
