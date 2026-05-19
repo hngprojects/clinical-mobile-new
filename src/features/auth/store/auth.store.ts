@@ -11,14 +11,19 @@ interface AuthState {
   refreshToken: string | null;
   user: UserProfile | null;
   isGuest: boolean;
+  guestSessionId: string | null;
 }
 
 interface AuthActions {
   setSession: (tokens: AuthTokens, user: UserProfile) => void;
   setTokens: (tokens: AuthTokens) => void;
   startGuestSession: () => void;
-  setGuestSession: (isGuest: boolean) => void;
+  setGuestSession: (isGuest: boolean, guestSessionId?: string | null) => void;
   clearSession: () => void;
+}
+
+function createGuestSessionId() {
+  return `guest-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
 export const useAuthStore = createStore<AuthState & AuthActions>((set, get) => ({
@@ -26,32 +31,44 @@ export const useAuthStore = createStore<AuthState & AuthActions>((set, get) => (
   refreshToken: null,
   user: null,
   isGuest: false,
+  guestSessionId: null,
 
   setSession: (tokens, user) => {
-    set({ ...tokens, user, isGuest: false });
+    set({ ...tokens, user, isGuest: false, guestSessionId: null });
     secureStorage.saveTokens(tokens).catch(console.warn);
     asyncStorage.removeItem(STORAGE_KEYS.GUEST_SESSION).catch(console.warn);
+    asyncStorage.removeItem(STORAGE_KEYS.GUEST_SESSION_ID).catch(console.warn);
   },
 
   setTokens: (tokens) => {
-    set({ ...tokens, isGuest: false });
+    set({ ...tokens, isGuest: false, guestSessionId: null });
     asyncStorage.removeItem(STORAGE_KEYS.GUEST_SESSION).catch(console.warn);
+    asyncStorage.removeItem(STORAGE_KEYS.GUEST_SESSION_ID).catch(console.warn);
   },
 
   startGuestSession: () => {
-    set({ accessToken: null, refreshToken: null, user: null, isGuest: true });
+    const guestSessionId = get().guestSessionId ?? createGuestSessionId();
+    set({ accessToken: null, refreshToken: null, user: null, isGuest: true, guestSessionId });
     secureStorage.clearTokens().catch(console.warn);
     asyncStorage.setItem(STORAGE_KEYS.GUEST_SESSION, true).catch(console.warn);
+    asyncStorage.setItem(STORAGE_KEYS.GUEST_SESSION_ID, guestSessionId).catch(console.warn);
   },
 
-  setGuestSession: (isGuest) => {
-    set({ isGuest, accessToken: null, refreshToken: null, user: null });
+  setGuestSession: (isGuest, guestSessionId = null) => {
+    set({ isGuest, guestSessionId, accessToken: null, refreshToken: null, user: null });
   },
 
   clearSession: () => {
-    set({ accessToken: null, refreshToken: null, user: null, isGuest: false });
+    set({
+      accessToken: null,
+      refreshToken: null,
+      user: null,
+      isGuest: false,
+      guestSessionId: null,
+    });
     secureStorage.clearTokens().catch(console.warn);
     asyncStorage.removeItem(STORAGE_KEYS.GUEST_SESSION).catch(console.warn);
+    asyncStorage.removeItem(STORAGE_KEYS.GUEST_SESSION_ID).catch(console.warn);
   },
 }));
 

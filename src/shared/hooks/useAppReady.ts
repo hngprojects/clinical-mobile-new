@@ -13,16 +13,17 @@ export function useAppReady() {
         const { useAuthStore } = await import('@/features/auth/store/auth.store');
         const { useOnboardingStore } = await import('@/features/onboarding/store/onboarding.store');
 
-        const [tokens, isGuest] = await Promise.all([
+        const [tokens, isGuest, guestSessionId] = await Promise.all([
           secureStorage.getTokens(),
           asyncStorage.getItem<boolean>(STORAGE_KEYS.GUEST_SESSION),
+          asyncStorage.getItem<string>(STORAGE_KEYS.GUEST_SESSION_ID),
           useOnboardingStore.getState().loadFromStorage(),
         ]);
 
         if (tokens) {
           useAuthStore.getState().setTokens(tokens);
         } else if (isGuest) {
-          useAuthStore.getState().setGuestSession(true);
+          useAuthStore.getState().setGuestSession(true, guestSessionId);
         }
       } catch (e) {
         console.warn('App init error:', e);

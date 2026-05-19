@@ -18,8 +18,9 @@ const processingSteps = [
 export function AiReviewScreen() {
   const { colors, spacing } = useTheme();
   const router = useRouter();
-  const { caseId, name, size, uri, mimeType, errorType } = useLocalSearchParams<{
+  const { caseId, guestSessionId, name, size, uri, mimeType, errorType } = useLocalSearchParams<{
     caseId?: string;
+    guestSessionId?: string;
     name?: string;
     size?: string;
     uri?: string;
@@ -28,7 +29,7 @@ export function AiReviewScreen() {
   }>();
   const [stepIndex, setStepIndex] = useState(0);
   const [hasShownAllSteps, setHasShownAllSteps] = useState(false);
-  const reviewQuery = useAiReview(caseId || 'mock-review');
+  const reviewQuery = useAiReview(caseId || '', guestSessionId);
   const review = reviewQuery.data;
   const isComplete = review?.status === 'complete' && hasShownAllSteps;
   const configuredErrorType =
@@ -64,16 +65,23 @@ export function AiReviewScreen() {
   const handleRetry = () => {
     setStepIndex(0);
     setHasShownAllSteps(false);
-    router.replace({
-      pathname: '/(main)/ai-review',
-      params: {
-        caseId: `mock-${Date.now()}`,
-        name,
-        size,
-        uri,
-        mimeType,
-      },
-    });
+
+    if (configuredErrorType) {
+      router.replace({
+        pathname: '/(main)/ai-review',
+        params: {
+          caseId,
+          guestSessionId,
+          name,
+          size,
+          uri,
+          mimeType,
+        },
+      });
+      return;
+    }
+
+    reviewQuery.refetch();
   };
 
   useEffect(() => {

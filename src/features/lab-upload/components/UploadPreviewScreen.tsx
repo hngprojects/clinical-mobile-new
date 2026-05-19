@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, StyleSheet, View } from 'react-native';
 
+import { useAuthStore } from '@/features/auth/store/auth.store';
 import {
   Button,
   Screen,
@@ -13,6 +14,7 @@ import {
 } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
+import { useUploadLabResult } from '../hooks/useUploadLabResult';
 import { FileSizeMessage, FlowErrorScreen } from './FlowErrorScreen';
 
 const UPLOAD_LOADING_DURATION_MS = 2400;
@@ -20,6 +22,9 @@ const UPLOAD_LOADING_DURATION_MS = 2400;
 export function UploadPreviewScreen() {
   const { colors, spacing } = useTheme();
   const router = useRouter();
+  const guestSessionId = useAuthStore((s) => s.guestSessionId);
+  const uploadMutation = useUploadLabResult();
+  const lastUploadUriRef = useRef<string | null>(null);
   const { name, size, uri, mimeType, errorType } = useLocalSearchParams<{
     name?: string;
     size?: string;
@@ -41,12 +46,27 @@ export function UploadPreviewScreen() {
     (fileMimeType?.startsWith('image/') ||
       ['JPG', 'JPEG', 'PNG', 'HEIC', 'WEBP'].includes(fileType));
   const isPdfPreview = fileMimeType === 'application/pdf' || fileType === 'PDF';
+  const isUploadProcessing = isUploading || (hasSelectedFile && uploadMutation.isPending);
+  const canRequestAiReview = hasSelectedFile && uploadMutation.isSuccess;
 
   useEffect(() => {
     setIsUploading(true);
     const timeout = setTimeout(() => setIsUploading(false), UPLOAD_LOADING_DURATION_MS);
     return () => clearTimeout(timeout);
   }, [fileName, fileSize, fileUri]);
+
+  useEffect(() => {
+    if (!hasSelectedFile || !fileUri || lastUploadUriRef.current === fileUri) return;
+
+    lastUploadUriRef.current = fileUri;
+    uploadMutation.mutate({
+      file: {
+        name: fileName,
+        url: fileUri,
+      },
+      guest_session_id: guestSessionId,
+    });
+  }, [fileName, fileUri, guestSessionId, hasSelectedFile, uploadMutation]);
 
   const handleUploadAnother = (file: UploadedFile) => {
     router.replace({
@@ -68,10 +88,13 @@ export function UploadPreviewScreen() {
   };
 
   const handleGetAiReview = () => {
+    if (!canRequestAiReview) return;
+
     router.push({
       pathname: '/(main)/ai-review',
       params: {
-        caseId: `mock-${Date.now()}`,
+        caseId: uploadMutation.data.case_id,
+        guestSessionId: guestSessionId ?? undefined,
         name: fileName,
         size: fileSize,
         uri: fileUri,
@@ -98,6 +121,26 @@ export function UploadPreviewScreen() {
               'Please select a different file or try uploading the file again.'
             )
           }
+          onClose={handleBack}
+          onRetry={() => setShowUploadSheet(true)}
+          showDisabledAiReview
+        />
+        <UploadBottomSheet
+          visible={showUploadSheet}
+          onClose={() => setShowUploadSheet(false)}
+          onUpload={handleUploadAnother}
+          onUploadError={handleUploadError}
+        />
+      </>
+    );
+  }
+
+  if (uploadMutation.isError && !isUploadProcessing) {
+    return (
+      <>
+        <FlowErrorScreen
+          title="There was a problem uploading your lab result"
+          message="Please select a different file or try uploading the file again."
           onClose={handleBack}
           onRetry={() => setShowUploadSheet(true)}
           showDisabledAiReview
@@ -156,7 +199,7 @@ export function UploadPreviewScreen() {
               ) : (
                 <ReportPreview />
               )}
-              {isUploading ? (
+              {isUploadProcessing ? (
                 <View style={styles.uploadOverlay}>
                   <ActivityIndicator color="#FFFFFF" size="large" />
                 </View>
@@ -167,16 +210,19 @@ export function UploadPreviewScreen() {
           <View style={styles.actions}>
             <Button
               label="Get AI Review"
-              disabled={isUploading}
+              disabled={isUploadProcessing || !canRequestAiReview}
               onPress={handleGetAiReview}
               style={[
                 styles.actionButton,
-                { backgroundColor: isUploading ? '#F5F5F5' : colors.primary },
+                {
+                  backgroundColor:
+                    isUploadProcessing || !canRequestAiReview ? '#F5F5F5' : colors.primary,
+                },
               ]}
-              textColor={isUploading ? '#767676' : '#FFFFFF'}
+              textColor={isUploadProcessing || !canRequestAiReview ? '#767676' : '#FFFFFF'}
             />
 
-            {!isUploading ? (
+            {!isUploadProcessing ? (
               <Button
                 label="Upload Another"
                 variant="outline"
