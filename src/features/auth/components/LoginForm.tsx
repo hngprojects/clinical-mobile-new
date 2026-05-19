@@ -7,6 +7,7 @@ import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { Button, FormField, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
+import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { LoginFormData, loginSchema } from '../schemas/auth.schemas';
 
 export function LoginForm({ mutation, onInteract }: { mutation: any; onInteract?: () => void }) {
@@ -14,6 +15,8 @@ export function LoginForm({ mutation, onInteract }: { mutation: any; onInteract?
   const { mutate: login, isPending } = mutation;
   const [showPassword, setShowPassword] = useState(false);
   const passwordRef = useRef<any>(null);
+
+  const { startGoogleAuth, isPending: isGooglePending } = useGoogleAuth();
 
   const { control, handleSubmit, watch } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -24,8 +27,12 @@ export function LoginForm({ mutation, onInteract }: { mutation: any; onInteract?
   const passwordValue = watch('password');
   const onSubmit = (data: LoginFormData) => login(data);
 
-  const handleSocialPress = (provider: string) => {
-    alert(`${provider} login is coming soon!`);
+  const handleSocialPress = async (provider: string) => {
+    if (provider === 'Google') {
+      await startGoogleAuth();
+    } else {
+      alert(`${provider} login is coming soon!`);
+    }
   };
 
   const has8Chars = passwordValue.length >= 8;
@@ -130,15 +137,18 @@ export function LoginForm({ mutation, onInteract }: { mutation: any; onInteract?
 
         <View style={{ gap: 16 }}>
           <Button
-            label="Google"
+            label={isGooglePending ? 'Connecting...' : 'Google'}
             variant="outline"
             onPress={() => handleSocialPress('Google')}
+            isLoading={isGooglePending}
             style={styles.socialIconButton}
             leftIcon={
-              <Image
-                source={require('../../../../assets/images/auth/Google.png')}
-                style={{ width: 24, height: 24 }}
-              />
+              !isGooglePending && (
+                <Image
+                  source={require('../../../../assets/images/auth/Google.png')}
+                  style={{ width: 24, height: 24 }}
+                />
+              )
             }
             textColor={colors.textSecondary}
           />

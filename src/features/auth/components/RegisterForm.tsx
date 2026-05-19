@@ -7,6 +7,7 @@ import { StyleSheet, View, Pressable, Image } from 'react-native';
 import { Button, FormField, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
+import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { useRegister } from '../hooks/useRegister';
 import { registerSchema, RegisterFormData } from '../schemas/auth.schemas';
 
@@ -14,6 +15,8 @@ export function RegisterForm() {
   const { spacing, colors } = useTheme();
   const { mutate: register, isPending, error } = useRegister();
   const [showPassword, setShowPassword] = useState(false);
+
+  const { startGoogleAuth, isPending: isGooglePending } = useGoogleAuth();
 
   const lastNameRef = useRef<any>(null);
   const emailRef = useRef<any>(null);
@@ -35,8 +38,12 @@ export function RegisterForm() {
   const passwordValue = watch('password');
   const onSubmit = (data: RegisterFormData) => register(data);
 
-  const handleSocialPress = (provider: string) => {
-    alert(`${provider} registration is coming soon!`);
+  const handleSocialPress = async (provider: string) => {
+    if (provider === 'Google') {
+      await startGoogleAuth();
+    } else {
+      alert(`${provider} registration is coming soon!`);
+    }
   };
 
   // Password validation logic
@@ -150,15 +157,18 @@ export function RegisterForm() {
 
       <View style={{ gap: spacing.md }}>
         <Button
-          label="Google"
+          label={isGooglePending ? 'Connecting...' : 'Google'}
           variant="outline"
           onPress={() => handleSocialPress('Google')}
+          isLoading={isGooglePending}
           style={styles.socialIconButton}
           leftIcon={
-            <Image
-              source={require('../../../../assets/images/auth/Google.png')}
-              style={{ width: 20, height: 20 }}
-            />
+            !isGooglePending && (
+              <Image
+                source={require('../../../../assets/images/auth/Google.png')}
+                style={{ width: 20, height: 20 }}
+              />
+            )
           }
           textColor={colors.textSecondary}
         />
@@ -195,8 +205,6 @@ function ValidationItem({ label, isValid }: { label: string; isValid: boolean })
 
 const styles = StyleSheet.create({
   container: { width: '100%' },
-  row: { flexDirection: 'row' },
-  flex: { flex: 1 },
   validationList: {
     gap: 4,
     marginTop: -8,
