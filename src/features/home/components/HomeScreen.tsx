@@ -10,6 +10,7 @@ import { HomeHeader } from './HomeHeader';
 import { Insight } from './InsightCard';
 import { RecentInsightsSection } from './RecentInsightsSection';
 import { UploadCard } from './UploadCard';
+import { UploadBottomSheet, UploadedFile, UploadError } from '@/shared/components';
 
 const MOCK_INSIGHTS: Insight[] = [
   { id: '1', title: 'Hormone Health Discussion', timestamp: '2 mins ago' },
@@ -22,6 +23,26 @@ export function HomeScreen() {
   const { user, isGuest } = useHome();
   const router = useRouter();
   const [insights, setInsights] = useState<Insight[]>(MOCK_INSIGHTS);
+  const [showUploadSheet, setShowUploadSheet] = useState(false);
+
+  const handleUpload = (file: UploadedFile) => {
+    router.push({
+      pathname: '/(main)/preview-upload',
+      params: {
+        name: file.name,
+        size: file.size,
+        uri: file.uri,
+        mimeType: file.mimeType,
+      },
+    });
+  };
+
+  const handleUploadError = (error: UploadError) => {
+    router.push({
+      pathname: '/(main)/preview-upload',
+      params: { errorType: error.type },
+    });
+  };
 
   const handleRename = (id: string, newTitle: string) => {
     setInsights((prev) => prev.map((i) => (i.id === id ? { ...i, title: newTitle } : i)));
@@ -32,22 +53,31 @@ export function HomeScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.fill, { backgroundColor: colors.background }]} edges={['top']}>
-      <HomeHeader name={isGuest ? 'Guest' : (user?.firstName ?? 'User')} />
-      <ScrollView
-        style={styles.fill}
-        contentContainerStyle={{ gap: spacing.lg, paddingBottom: spacing.xl }}
-        showsVerticalScrollIndicator={false}
-      >
-        <UploadCard onUpload={() => router.push('/(main)/preview-upload')} />
-        <RecentInsightsSection
-          insights={insights}
-          onViewAll={() => router.push('/(main)/insights')}
-          onRename={handleRename}
-          onDelete={handleDelete}
-        />
-      </ScrollView>
-    </SafeAreaView>
+    <>
+      <SafeAreaView style={[styles.fill, { backgroundColor: colors.background }]} edges={['top']}>
+        <HomeHeader name={isGuest ? 'Guest' : (user?.firstName ?? 'User')} />
+        <ScrollView
+          style={styles.fill}
+          contentContainerStyle={{ gap: spacing.lg, paddingBottom: spacing.xl }}
+          showsVerticalScrollIndicator={false}
+        >
+          <UploadCard onUpload={() => setShowUploadSheet(true)} />
+          <RecentInsightsSection
+            insights={insights}
+            onViewAll={() => router.push('/(main)/insights')}
+            onRename={handleRename}
+            onDelete={handleDelete}
+          />
+        </ScrollView>
+      </SafeAreaView>
+
+      <UploadBottomSheet
+        visible={showUploadSheet}
+        onClose={() => setShowUploadSheet(false)}
+        onUpload={handleUpload}
+        onUploadError={handleUploadError}
+      />
+    </>
   );
 }
 
