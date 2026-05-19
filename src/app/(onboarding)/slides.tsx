@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { OnboardingPager, SLIDES } from '@/features/onboarding';
 import { useAuthStore } from '@/features/auth/store/auth.store';
 import { useOnboardingStore } from '@/features/onboarding/store/onboarding.store';
-import { Screen, UploadBottomSheet } from '@/shared/components';
+import { Screen, UploadBottomSheet, UploadedFile, UploadError } from '@/shared/components';
 
 export default function SlidesScreen() {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -22,12 +22,26 @@ export default function SlidesScreen() {
     setShowUploadSheet(true);
   };
 
-  const handleUpload = async (fileName: string, fileSize: string) => {
+  const handleUpload = async (file: UploadedFile) => {
     await completeOnboarding();
     startGuestSession();
     router.replace({
       pathname: '/(main)/preview-upload',
-      params: { name: fileName, size: fileSize },
+      params: {
+        name: file.name,
+        size: file.size,
+        uri: file.uri,
+        mimeType: file.mimeType,
+      },
+    });
+  };
+
+  const handleUploadError = async (error: UploadError) => {
+    await completeOnboarding();
+    startGuestSession();
+    router.replace({
+      pathname: '/(main)/preview-upload',
+      params: { errorType: error.type },
     });
   };
 
@@ -50,6 +64,7 @@ export default function SlidesScreen() {
         visible={showUploadSheet}
         onClose={() => setShowUploadSheet(false)}
         onUpload={handleUpload}
+        onUploadError={handleUploadError}
       />
     </Screen>
   );

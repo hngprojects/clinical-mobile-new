@@ -20,6 +20,7 @@ interface ScreenProps extends ViewProps {
   padding?: boolean;
   keyboardAvoiding?: boolean;
   scrollContentContainerStyle?: StyleProp<ViewStyle>;
+  backgroundColor?: string;
 }
 
 export function Screen({
@@ -28,6 +29,7 @@ export function Screen({
   edges = ['top', 'bottom'],
   padding = false,
   scrollContentContainerStyle,
+  backgroundColor,
   style,
   keyboardAvoiding = false,
   ...props
@@ -49,7 +51,10 @@ export function Screen({
   );
 
   return (
-    <SafeAreaView style={[styles.fill, { backgroundColor: colors.background }]} edges={edges}>
+    <SafeAreaView
+      style={[styles.fill, { backgroundColor: backgroundColor ?? colors.background }]}
+      edges={edges}
+    >
       {keyboardAvoiding ? (
         <KeyboardAvoidingView
           style={styles.fill}

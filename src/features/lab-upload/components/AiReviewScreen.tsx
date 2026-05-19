@@ -1,10 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { Screen, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
+
+import { FlowErrorScreen } from './FlowErrorScreen';
+import { useAiReview } from '../hooks/useAiReview';
 
 const processingSteps = [
   'Extracting data from your file...',
@@ -15,24 +18,87 @@ const processingSteps = [
 export function AiReviewScreen() {
   const { colors, spacing } = useTheme();
   const router = useRouter();
+  const { caseId, name, size, uri, mimeType, errorType } = useLocalSearchParams<{
+    caseId?: string;
+    name?: string;
+    size?: string;
+    uri?: string;
+    mimeType?: string;
+    errorType?: string;
+  }>();
   const [stepIndex, setStepIndex] = useState(0);
-  const [isComplete, setIsComplete] = useState(false);
+  const [hasShownAllSteps, setHasShownAllSteps] = useState(false);
+  const reviewQuery = useAiReview(caseId || 'mock-review');
+  const review = reviewQuery.data;
+  const isComplete = review?.status === 'complete' && hasShownAllSteps;
+  const configuredErrorType =
+    errorType === 'network' || errorType === 'system' ? errorType : undefined;
+  const failedErrorType = review?.status === 'failed' ? 'system' : undefined;
+  const queryErrorType = reviewQuery.isError ? 'network' : undefined;
+  const visibleErrorType = hasShownAllSteps
+    ? configuredErrorType || failedErrorType || queryErrorType
+    : undefined;
 
   useEffect(() => {
-    if (isComplete) return;
-
     const id = setInterval(() => {
       setStepIndex((current) => {
         if (current >= processingSteps.length - 1) {
-          setIsComplete(true);
-          return current;
+          setHasShownAllSteps(true);
+          return 0;
         }
+
         return current + 1;
       });
     }, 1200);
 
     return () => clearInterval(id);
-  }, [isComplete]);
+  }, []);
+
+  const handleBackToPreview = () => {
+    router.replace({
+      pathname: '/(main)/preview-upload',
+      params: { name, size, uri, mimeType },
+    });
+  };
+
+  const handleRetry = () => {
+    setStepIndex(0);
+    setHasShownAllSteps(false);
+    router.replace({
+      pathname: '/(main)/ai-review',
+      params: {
+        caseId: `mock-${Date.now()}`,
+        name,
+        size,
+        uri,
+        mimeType,
+      },
+    });
+  };
+
+  useEffect(() => {
+    if (isComplete) {
+      router.replace('/(main)/chat-review');
+    }
+  }, [isComplete, router]);
+
+  if (visibleErrorType) {
+    const isNetworkError = visibleErrorType === 'network';
+
+    return (
+      <FlowErrorScreen
+        title={isNetworkError ? 'There was an issue processing your file' : 'Something went wrong.'}
+        message={
+          isNetworkError
+            ? "We couldn't connect to the server.\nPlease check your internet connection and try again."
+            : 'The system encountered an issue.\nPlease try again later.'
+        }
+        icon={isNetworkError ? 'network' : 'warning'}
+        onClose={handleBackToPreview}
+        onRetry={handleRetry}
+      />
+    );
+  }
 
   return (
     <Screen edges={['top', 'bottom']}>
@@ -41,60 +107,23 @@ export function AiReviewScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Go back"
-            onPress={() => router.back()}
+            onPress={handleBackToPreview}
             hitSlop={12}
+            style={styles.backButton}
           >
-            <Ionicons name="chevron-back" size={34} color="#111827" />
+            <Ionicons name="chevron-back" size={24} color="#111827" />
           </Pressable>
           <Typography variant="h2" color={colors.textSecondary} style={styles.headerTitle}>
             AI Review
           </Typography>
         </View>
 
-        {isComplete ? (
-          <View style={[styles.resultBody, { gap: spacing.lg }]}>
-            <View style={[styles.successHalo, { backgroundColor: colors.primarySubtle }]}>
-              <View style={[styles.successInner, { backgroundColor: colors.primary }]}>
-                <Ionicons name="checkmark" size={54} color="#FFFFFF" />
-              </View>
-            </View>
-            <Typography variant="h1" align="center" style={styles.resultTitle}>
-              Your AI review is ready
-            </Typography>
-            <Typography
-              variant="body1"
-              color={colors.textSecondary}
-              align="center"
-              style={styles.resultCopy}
-            >
-              We found 8 markers within range and 2 markers that may need attention.
-            </Typography>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => router.replace('/(main)/insights')}
-              style={({ pressed }) => [
-                styles.primaryButton,
-                { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 },
-              ]}
-            >
-              <Typography variant="h3" style={styles.primaryButtonText}>
-                View Results
-              </Typography>
-            </Pressable>
-          </View>
-        ) : (
-          <View style={styles.processingBody}>
-            <ActivityIndicator color={colors.primary} size="small" />
-            <Typography
-              variant="h2"
-              color={colors.textSecondary}
-              align="center"
-              style={styles.processingText}
-            >
-              {processingSteps[stepIndex]}
-            </Typography>
-          </View>
-        )}
+        <View style={styles.processingBody}>
+          <ActivityIndicator color={colors.primary} size="small" />
+          <Typography variant="h2" align="center" style={styles.processingText}>
+            {processingSteps[stepIndex]}
+          </Typography>
+        </View>
       </View>
     </Screen>
   );
@@ -103,15 +132,27 @@ export function AiReviewScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+    paddingTop: 4,
   },
   header: {
-    minHeight: 96,
+    height: 32,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingVertical: 4,
+  },
+  backButton: {
+    alignItems: 'center',
+    height: 24,
+    justifyContent: 'center',
+    width: 24,
   },
   headerTitle: {
-    fontWeight: '500',
+    fontFamily: 'Inter_400Regular',
+    fontSize: 16,
+    fontWeight: '400',
+    letterSpacing: -0.16,
+    lineHeight: 24,
   },
   processingBody: {
     flex: 1,
@@ -121,44 +162,12 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   processingText: {
+    color: '#767676',
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
     fontWeight: '400',
-  },
-  resultBody: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingBottom: 96,
-  },
-  successHalo: {
-    width: 206,
-    height: 206,
-    borderRadius: 103,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  successInner: {
-    width: 118,
-    height: 118,
-    borderRadius: 59,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  resultTitle: {
-    maxWidth: 340,
-  },
-  resultCopy: {
-    maxWidth: 340,
-  },
-  primaryButton: {
-    minHeight: 64,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'stretch',
-    marginTop: 8,
-  },
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '500',
+    letterSpacing: -0.14,
+    lineHeight: 21,
+    textAlign: 'center',
   },
 });

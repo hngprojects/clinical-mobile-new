@@ -8,3 +8,4 @@ export { Screen } from './Screen';
 export { TextInput } from './TextInput';
 export { Typography } from './Typography';
 export { UploadBottomSheet } from './UploadBottomSheet';
+export type { UploadedFile, UploadError } from './UploadBottomSheet';

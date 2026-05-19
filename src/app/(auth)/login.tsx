@@ -6,7 +6,13 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-na
 import { LoginForm } from '@/features/auth';
 import { useLogin } from '@/features/auth/hooks/useLogin';
 import { useAuthStore } from '@/features/auth/store/auth.store';
-import { Screen, Typography, UploadBottomSheet } from '@/shared/components';
+import {
+  Screen,
+  Typography,
+  UploadBottomSheet,
+  UploadedFile,
+  UploadError,
+} from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 export default function LoginScreen() {
@@ -20,11 +26,24 @@ export default function LoginScreen() {
     setShowUploadSheet(true);
   };
 
-  const handleUpload = (fileName: string, fileSize: string) => {
+  const handleUpload = (file: UploadedFile) => {
     startGuestSession();
     router.replace({
       pathname: '/(main)/preview-upload',
-      params: { name: fileName, size: fileSize },
+      params: {
+        name: file.name,
+        size: file.size,
+        uri: file.uri,
+        mimeType: file.mimeType,
+      },
+    });
+  };
+
+  const handleUploadError = (error: UploadError) => {
+    startGuestSession();
+    router.replace({
+      pathname: '/(main)/preview-upload',
+      params: { errorType: error.type },
     });
   };
 
@@ -114,6 +133,7 @@ export default function LoginScreen() {
         visible={showUploadSheet}
         onClose={() => setShowUploadSheet(false)}
         onUpload={handleUpload}
+        onUploadError={handleUploadError}
       />
     </>
   );

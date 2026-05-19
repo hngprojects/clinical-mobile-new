@@ -5,6 +5,7 @@ import {
   PressableProps,
   StyleProp,
   StyleSheet,
+  TextStyle,
   View,
   ViewStyle,
 } from 'react-native';
@@ -22,6 +23,7 @@ interface ButtonProps extends Omit<PressableProps, 'style'> {
   leftIcon?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   textColor?: string;
+  textStyle?: StyleProp<TextStyle>;
 }
 
 export function Button({
@@ -32,6 +34,7 @@ export function Button({
   disabled,
   style,
   textColor: customTextColor,
+  textStyle,
   ...props
 }: ButtonProps) {
   const { colors, spacing } = useTheme();
@@ -73,7 +76,7 @@ export function Button({
             <Typography
               variant="body1"
               color={textColor}
-              style={[styles.label, variant === 'outline' && { fontWeight: '500' }]}
+              style={[styles.label, variant === 'outline' && { fontWeight: '500' }, textStyle]}
             >
               {label}
             </Typography>

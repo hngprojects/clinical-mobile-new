@@ -19,12 +19,37 @@ import { Typography } from './Typography';
 interface UploadBottomSheetProps {
   visible: boolean;
   onClose: () => void;
-  onUpload: (fileName: string, fileSize: string) => void;
+  onUpload: (file: UploadedFile) => void;
+  onUploadError?: (error: UploadError) => void;
 }
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const MAX_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024;
+const ACCEPTED_DOCUMENT_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
+const ACCEPTED_EXTENSIONS = ['PDF', 'JPG', 'JPEG', 'PNG'];
 
-export function UploadBottomSheet({ visible, onClose, onUpload }: UploadBottomSheetProps) {
+export interface UploadedFile {
+  name: string;
+  size: string;
+  sizeBytes?: number;
+  uri: string;
+  mimeType?: string;
+}
+
+export type UploadErrorType = 'upload-failed' | 'file-size' | 'file-type';
+
+export interface UploadError {
+  type: UploadErrorType;
+  fileName?: string;
+  fileSize?: string;
+}
+
+export function UploadBottomSheet({
+  visible,
+  onClose,
+  onUpload,
+  onUploadError,
+}: UploadBottomSheetProps) {
   const { colors } = useTheme();
   const [showSourceSheet, setShowSourceSheet] = useState(false);
 
@@ -106,15 +131,40 @@ export function UploadBottomSheet({ visible, onClose, onUpload }: UploadBottomSh
     });
   };
 
-  const dismissAllAndUpload = (fileName: string, fileSize: string) => {
+  const dismissAllAndUpload = (file: UploadedFile) => {
     Animated.timing(slideAnim, {
       toValue: SCREEN_HEIGHT,
       duration: 220,
       useNativeDriver: true,
     }).start(() => {
       onClose();
-      onUpload(fileName, fileSize);
+      onUpload(file);
     });
+  };
+
+  const dismissAllAndError = (error: UploadError) => {
+    Animated.timing(slideAnim, {
+      toValue: SCREEN_HEIGHT,
+      duration: 220,
+      useNativeDriver: true,
+    }).start(() => {
+      onClose();
+      onUploadError?.(error);
+    });
+  };
+
+  const formatFileSize = (sizeBytes?: number, fallback = '0.8MB') =>
+    sizeBytes ? `${(sizeBytes / (1024 * 1024)).toFixed(1)}MB` : fallback;
+
+  const isOversized = (sizeBytes?: number) =>
+    typeof sizeBytes === 'number' && sizeBytes > MAX_UPLOAD_SIZE_BYTES;
+
+  const isSupportedFileType = (fileName: string, mimeType?: string) => {
+    const extension = fileName.split('.').pop()?.toUpperCase();
+    return (
+      (mimeType ? ACCEPTED_DOCUMENT_TYPES.includes(mimeType) : false) ||
+      (extension ? ACCEPTED_EXTENSIONS.includes(extension) : false)
+    );
   };
 
   const handleTakePhoto = async () => {
@@ -134,14 +184,24 @@ export function UploadBottomSheet({ visible, onClose, onUpload }: UploadBottomSh
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const asset = result.assets[0];
         const fileName = asset.fileName || 'camera_photo.jpg';
-        const fileSize = asset.fileSize
-          ? `${(asset.fileSize / (1024 * 1024)).toFixed(1)}MB`
-          : '1.2MB';
+        const fileSize = formatFileSize(asset.fileSize, '1.2MB');
 
-        dismissAllAndUpload(fileName, fileSize);
+        if (isOversized(asset.fileSize)) {
+          dismissAllAndError({ type: 'file-size', fileName, fileSize });
+          return;
+        }
+
+        dismissAllAndUpload({
+          name: fileName,
+          size: fileSize,
+          sizeBytes: asset.fileSize,
+          uri: asset.uri,
+          mimeType: asset.mimeType || 'image/jpeg',
+        });
       }
     } catch (err) {
       console.warn('Camera error:', err);
+      dismissAllAndError({ type: 'upload-failed' });
     }
   };
 
@@ -162,33 +222,60 @@ export function UploadBottomSheet({ visible, onClose, onUpload }: UploadBottomSh
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const asset = result.assets[0];
         const fileName = asset.fileName || 'gallery_photo.jpg';
-        const fileSize = asset.fileSize
-          ? `${(asset.fileSize / (1024 * 1024)).toFixed(1)}MB`
-          : '1.5MB';
+        const fileSize = formatFileSize(asset.fileSize, '1.5MB');
 
-        dismissAllAndUpload(fileName, fileSize);
+        if (isOversized(asset.fileSize)) {
+          dismissAllAndError({ type: 'file-size', fileName, fileSize });
+          return;
+        }
+
+        dismissAllAndUpload({
+          name: fileName,
+          size: fileSize,
+          sizeBytes: asset.fileSize,
+          uri: asset.uri,
+          mimeType: asset.mimeType || 'image/jpeg',
+        });
       }
     } catch (err) {
       console.warn('Photo library error:', err);
+      dismissAllAndError({ type: 'upload-failed' });
     }
   };
 
   const handleBrowseFiles = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: '*/*',
+        type: ACCEPTED_DOCUMENT_TYPES,
         copyToCacheDirectory: true,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const file = result.assets[0];
         const fileName = file.name;
-        const fileSize = file.size ? `${(file.size / (1024 * 1024)).toFixed(1)}MB` : '0.8MB';
+        const fileSize = formatFileSize(file.size);
 
-        dismissAllAndUpload(fileName, fileSize);
+        if (!isSupportedFileType(fileName, file.mimeType)) {
+          dismissAllAndError({ type: 'file-type', fileName, fileSize });
+          return;
+        }
+
+        if (isOversized(file.size)) {
+          dismissAllAndError({ type: 'file-size', fileName, fileSize });
+          return;
+        }
+
+        dismissAllAndUpload({
+          name: fileName,
+          size: fileSize,
+          sizeBytes: file.size,
+          uri: file.uri,
+          mimeType: file.mimeType,
+        });
       }
     } catch (err) {
       console.warn('Document picker error:', err);
+      dismissAllAndError({ type: 'upload-failed' });
     }
   };
 

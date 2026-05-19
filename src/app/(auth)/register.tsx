@@ -4,7 +4,13 @@ import { View, Pressable } from 'react-native';
 
 import { RegisterForm } from '@/features/auth';
 import { useAuthStore } from '@/features/auth/store/auth.store';
-import { Screen, Typography, UploadBottomSheet } from '@/shared/components';
+import {
+  Screen,
+  Typography,
+  UploadBottomSheet,
+  UploadedFile,
+  UploadError,
+} from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 export default function RegisterScreen() {
@@ -16,11 +22,24 @@ export default function RegisterScreen() {
     setShowUploadSheet(true);
   };
 
-  const handleUpload = (fileName: string, fileSize: string) => {
+  const handleUpload = (file: UploadedFile) => {
     startGuestSession();
     router.replace({
       pathname: '/(main)/preview-upload',
-      params: { name: fileName, size: fileSize },
+      params: {
+        name: file.name,
+        size: file.size,
+        uri: file.uri,
+        mimeType: file.mimeType,
+      },
+    });
+  };
+
+  const handleUploadError = (error: UploadError) => {
+    startGuestSession();
+    router.replace({
+      pathname: '/(main)/preview-upload',
+      params: { errorType: error.type },
     });
   };
 
@@ -116,6 +135,7 @@ export default function RegisterScreen() {
         visible={showUploadSheet}
         onClose={() => setShowUploadSheet(false)}
         onUpload={handleUpload}
+        onUploadError={handleUploadError}
       />
     </>
   );

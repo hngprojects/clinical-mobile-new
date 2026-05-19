@@ -86,6 +86,7 @@ export default function MainLayout() {
         options={{
           href: null,
           headerShown: false,
+          tabBarStyle: { display: 'none' },
         }}
       />
       <Tabs.Screen
@@ -93,6 +94,15 @@ export default function MainLayout() {
         options={{
           href: null,
           headerShown: false,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
+      <Tabs.Screen
+        name="chat-review"
+        options={{
+          href: null,
+          headerShown: false,
+          tabBarStyle: { display: 'none' },
         }}
       />
     </Tabs>
