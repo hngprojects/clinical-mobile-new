@@ -4,9 +4,14 @@ import { Screen } from '@/shared/components';
 import { VerifyOtp } from '@/features/auth';
 
 export default function VerifyOtpScreen() {
-  const { email, expiresInSeconds } = useLocalSearchParams<{ email?: string; expiresInSeconds?: string }>();
+  const { email, expiresInSeconds } = useLocalSearchParams<{
+    email?: string;
+    expiresInSeconds?: string;
+  }>();
   const parsedExpiresInSeconds = Number(expiresInSeconds);
-  const countdownSeconds = Number.isFinite(parsedExpiresInSeconds) ? parsedExpiresInSeconds : undefined;
+  const countdownSeconds = Number.isFinite(parsedExpiresInSeconds)
+    ? parsedExpiresInSeconds
+    : undefined;
 
   return (
     <>
