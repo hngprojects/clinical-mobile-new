@@ -11,12 +11,21 @@ import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { LoginFormData, loginSchema } from '../schemas/auth.schemas';
 
 interface LoginFormProps {
-  mutation: any;
+  mutation: {
+    mutate: (data: LoginFormData) => void;
+    isPending: boolean;
+  };
+  onForgotPassword?: () => void;
   onContinueAsGuest?: () => void;
   onInteract?: () => void;
 }
 
-export function LoginForm({ mutation, onContinueAsGuest, onInteract }: LoginFormProps) {
+export function LoginForm({
+  mutation,
+  onForgotPassword,
+  onContinueAsGuest,
+  onInteract,
+}: LoginFormProps) {
   const { colors, spacing } = useTheme();
   const { mutate: login, isPending } = mutation;
   const [showPassword, setShowPassword] = useState(false);
@@ -83,7 +92,7 @@ export function LoginForm({ mutation, onContinueAsGuest, onInteract }: LoginForm
               </Pressable>
             }
           />
-          <Pressable style={styles.forgotPassword} onPress={() => {}}>
+          <Pressable style={styles.forgotPassword} onPress={onForgotPassword}>
             <Typography
               variant="body2"
               color={colors.primary}

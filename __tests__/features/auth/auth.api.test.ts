@@ -137,6 +137,43 @@ describe('authApi', () => {
     expect(mockPost).toHaveBeenCalledWith('/api/v1/auth/refresh');
   });
 
+  it('requests password reset through the backend', async () => {
+    mockPost.mockResolvedValueOnce({
+      data: {
+        status: 'success',
+        message: 'If an account exists for this email, reset instructions have been sent.',
+        data: null,
+      },
+    });
+
+    await expect(authApi.resetPassword({ email: 'jane@example.com' })).resolves.toEqual({
+      message: 'If an account exists for this email, reset instructions have been sent.',
+    });
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/auth/forgot-password', {
+      email: 'jane@example.com',
+    });
+  });
+
+  it('completes password reset through the backend', async () => {
+    mockPost.mockResolvedValueOnce({
+      data: {
+        status: 'success',
+        message: 'Password reset successfully. You can now log in.',
+        data: null,
+      },
+    });
+
+    await expect(
+      authApi.completePasswordReset({ token: 'reset-token', password: 'Password1' }),
+    ).resolves.toEqual({
+      message: 'Password reset successfully. You can now log in.',
+    });
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/auth/reset-password', {
+      token: 'reset-token',
+      password: 'Password1',
+    });
+  });
+
   it('restores the current user profile', async () => {
     mockGet.mockResolvedValueOnce({
       data: { status: 'success', message: 'ok', data: backendUser },
