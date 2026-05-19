@@ -1,14 +1,16 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert } from 'react-native';
 
 import { OnboardingPager, SLIDES } from '@/features/onboarding';
+import { useAuthStore } from '@/features/auth/store/auth.store';
 import { useOnboardingStore } from '@/features/onboarding/store/onboarding.store';
-import { Screen } from '@/shared/components';
+import { Screen, UploadBottomSheet, UploadedFile, UploadError } from '@/shared/components';
 
 export default function SlidesScreen() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [showUploadSheet, setShowUploadSheet] = useState(false);
   const { completeOnboarding } = useOnboardingStore();
+  const startGuestSession = useAuthStore((s) => s.startGuestSession);
   const router = useRouter();
 
   const handleGetStarted = async () => {
@@ -17,7 +19,30 @@ export default function SlidesScreen() {
   };
 
   const handleContinueAsGuest = () => {
-    Alert.alert('Coming soon', 'Guest access will be available in a future update.');
+    setShowUploadSheet(true);
+  };
+
+  const handleUpload = async (file: UploadedFile) => {
+    await completeOnboarding();
+    startGuestSession();
+    router.replace({
+      pathname: '/(main)/preview-upload',
+      params: {
+        name: file.name,
+        size: file.size,
+        uri: file.uri,
+        mimeType: file.mimeType,
+      },
+    });
+  };
+
+  const handleUploadError = async (error: UploadError) => {
+    await completeOnboarding();
+    startGuestSession();
+    router.replace({
+      pathname: '/(main)/preview-upload',
+      params: { errorType: error.type },
+    });
   };
 
   const handleLogin = async () => {
@@ -34,6 +59,12 @@ export default function SlidesScreen() {
         onGetStarted={handleGetStarted}
         onContinueAsGuest={handleContinueAsGuest}
         onLogin={handleLogin}
+      />
+      <UploadBottomSheet
+        visible={showUploadSheet}
+        onClose={() => setShowUploadSheet(false)}
+        onUpload={handleUpload}
+        onUploadError={handleUploadError}
       />
     </Screen>
   );

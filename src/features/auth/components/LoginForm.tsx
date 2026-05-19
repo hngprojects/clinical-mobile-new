@@ -16,10 +16,16 @@ interface LoginFormProps {
     isPending: boolean;
   };
   onForgotPassword?: () => void;
+  onContinueAsGuest?: () => void;
   onInteract?: () => void;
 }
 
-export function LoginForm({ mutation, onForgotPassword, onInteract }: LoginFormProps) {
+export function LoginForm({
+  mutation,
+  onForgotPassword,
+  onContinueAsGuest,
+  onInteract,
+}: LoginFormProps) {
   const { colors, spacing } = useTheme();
   const { mutate: login, isPending } = mutation;
   const [showPassword, setShowPassword] = useState(false);
@@ -165,7 +171,7 @@ export function LoginForm({ mutation, onForgotPassword, onInteract }: LoginFormP
           <Button
             label="Continue as guest"
             variant="outline"
-            onPress={() => handleSocialPress('Guest')}
+            onPress={onContinueAsGuest}
             style={styles.socialIconButton}
             textColor={colors.textSecondary}
           />
