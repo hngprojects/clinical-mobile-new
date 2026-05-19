@@ -23,13 +23,14 @@ jobs:
           # Strip CodeRabbit's auto-generated block so its badge doesn't satisfy the check
           stripped=$(printf '%s' "$BODY" | sed -E '/<!-- This is an auto-generated comment: release notes by coderabbit\.ai -->/,/<!-- end of auto-generated comment: release notes by coderabbit\.ai -->/d')
 
-          # Real drag-and-drop uploads land at github.com/user-attachments/{assets,files}/...
-          if echo "$stripped" | grep -Eqi 'github\.com/user-attachments/(assets|files)/[^ )"]+\.(png|jpe?g|gif|webp|mp4|mov|webm)'; then
-            echo "Real screenshot/recording found."
+          # Real drag-and-drop uploads land at github.com/user-attachments/{assets,files}/<id>.
+          # GitHub does not put a file extension on these URLs, so accept them as-is.
+          if echo "$stripped" | grep -Eqi 'github\.com/user-attachments/(assets|files)/[A-Za-z0-9-]+'; then
+            echo "Real screenshot/recording upload found."
             exit 0
           fi
 
-          # Also accept markdown/HTML image or video tags pointing at raster or video (not SVG)
+          # Accept external markdown/HTML image or video tags pointing at a raster or video file (not SVG).
           if echo "$stripped" | grep -Eqi '(!\[[^]]*\]\([^)]+\.(png|jpe?g|gif|webp|mp4|mov|webm)[^)]*\)|<(img|video)[^>]+src=["'"'"'][^"'"'"']+\.(png|jpe?g|gif|webp|mp4|mov|webm))'; then
             echo "Screenshot/recording found."
             exit 0
