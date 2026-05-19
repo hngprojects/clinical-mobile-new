@@ -10,7 +10,16 @@ import { useTheme } from '@/shared/theme';
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { LoginFormData, loginSchema } from '../schemas/auth.schemas';
 
-export function LoginForm({ mutation, onInteract }: { mutation: any; onInteract?: () => void }) {
+interface LoginFormProps {
+  mutation: {
+    mutate: (data: LoginFormData) => void;
+    isPending: boolean;
+  };
+  onForgotPassword?: () => void;
+  onInteract?: () => void;
+}
+
+export function LoginForm({ mutation, onForgotPassword, onInteract }: LoginFormProps) {
   const { colors, spacing } = useTheme();
   const { mutate: login, isPending } = mutation;
   const [showPassword, setShowPassword] = useState(false);
@@ -77,7 +86,7 @@ export function LoginForm({ mutation, onInteract }: { mutation: any; onInteract?
               </Pressable>
             }
           />
-          <Pressable style={styles.forgotPassword} onPress={() => {}}>
+          <Pressable style={styles.forgotPassword} onPress={onForgotPassword}>
             <Typography
               variant="body2"
               color={colors.primary}

@@ -1,43 +1,58 @@
-import { Href, router, Stack } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import React, { useEffect } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
-import { LoginForm } from '@/features/auth';
-import { useLogin } from '@/features/auth/hooks/useLogin';
+import { CompletePasswordResetForm } from '@/features/auth';
+import { useCompletePasswordReset } from '@/features/auth/hooks/useCompletePasswordReset';
 import { Screen, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
-const RESET_PASSWORD_ROUTE = '/(auth)/reset-password' as Href;
-
-export default function LoginScreen() {
-  const { spacing, colors } = useTheme();
-  const loginMutation = useLogin();
+export default function NewPasswordScreen() {
+  const { colors, spacing } = useTheme();
+  const { token } = useLocalSearchParams<{ token?: string | string[] }>();
+  const completeResetMutation = useCompletePasswordReset();
   const bannerY = useSharedValue(-100);
+  const resetToken = (Array.isArray(token) ? (token[0] ?? '') : (token ?? '')).trim();
 
   useEffect(() => {
-    if (loginMutation.error) {
+    if (!resetToken) {
+      router.replace('/(auth)/reset-password');
+    }
+  }, [resetToken]);
+
+  useEffect(() => {
+    if (completeResetMutation.error || completeResetMutation.isSuccess) {
       bannerY.value = withTiming(0, { duration: 300 });
       const timeout = setTimeout(() => {
         bannerY.value = withTiming(-100, { duration: 300 });
-      }, 5000);
+        if (completeResetMutation.isSuccess) {
+          router.replace('/(auth)/login');
+        }
+      }, 2500);
       return () => clearTimeout(timeout);
     }
 
     bannerY.value = withTiming(-100, { duration: 300 });
-  }, [loginMutation.error, bannerY]);
+  }, [completeResetMutation.error, completeResetMutation.isSuccess, bannerY]);
 
   const animatedBannerStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: bannerY.value }],
     opacity: withTiming(bannerY.value === 0 ? 1 : 0),
   }));
 
+  const notificationMessage = completeResetMutation.error
+    ? 'We could not reset your password. Please request a new link and try again.'
+    : completeResetMutation.data?.message || 'Password reset successfully. You can now log in.';
+
+  if (!resetToken) return null;
+
   return (
     <>
-      <Stack.Screen options={{ title: 'Sign In', headerShown: false }} />
+      <Stack.Screen options={{ title: 'New Password', headerShown: false }} />
 
       <View style={styles.bannerContainer}>
-        <Animated.View style={[styles.errorBanner, animatedBannerStyle]}>
+        <Animated.View style={[styles.notificationBanner, animatedBannerStyle]}>
           <Typography
             style={{
               color: '#494949',
@@ -47,26 +62,22 @@ export default function LoginScreen() {
               textAlign: 'center',
             }}
           >
-            {loginMutation.error?.message || 'Something went wrong. Please check your credentials.'}
+            {notificationMessage}
           </Typography>
         </Animated.View>
       </View>
 
       <Screen scrollable padding style={{ backgroundColor: '#FFFFFF' }} keyboardAvoiding>
         <View style={{ marginTop: spacing.xxl, marginBottom: spacing.xl }}>
-          <Typography variant="h1" style={{ fontWeight: '700' }}>
-            Welcome Back
+          <Typography variant="h1" style={{ fontWeight: '700', marginBottom: 4 }}>
+            Create New Password
           </Typography>
-          <Typography variant="body1" style={{ color: colors.textSecondary, marginTop: 4 }}>
-            Insert your details to login to Clinsight
+          <Typography variant="body1" style={{ color: colors.textSecondary }}>
+            Choose a new password for your Clinsight account.
           </Typography>
         </View>
 
-        <LoginForm
-          mutation={loginMutation}
-          onForgotPassword={() => router.push(RESET_PASSWORD_ROUTE)}
-          onInteract={() => loginMutation.reset()}
-        />
+        <CompletePasswordResetForm mutation={completeResetMutation} resetToken={resetToken} />
 
         <View style={styles.footer}>
           <Typography
@@ -78,9 +89,9 @@ export default function LoginScreen() {
               letterSpacing: -0.14,
             }}
           >
-            Don&apos;t have an account?{' '}
+            Remember your password?{' '}
           </Typography>
-          <Pressable onPress={() => router.push('/(auth)/register')}>
+          <Pressable onPress={() => router.replace('/(auth)/login')}>
             <Typography
               style={{
                 color: colors.primary,
@@ -91,7 +102,7 @@ export default function LoginScreen() {
                 textDecorationLine: 'underline',
               }}
             >
-              Sign Up
+              Log In
             </Typography>
           </Pressable>
         </View>
@@ -108,7 +119,7 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 1000,
   },
-  errorBanner: {
+  notificationBanner: {
     height: 56,
     paddingVertical: 10,
     paddingHorizontal: 16,

@@ -19,6 +19,8 @@ interface ButtonProps extends Omit<PressableProps, 'style'> {
   label: string;
   variant?: ButtonVariant;
   isLoading?: boolean;
+  loadingLabel?: string;
+  loadingIndicatorColor?: string;
   leftIcon?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   textColor?: string;
@@ -28,6 +30,8 @@ export function Button({
   label,
   variant = 'primary',
   isLoading = false,
+  loadingLabel,
+  loadingIndicatorColor,
   leftIcon,
   disabled,
   style,
@@ -66,7 +70,14 @@ export function Button({
     >
       <View style={styles.content}>
         {isLoading ? (
-          <ActivityIndicator color={textColor} size="small" />
+          <>
+            <ActivityIndicator color={loadingIndicatorColor ?? textColor} size="small" />
+            {loadingLabel && (
+              <Typography variant="body1" color={textColor} style={styles.label}>
+                {loadingLabel}
+              </Typography>
+            )}
+          </>
         ) : (
           <>
             {leftIcon && <View style={styles.iconContainer}>{leftIcon}</View>}
