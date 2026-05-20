@@ -10,6 +10,23 @@ export interface RegisterRequest {
   lastName: string;
 }
 
+export interface ResetPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordResponse {
+  message: string;
+}
+
+export interface CompletePasswordResetRequest {
+  token: string;
+  password: string;
+}
+
+export interface CompletePasswordResetResponse {
+  message: string;
+}
+
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
