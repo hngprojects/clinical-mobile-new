@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Redirect, Tabs } from 'expo-router';
+import { Redirect, Tabs, usePathname } from 'expo-router';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -28,9 +28,16 @@ function ProfileTabIcon({ color, focused }: { color: string; focused: boolean })
 
 export default function MainLayout() {
   const { colors } = useTheme();
-  const { isAuthenticated } = useAuthSession();
+  const { isLoggedIn, isGuest } = useAuthSession();
+  const pathname = usePathname();
 
-  if (!isAuthenticated) return <Redirect href="/(auth)/login" />;
+  const isGuestFlowRoute =
+    pathname.endsWith('/preview-upload') ||
+    pathname.endsWith('/ai-review') ||
+    pathname.endsWith('/chat-review');
+
+  if (!isLoggedIn && !isGuest) return <Redirect href="/(auth)/login" />;
+  if (isGuest && !isGuestFlowRoute) return <Redirect href="/(auth)/register" />;
 
   return (
     <Tabs

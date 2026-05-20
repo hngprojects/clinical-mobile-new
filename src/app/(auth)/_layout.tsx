@@ -7,10 +7,10 @@ import { useTheme } from '@/shared/theme';
 export default function AuthLayout() {
   const { colors } = useTheme();
   const hasCompleted = useOnboardingStore((s) => s.hasCompleted);
-  const { isAuthenticated } = useAuthSession();
+  const { isLoggedIn } = useAuthSession();
 
   if (!hasCompleted) return <Redirect href="/(onboarding)" />;
-  if (isAuthenticated) return <Redirect href="/(main)" />;
+  if (isLoggedIn) return <Redirect href="/(main)" />;
 
   return (
     <Stack
