@@ -247,7 +247,7 @@ export function VerifyOtp({
         ) : (
           <View style={styles.resendRow}>
             <Typography style={styles.timerText}>Didn&apos;t receive code? </Typography>
-            <Pressable onPress={handleResend} disabled={resendOtpMutation.isPending}>
+            <Pressable onPress={handleResend} disabled={resendOtpMutation.isPending || resetPasswordMutation.isPending}>
               <Typography style={styles.resendLink}>
                 {resendOtpMutation.isPending || resetPasswordMutation.isPending
                   ? 'Sending...'

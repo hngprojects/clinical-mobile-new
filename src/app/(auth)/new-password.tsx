@@ -46,7 +46,7 @@ export default function NewPasswordScreen() {
     ? 'We could not reset your password. Please request a new link and try again.'
     : completeResetMutation.data?.message || 'Password reset successfully. You can now log in.';
 
-  if (!resetToken) return null;
+  if (!resetToken || !resetEmail) return null;
 
   return (
     <>
