@@ -128,11 +128,20 @@ jobs:
           apiToken: ${{ secrets.APPETIZE_API_TOKEN }}
           appFile: android/app/build/outputs/apk/debug/app-debug.apk
           platform: android
-        continue-on-error: true
+
+      - name: Generate Appetize Links
+        id: appetize-links
+        if: steps.appetize.outputs.publicKey != ''
+        run: |
+          PUBLIC_KEY="${{ steps.appetize.outputs.publicKey }}"
+          echo "publicKey=$PUBLIC_KEY" >> $GITHUB_OUTPUT
+          echo "embedUrl=https://appetize.io/embed/$PUBLIC_KEY" >> $GITHUB_OUTPUT
+          echo "appUrl=https://appetize.io/app/$PUBLIC_KEY" >> $GITHUB_OUTPUT
+          echo "manageUrl=https://appetize.io/app/$PUBLIC_KEY/manage" >> $GITHUB_OUTPUT
 
       - name: Write job summary
         run: |
-          echo "## Android Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## 📱 Android Build Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ **APK built successfully**" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -142,7 +151,8 @@ jobs:
           echo "| Commit | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| Artifact | [Download APK](${{ steps.artifact.outputs.artifact-url }}) |" >> $GITHUB_STEP_SUMMARY
           if [ -n "${{ steps.appetize.outputs.publicKey }}" ]; then
-            echo "| Appetize | [▶ Preview on Appetize](https://appetize.io/app/${{ steps.appetize.outputs.publicKey }}) |" >> $GITHUB_STEP_SUMMARY
+            echo "| 🔗 Appetize | [Open in Appetize](${{ steps.appetize-links.outputs.appUrl }}) |" >> $GITHUB_STEP_SUMMARY
+            echo "| 🖼️ Embed | [Embed View](${{ steps.appetize-links.outputs.embedUrl }}) |" >> $GITHUB_STEP_SUMMARY
           else
-            echo "| Appetize | Skipped (set \`APPETIZE_API_TOKEN\` secret to enable) |" >> $GITHUB_STEP_SUMMARY
+            echo "| ⚠️ Appetize | Upload failed or \`APPETIZE_API_TOKEN\` not set |" >> $GITHUB_STEP_SUMMARY
           fi
