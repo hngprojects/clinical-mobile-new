@@ -1,3 +1,5 @@
+import * as Crypto from 'expo-crypto';
+
 import { registerAuthStore } from '@/shared/api/client';
 import { STORAGE_KEYS } from '@/shared/constants/keys';
 import { asyncStorage } from '@/shared/storage/asyncStorage';
@@ -23,12 +25,12 @@ interface AuthActions {
 }
 
 function createGuestSessionId() {
-  const randomBytes = getRandomBytes(8);
+  const randomBytes = getSecureRandomBytes(8);
   const randomPart = Array.from(randomBytes, (b) => b.toString(16).padStart(2, '0')).join('');
   return `guest-${Date.now()}-${randomPart}`;
 }
 
-function getRandomBytes(length: number) {
+function getSecureRandomBytes(length: number) {
   const randomBytes = new Uint8Array(length);
   const cryptoApi = globalThis.crypto;
 
@@ -37,7 +39,7 @@ function getRandomBytes(length: number) {
     return randomBytes;
   }
 
-  throw new Error('Secure random number generation is unavailable.');
+  return Crypto.getRandomBytes(length);
 }
 
 export const useAuthStore = createStore<AuthState & AuthActions>((set, get) => ({
