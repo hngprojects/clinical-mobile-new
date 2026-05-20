@@ -23,10 +23,21 @@ interface AuthActions {
 }
 
 function createGuestSessionId() {
-  const randomBytes = new Uint8Array(8);
-  crypto.getRandomValues(randomBytes);
+  const randomBytes = getRandomBytes(8);
   const randomPart = Array.from(randomBytes, (b) => b.toString(16).padStart(2, '0')).join('');
   return `guest-${Date.now()}-${randomPart}`;
+}
+
+function getRandomBytes(length: number) {
+  const randomBytes = new Uint8Array(length);
+  const cryptoApi = globalThis.crypto;
+
+  if (cryptoApi?.getRandomValues) {
+    cryptoApi.getRandomValues(randomBytes);
+    return randomBytes;
+  }
+
+  throw new Error('Secure random number generation is unavailable.');
 }
 
 export const useAuthStore = createStore<AuthState & AuthActions>((set, get) => ({

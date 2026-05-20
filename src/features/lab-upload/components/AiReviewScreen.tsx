@@ -32,12 +32,13 @@ export function AiReviewScreen() {
   const reviewQuery = useAiReview(caseId || '', guestSessionId);
   const review = reviewQuery.data;
   const isComplete = review?.status === 'complete' && hasShownAllSteps;
+  const missingCaseErrorType = !caseId ? 'system' : undefined;
   const configuredErrorType =
     errorType === 'network' || errorType === 'system' ? errorType : undefined;
   const failedErrorType = review?.status === 'failed' ? 'system' : undefined;
   const queryErrorType = reviewQuery.isError ? 'network' : undefined;
   const visibleErrorType = hasShownAllSteps
-    ? configuredErrorType || failedErrorType || queryErrorType
+    ? missingCaseErrorType || configuredErrorType || failedErrorType || queryErrorType
     : undefined;
 
   useEffect(() => {
@@ -86,9 +87,19 @@ export function AiReviewScreen() {
 
   useEffect(() => {
     if (isComplete) {
-      router.replace('/(main)/chat-review');
+      router.replace({
+        pathname: '/(main)/chat-review',
+        params: {
+          caseId,
+          guestSessionId,
+          name,
+          size,
+          uri,
+          mimeType,
+        },
+      });
     }
-  }, [isComplete, router]);
+  }, [caseId, guestSessionId, isComplete, mimeType, name, router, size, uri]);
 
   if (visibleErrorType) {
     const isNetworkError = visibleErrorType === 'network';
@@ -140,7 +151,7 @@ export function AiReviewScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    paddingTop: 4,
+    paddingTop: 20,
   },
   header: {
     height: 32,

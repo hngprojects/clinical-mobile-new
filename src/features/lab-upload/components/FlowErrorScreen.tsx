@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 16,
-    paddingTop: 4,
+    paddingTop: 20,
   },
   screen: {
     backgroundColor: '#FFFFFF',
@@ -114,8 +114,7 @@ const styles = StyleSheet.create({
   body: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingTop: 68,
+    justifyContent: 'center',
     paddingBottom: 96,
   },
   haloOuter: {
