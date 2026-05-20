@@ -5,6 +5,7 @@ export { InsightSearchBar } from './components/InsightSearchBar';
 export { InsightScreen } from './components/InsightScreen';
 export { InsightUploadEmptyState } from './components/InsightUploadEmptyState';
 export type {
+  InsightCardModel,
   InsightDeleteConfirmModalProps,
   InsightItemCardProps,
   InsightListItem,

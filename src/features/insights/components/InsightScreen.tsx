@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { FlatList, ListRenderItem, StyleSheet, View } from 'react-native';
 
-import { Screen } from '@/shared/components';
+import { Screen, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 import type { InsightListItem } from '../api/types';
@@ -54,8 +54,11 @@ export function InsightScreen() {
   const listEmptyVisible = listData.length === 0;
 
   return (
-    <Screen scrollable={false}>
+    <Screen scrollable={false} padding>
       <View style={styles.screenBody}>
+        <Typography variant="h2" color="#000000" style={{ marginBottom: spacing.md }}>
+          Insights
+        </Typography>
         <View style={{ marginBottom: spacing.md }}>
           <InsightSearchBar value={query} onChangeText={setQuery} />
         </View>

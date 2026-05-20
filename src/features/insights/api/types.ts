@@ -1,13 +1,17 @@
 import type { StyleProp, TextInputProps, ViewStyle } from 'react-native';
 
-export interface InsightItemCardProps {
+/** Matches `InsightItemCard` — list rows use `InsightListItem` and map `subtitle` → `timestamp`. */
+export interface InsightCardModel {
+  id: string;
   title: string;
-  subtitle: string;
-  onPress?: () => void;
-  style?: StyleProp<ViewStyle>;
-  onRename?: (newTitle: string) => void;
-  onView?: () => void;
-  onDelete?: () => void;
+  timestamp: string;
+}
+
+export interface InsightItemCardProps {
+  insight: InsightCardModel;
+  onRename?: (id: string, newTitle: string) => void;
+  onView?: (id: string) => void;
+  onDelete?: (id: string) => void;
 }
 
 export interface InsightRenameModalProps {

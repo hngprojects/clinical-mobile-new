@@ -13,10 +13,13 @@ interface InsightListRenderItemProps {
 export function InsightListRenderItem({ item, onRename, onDelete }: InsightListRenderItemProps) {
   return (
     <InsightItemCard
-      title={item.title}
-      subtitle={item.subtitle}
-      onRename={(next) => onRename(item.id, next)}
-      onDelete={() => onDelete(item.id)}
+      insight={{
+        id: item.id,
+        title: item.title,
+        timestamp: item.subtitle,
+      }}
+      onRename={onRename}
+      onDelete={onDelete}
     />
   );
 }

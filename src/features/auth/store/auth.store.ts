@@ -24,7 +24,13 @@ interface AuthActions {
 
 function createGuestSessionId() {
   const randomBytes = new Uint8Array(8);
-  crypto.getRandomValues(randomBytes);
+  if (typeof globalThis.crypto?.getRandomValues === 'function') {
+    globalThis.crypto.getRandomValues(randomBytes);
+  } else {
+    for (let i = 0; i < randomBytes.length; i++) {
+      randomBytes[i] = Math.floor(Math.random() * 256);
+    }
+  }
   const randomPart = Array.from(randomBytes, (b) => b.toString(16).padStart(2, '0')).join('');
   return `guest-${Date.now()}-${randomPart}`;
 }
