@@ -53,7 +53,10 @@ export function ChatReviewScreen() {
   const chatQuery = useCaseChat(caseId || '', guestSessionId);
   const sendMessage = useSendChatMessage(caseId || '', guestSessionId);
   const review = isMockChat ? MOCK_REVIEW : reviewQuery.data;
-  const messages = isMockChat ? mockMessages : (chatQuery.data ?? []);
+  const messages = useMemo(
+    () => (isMockChat ? mockMessages : (chatQuery.data ?? [])),
+    [chatQuery.data, isMockChat, mockMessages],
+  );
   const trimmedDraft = draft.trim();
   const canSend = Boolean((caseId || isMockChat) && trimmedDraft && !sendMessage.isPending);
   const hasInterpretation = Boolean(
