@@ -4,9 +4,10 @@ import { Screen } from '@/shared/components';
 import { VerifyOtp } from '@/features/auth';
 
 export default function VerifyOtpScreen() {
-  const { email, expiresInSeconds } = useLocalSearchParams<{
+  const { email, expiresInSeconds, type } = useLocalSearchParams<{
     email?: string;
     expiresInSeconds?: string;
+    type?: 'signup' | 'reset-password';
   }>();
   const parsedExpiresInSeconds = Number(expiresInSeconds);
   const countdownSeconds = Number.isFinite(parsedExpiresInSeconds)
@@ -17,7 +18,7 @@ export default function VerifyOtpScreen() {
     <>
       <Stack.Screen options={{ title: 'OTP Verification', headerShown: false }} />
       <Screen padding style={{ backgroundColor: '#FFFFFF' }} keyboardAvoiding>
-        <VerifyOtp email={email} expiresInSeconds={countdownSeconds} />
+        <VerifyOtp email={email} expiresInSeconds={countdownSeconds} type={type} />
       </Screen>
     </>
   );

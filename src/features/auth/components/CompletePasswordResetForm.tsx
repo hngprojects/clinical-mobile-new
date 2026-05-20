@@ -18,11 +18,13 @@ interface CompletePasswordResetFormProps {
     mutate: (data: CompletePasswordResetRequest) => void;
     isPending: boolean;
   };
+  email: string;
   resetToken: string;
 }
 
 export function CompletePasswordResetForm({
   mutation,
+  email,
   resetToken,
 }: CompletePasswordResetFormProps) {
   const { colors, spacing } = useTheme();
@@ -43,7 +45,7 @@ export function CompletePasswordResetForm({
   const hasNumber = /[0-9]/.test(passwordValue);
 
   const onSubmit = (formData: CompletePasswordResetFormData) => {
-    completeReset({ token: resetToken, password: formData.password });
+    completeReset({ email, token: resetToken, new_password: formData.password });
   };
 
   return (

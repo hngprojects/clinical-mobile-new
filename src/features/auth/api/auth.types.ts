@@ -19,8 +19,9 @@ export interface ResetPasswordResponse {
 }
 
 export interface CompletePasswordResetRequest {
+  email: string;
   token: string;
-  password: string;
+  new_password: string;
 }
 
 export interface CompletePasswordResetResponse {

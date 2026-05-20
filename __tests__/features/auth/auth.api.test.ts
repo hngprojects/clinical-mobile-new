@@ -164,13 +164,14 @@ describe('authApi', () => {
     });
 
     await expect(
-      authApi.completePasswordReset({ token: 'reset-token', password: 'Password1' }),
+      authApi.completePasswordReset({ email: 'jane@example.com', token: 'reset-token', new_password: 'Password1' }),
     ).resolves.toEqual({
       message: 'Password reset successfully. You can now log in.',
     });
     expect(mockPost).toHaveBeenCalledWith('/api/v1/auth/reset-password', {
+      email: 'jane@example.com',
       token: 'reset-token',
-      password: 'Password1',
+      new_password: 'Password1',
     });
   });
 
