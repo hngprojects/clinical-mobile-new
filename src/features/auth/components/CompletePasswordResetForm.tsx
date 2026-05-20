@@ -45,7 +45,7 @@ export function CompletePasswordResetForm({
   const hasNumber = /[0-9]/.test(passwordValue);
 
   const onSubmit = (formData: CompletePasswordResetFormData) => {
-    completeReset({ email, token: resetToken, new_password: formData.password });
+    completeReset({ email, token: resetToken, newPassword: formData.password });
   };
 
   return (

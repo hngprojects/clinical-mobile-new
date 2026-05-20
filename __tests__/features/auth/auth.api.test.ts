@@ -167,7 +167,7 @@ describe('authApi', () => {
       authApi.completePasswordReset({
         email: 'jane@example.com',
         token: 'reset-token',
-        new_password: 'Password1',
+        newPassword: 'Password1',
       }),
     ).resolves.toEqual({
       message: 'Password reset successfully. You can now log in.',
