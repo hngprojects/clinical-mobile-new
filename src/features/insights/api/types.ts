@@ -9,6 +9,8 @@ export interface InsightCardModel {
 
 export interface InsightItemCardProps {
   insight: InsightCardModel;
+  /** Opens the insight detail / chat review when the card body is pressed. */
+  onPress?: () => void;
   onRename?: (id: string, newTitle: string) => void;
   onView?: (id: string) => void;
   onDelete?: (id: string) => void;

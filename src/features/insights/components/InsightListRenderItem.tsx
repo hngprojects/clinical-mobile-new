@@ -1,4 +1,5 @@
-import React from 'react';
+import { useRouter } from 'expo-router';
+import React, { useCallback } from 'react';
 
 import type { InsightListItem } from '../api/types';
 
@@ -11,6 +12,12 @@ interface InsightListRenderItemProps {
 }
 
 export function InsightListRenderItem({ item, onRename, onDelete }: InsightListRenderItemProps) {
+  const router = useRouter();
+
+  const openChatReview = useCallback(() => {
+    router.push('/(main)/chat-review');
+  }, [router]);
+
   return (
     <InsightItemCard
       insight={{
@@ -18,6 +25,8 @@ export function InsightListRenderItem({ item, onRename, onDelete }: InsightListR
         title: item.title,
         timestamp: item.subtitle,
       }}
+      onPress={openChatReview}
+      onView={() => openChatReview()}
       onRename={onRename}
       onDelete={onDelete}
     />

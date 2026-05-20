@@ -14,7 +14,13 @@ import type { InsightItemCardProps } from '../api/types';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-export function InsightItemCard({ insight, onRename, onView, onDelete }: InsightItemCardProps) {
+export function InsightItemCard({
+  insight,
+  onPress,
+  onRename,
+  onView,
+  onDelete,
+}: InsightItemCardProps) {
   const { colors, spacing } = useTheme();
   const [menuVisible, setMenuVisible] = useState(false);
   const [renameVisible, setRenameVisible] = useState(false);
@@ -61,13 +67,18 @@ export function InsightItemCard({ insight, onRename, onView, onDelete }: Insight
 
   return (
     <>
-      <View
-        style={[
+      <Pressable
+        accessibilityRole={onPress ? 'button' : undefined}
+        accessibilityLabel={onPress ? `Open ${insight.title}` : undefined}
+        onPress={onPress}
+        disabled={!onPress}
+        style={({ pressed }) => [
           styles.card,
           {
             backgroundColor: colors.cardBackground,
             borderRadius: 12,
             padding: spacing.md,
+            opacity: onPress && pressed ? 0.92 : 1,
           },
         ]}
       >
@@ -84,7 +95,7 @@ export function InsightItemCard({ insight, onRename, onView, onDelete }: Insight
             <Ionicons name="ellipsis-vertical" size={18} color={colors.textSecondary} />
           </Pressable>
         </View>
-      </View>
+      </Pressable>
 
       {/* Three-dot dropdown menu */}
       <Modal visible={menuVisible} transparent animationType="none" onRequestClose={closeMenu}>
