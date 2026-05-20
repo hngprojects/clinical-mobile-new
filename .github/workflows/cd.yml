@@ -59,6 +59,11 @@ jobs:
       - name: Expo Prebuild
         run: npx expo prebuild --platform android --no-install
 
+      - name: Set Android versionCode
+        run: |
+          VERSION_CODE=${{ github.run_number }}
+          sed -i "s/versionCode [0-9]\+/versionCode $VERSION_CODE/" android/app/build.gradle
+
       - name: Cache Android Gradle
         uses: actions/cache@v5
         with:
