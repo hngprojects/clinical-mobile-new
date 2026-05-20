@@ -19,6 +19,13 @@ import { Typography } from '@/shared/components';
 
 const CODE_LENGTH = 6;
 
+function formatCountdown(totalSeconds: number) {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
 export function VerifyOtp({
   email,
   expiresInSeconds,
@@ -214,7 +221,7 @@ export function VerifyOtp({
         {timer > 0 ? (
           <Typography style={styles.timerText}>
             Code expires in{' '}
-            <Typography style={styles.boldTimer}>00:{timer < 10 ? `0${timer}` : timer}</Typography>
+            <Typography style={styles.boldTimer}>{formatCountdown(timer)}</Typography>
           </Typography>
         ) : (
           <View style={styles.resendRow}>
