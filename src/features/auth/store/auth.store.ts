@@ -23,7 +23,10 @@ interface AuthActions {
 }
 
 function createGuestSessionId() {
-  return `guest-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  const randomBytes = new Uint8Array(8);
+  crypto.getRandomValues(randomBytes);
+  const randomPart = Array.from(randomBytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  return `guest-${Date.now()}-${randomPart}`;
 }
 
 export const useAuthStore = createStore<AuthState & AuthActions>((set, get) => ({
@@ -76,6 +79,6 @@ export const useAuthStore = createStore<AuthState & AuthActions>((set, get) => (
 registerAuthStore(() => ({
   accessToken: useAuthStore.getState().accessToken,
   refreshToken: useAuthStore.getState().refreshToken,
-  setSession: useAuthStore.getState().setSession,
+  setTokens: useAuthStore.getState().setTokens,
   clearSession: useAuthStore.getState().clearSession,
 }));

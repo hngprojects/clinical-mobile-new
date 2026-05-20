@@ -15,6 +15,10 @@ import { useOnboardingStore } from '@/features/onboarding/store/onboarding.store
 import { AppProviders } from '@/providers/AppProviders';
 import { useAppReady } from '@/shared/hooks/useAppReady';
 
+import * as WebBrowser from 'expo-web-browser';
+
+WebBrowser.maybeCompleteAuthSession();
+
 SplashScreen.preventAutoHideAsync().catch(() => {
   /* Reloading the app might cause this to fail, ignore */
 });
