@@ -101,7 +101,6 @@ export function ChatReviewScreen() {
 
     try {
       await sendMessage.mutateAsync(message);
-      chatQuery.refetch();
     } catch {
       setDraft(message);
     }

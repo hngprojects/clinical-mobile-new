@@ -38,11 +38,7 @@ function mapInterpretation(interpretation: AIInterpretationResponse): AiReviewRe
 }
 
 function isNoInterpretationYetError(error: unknown) {
-  return (
-    error instanceof ApiError &&
-    error.status === 404 &&
-    error.message.toLowerCase().includes('no interpretation found')
-  );
+  return error instanceof ApiError && error.status === 404;
 }
 
 async function getCaseProcessingStatus(

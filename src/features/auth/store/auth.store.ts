@@ -37,11 +37,7 @@ function getRandomBytes(length: number) {
     return randomBytes;
   }
 
-  for (let i = 0; i < randomBytes.length; i += 1) {
-    randomBytes[i] = Math.floor(Math.random() * 256);
-  }
-
-  return randomBytes;
+  throw new Error('Secure random number generation is unavailable.');
 }
 
 export const useAuthStore = createStore<AuthState & AuthActions>((set, get) => ({

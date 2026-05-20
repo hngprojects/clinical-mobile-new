@@ -33,13 +33,30 @@ function parseArgs(argv) {
     timeoutMs: 120000,
   };
 
+  const readOptionValue = (index, option) => {
+    const optionValue = argv[index + 1];
+    if (!optionValue || optionValue.startsWith('--')) {
+      throw new Error(`Missing value for ${option}.`);
+    }
+    return optionValue;
+  };
+
+  const readPositiveNumberOption = (index, option) => {
+    const optionValue = readOptionValue(index, option);
+    const numericValue = Number(optionValue);
+    if (!Number.isFinite(numericValue) || numericValue <= 0) {
+      throw new Error(`${option} must be a positive number.`);
+    }
+    return numericValue;
+  };
+
   for (let index = 0; index < argv.length; index += 1) {
     const value = argv[index];
-    if (value === '--base-url') args.baseUrl = argv[++index];
-    else if (value === '--guest-session-id') args.guestSessionId = argv[++index];
-    else if (value === '--auth-token') args.authToken = argv[++index];
-    else if (value === '--interval-ms') args.intervalMs = Number(argv[++index]);
-    else if (value === '--timeout-ms') args.timeoutMs = Number(argv[++index]);
+    if (value === '--base-url') args.baseUrl = readOptionValue(index++, value);
+    else if (value === '--guest-session-id') args.guestSessionId = readOptionValue(index++, value);
+    else if (value === '--auth-token') args.authToken = readOptionValue(index++, value);
+    else if (value === '--interval-ms') args.intervalMs = readPositiveNumberOption(index++, value);
+    else if (value === '--timeout-ms') args.timeoutMs = readPositiveNumberOption(index++, value);
     else if (!args.filePath) args.filePath = value;
     else throw new Error(`Unknown argument: ${value}`);
   }
@@ -60,13 +77,23 @@ function getMimeType(filePath) {
 async function requestJson(url, options = {}) {
   const response = await fetch(url, options);
   const text = await response.text();
-  const body = text ? JSON.parse(text) : null;
+  let body = null;
+
+  if (text) {
+    try {
+      body = JSON.parse(text);
+    } catch {
+      if (response.ok) {
+        throw new Error(`Expected JSON response but received: ${text.slice(0, 120)}`);
+      }
+    }
+  }
 
   if (!response.ok) {
-    const message = body?.message || response.statusText || 'Request failed';
+    const message = body?.message || text || response.statusText || 'Request failed';
     const error = new Error(message);
     error.status = response.status;
-    error.body = body;
+    error.body = body ?? text;
     throw error;
   }
 
@@ -133,12 +160,7 @@ async function getLatestInterpretation({ baseUrl, caseId, guestSessionId, authTo
       body: result,
     };
   } catch (error) {
-    if (
-      error.status === 404 &&
-      String(error.message || '')
-        .toLowerCase()
-        .includes('no interpretation found')
-    ) {
+    if (error.status === 404) {
       return getCaseProcessingStatus({ baseUrl, caseId, guestSessionId, authToken });
     }
 

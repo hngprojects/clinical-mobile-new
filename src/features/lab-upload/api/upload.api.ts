@@ -5,12 +5,12 @@ import type { ApiSuccessResponse, UploadRequest, UploadResponse } from './upload
 async function uploadLabResult(request: UploadRequest): Promise<UploadResponse> {
   let fileUrl = request.file.url;
 
-  if (
-    fileUrl.startsWith('file://') ||
-    fileUrl.startsWith('content://') ||
-    !fileUrl.startsWith('http')
-  ) {
+  if (fileUrl.startsWith('file://') || fileUrl.startsWith('content://')) {
     const response = await fetch(fileUrl);
+    if (!response.ok) {
+      throw new Error(`Could not read selected file for upload: ${response.status}`);
+    }
+
     const blob = await response.blob();
 
     const base64Data = await new Promise<string>((resolve, reject) => {
