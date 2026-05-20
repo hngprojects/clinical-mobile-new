@@ -47,9 +47,7 @@ export function useGoogleAuth() {
       const redirectUrl = Linking.createURL('auth/google');
       const googleAuthUrl = buildGoogleAuthUrl(redirectUrl);
 
-      const result = await WebBrowser.openAuthSessionAsync(googleAuthUrl, redirectUrl, {
-        preferEphemeralSession: true,
-      });
+      const result = await WebBrowser.openAuthSessionAsync(googleAuthUrl, redirectUrl);
 
       if (result.type === 'success' && result.url) {
         const token = getTokenFromUrl(result.url);
