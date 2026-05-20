@@ -175,7 +175,7 @@ describe('authApi', () => {
     expect(mockPost).toHaveBeenCalledWith('/api/v1/auth/reset-password', {
       email: 'jane@example.com',
       token: 'reset-token',
-      new_password: 'Password1',
+      newPassword: 'Password1',
     });
   });
 
