@@ -15,10 +15,13 @@ interface MenuRowProps {
   label: string;
   onPress: () => void;
   isLast?: boolean;
+  danger?: boolean;
 }
 
-function MenuRow({ icon, label, onPress, isLast }: MenuRowProps) {
+function MenuRow({ icon, label, onPress, isLast, danger }: MenuRowProps) {
   const { colors } = useTheme();
+  const tint = danger ? colors.error : colors.textSecondary;
+  const textColor = danger ? colors.error : colors.text;
 
   return (
     <>
@@ -28,10 +31,12 @@ function MenuRow({ icon, label, onPress, isLast }: MenuRowProps) {
         android_ripple={{ color: colors.border }}
       >
         <View style={styles.rowLeft}>
-          <Ionicons name={icon} size={20} color={colors.textSecondary} />
-          <Typography variant="body1">{label}</Typography>
+          <Ionicons name={icon} size={20} color={tint} />
+          <Typography variant="body1" color={textColor}>
+            {label}
+          </Typography>
         </View>
-        <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+        <Ionicons name="chevron-forward" size={18} color={tint} />
       </Pressable>
       {!isLast && <View style={[styles.divider, { backgroundColor: colors.borderSubtle }]} />}
     </>
@@ -137,14 +142,14 @@ export function ProfileScreen() {
         </View>
 
         <Section title="Account">
-          <MenuRow icon="person-outline" label="Edit Profile" onPress={() => {}} />
-          <MenuRow icon="lock-closed-outline" label="Change Password" onPress={() => {}} />
           <MenuRow
-            icon="notifications-outline"
-            label="Notifications"
-            onPress={() => router.push('/(main)/notifications' as never)}
+            icon="person-outline"
+            label="Edit Profile"
+            onPress={() => router.push('/(main)/edit-profile')}
           />
-          <MenuRow icon="log-out-outline" label="Logout" onPress={handleLogout} isLast />
+          <MenuRow icon="lock-closed-outline" label="Change Password" onPress={() => {}} />
+          <MenuRow icon="notifications-outline" label="Notifications" onPress={() => {}} />
+          <MenuRow icon="log-out-outline" label="Logout" onPress={handleLogout} isLast danger />
         </Section>
 
         <Section title="Support and Legal">
@@ -157,17 +162,23 @@ export function ProfileScreen() {
           <MenuRow icon="help-circle-outline" label="Support" onPress={() => {}} isLast />
         </Section>
 
-        <Section title="Danger" titleColor={colors.error}>
+        <View style={styles.section}>
+          <Typography variant="label" color={colors.error} style={styles.sectionLabel}>
+            DANGER ZONE
+          </Typography>
           <Pressable
             onPress={handleDeleteAccount}
-            style={({ pressed }) => [styles.deleteButton, { opacity: pressed ? 0.7 : 1 }]}
+            style={({ pressed }) => [
+              styles.deleteButton,
+              { backgroundColor: colors.errorSubtle, opacity: pressed ? 0.7 : 1 },
+            ]}
           >
             <Ionicons name="trash-outline" size={20} color={colors.error} />
             <Typography variant="body1" color={colors.error} style={styles.deleteLabel}>
               Delete Account
             </Typography>
           </Pressable>
-        </Section>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -259,7 +270,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 10,
     paddingVertical: 15,
-    backgroundColor: '#FEF2F2',
   },
   deleteLabel: {
     fontWeight: '500',

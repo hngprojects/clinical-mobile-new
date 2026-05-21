@@ -55,3 +55,13 @@ export interface OtpDispatchResponse {
   email: string;
   expiresInSeconds: number;
 }
+
+export interface UpdateProfileRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
+export interface UpdateProfileResponse {
+  user: UserProfile;
+}

@@ -10,6 +10,8 @@ import type {
   RegisterRequest,
   ResetPasswordRequest,
   ResetPasswordResponse,
+  UpdateProfileRequest,
+  UpdateProfileResponse,
   UserProfile,
 } from './auth.types';
 
@@ -150,6 +152,15 @@ async function logout(): Promise<void> {
   await client.post('/api/v1/auth/logout');
 }
 
+async function updateProfile(data: UpdateProfileRequest): Promise<UpdateProfileResponse> {
+  const response = await client.patch<SuccessResponse<BackendUserResponse>>('/api/v1/auth/me', {
+    first_name: data.firstName,
+    last_name: data.lastName,
+    email: data.email,
+  });
+  return { user: mapUser(response.data.data) };
+}
+
 export const authApi = {
   login,
   register,
@@ -160,4 +171,5 @@ export const authApi = {
   completePasswordReset,
   getMe,
   logout,
+  updateProfile,
 };
