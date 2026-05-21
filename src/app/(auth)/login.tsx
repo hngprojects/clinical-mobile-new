@@ -39,23 +39,39 @@ export default function LoginScreen() {
   };
 
   const handleUpload = async (file: UploadedFile) => {
-    const deviceFingerprint = await getOrCreateGuestDeviceFingerprint();
-    const guestSession = await authApi.createGuestSession(deviceFingerprint);
-    const guestSessionId = startGuestSession(guestSession.guestSessionId);
-    navigateAfterGuestSession({
-      guestSessionId,
-      name: file.name,
-      size: file.size,
-      uri: file.uri,
-      mimeType: file.mimeType,
-    });
+    try {
+      const deviceFingerprint = await getOrCreateGuestDeviceFingerprint();
+      const guestSession = await authApi.createGuestSession(deviceFingerprint);
+      const guestSessionId = startGuestSession(guestSession.guestSessionId);
+      navigateAfterGuestSession({
+        guestSessionId,
+        name: file.name,
+        size: file.size,
+        uri: file.uri,
+        mimeType: file.mimeType,
+      });
+    } catch {
+      const guestSessionId = startGuestSession();
+      navigateAfterGuestSession({
+        guestSessionId,
+        name: file.name,
+        size: file.size,
+        uri: file.uri,
+        mimeType: file.mimeType,
+      });
+    }
   };
 
   const handleUploadError = async (error: UploadError) => {
-    const deviceFingerprint = await getOrCreateGuestDeviceFingerprint();
-    const guestSession = await authApi.createGuestSession(deviceFingerprint);
-    const guestSessionId = startGuestSession(guestSession.guestSessionId);
-    navigateAfterGuestSession({ errorType: error.type, guestSessionId });
+    try {
+      const deviceFingerprint = await getOrCreateGuestDeviceFingerprint();
+      const guestSession = await authApi.createGuestSession(deviceFingerprint);
+      const guestSessionId = startGuestSession(guestSession.guestSessionId);
+      navigateAfterGuestSession({ errorType: error.type, guestSessionId });
+    } catch {
+      const guestSessionId = startGuestSession();
+      navigateAfterGuestSession({ errorType: error.type, guestSessionId });
+    }
   };
 
   useEffect(() => {

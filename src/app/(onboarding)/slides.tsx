@@ -37,24 +37,40 @@ export default function SlidesScreen() {
 
   const handleUpload = async (file: UploadedFile) => {
     await completeOnboarding();
-    const deviceFingerprint = await getOrCreateGuestDeviceFingerprint();
-    const guestSession = await authApi.createGuestSession(deviceFingerprint);
-    const guestSessionId = startGuestSession(guestSession.guestSessionId);
-    navigateAfterGuestSession(router, {
-      guestSessionId,
-      name: file.name,
-      size: file.size,
-      uri: file.uri,
-      mimeType: file.mimeType,
-    });
+    try {
+      const deviceFingerprint = await getOrCreateGuestDeviceFingerprint();
+      const guestSession = await authApi.createGuestSession(deviceFingerprint);
+      const guestSessionId = startGuestSession(guestSession.guestSessionId);
+      navigateAfterGuestSession(router, {
+        guestSessionId,
+        name: file.name,
+        size: file.size,
+        uri: file.uri,
+        mimeType: file.mimeType,
+      });
+    } catch {
+      const guestSessionId = startGuestSession();
+      navigateAfterGuestSession(router, {
+        guestSessionId,
+        name: file.name,
+        size: file.size,
+        uri: file.uri,
+        mimeType: file.mimeType,
+      });
+    }
   };
 
   const handleUploadError = async (error: UploadError) => {
     await completeOnboarding();
-    const deviceFingerprint = await getOrCreateGuestDeviceFingerprint();
-    const guestSession = await authApi.createGuestSession(deviceFingerprint);
-    const guestSessionId = startGuestSession(guestSession.guestSessionId);
-    navigateAfterGuestSession(router, { errorType: error.type, guestSessionId });
+    try {
+      const deviceFingerprint = await getOrCreateGuestDeviceFingerprint();
+      const guestSession = await authApi.createGuestSession(deviceFingerprint);
+      const guestSessionId = startGuestSession(guestSession.guestSessionId);
+      navigateAfterGuestSession(router, { errorType: error.type, guestSessionId });
+    } catch {
+      const guestSessionId = startGuestSession();
+      navigateAfterGuestSession(router, { errorType: error.type, guestSessionId });
+    }
   };
 
   const handleLogin = async () => {

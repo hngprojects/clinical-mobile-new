@@ -596,7 +596,6 @@ const styles = StyleSheet.create({
   },
   aiMessageGroup: {
     alignSelf: 'flex-start',
-    maxWidth: '88%',
   },
   patientBubble: {
     alignSelf: 'flex-end',

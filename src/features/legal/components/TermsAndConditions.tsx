@@ -8,9 +8,9 @@ import { terms } from '../../onboarding/data/TandC';
 
 export function TermsAndConditions() {
   const { spacing, colors } = useTheme();
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({
-    [terms[0].title]: true,
-  });
+  const [expanded, setExpanded] = useState<Record<string, boolean>>(
+    terms.length > 0 ? { [terms[0].title]: true } : {},
+  );
 
   const toggle = useCallback((key: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);

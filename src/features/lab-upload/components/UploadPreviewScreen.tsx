@@ -82,7 +82,7 @@ export function UploadPreviewScreen() {
     fileMimeType,
     hasSelectedFile,
     hasUploadIdentity,
-    uploadMutation,
+    uploadMutation.mutate,
   ]);
 
   const handleUploadAnother = (file: UploadedFile) => {
@@ -119,6 +119,7 @@ export function UploadPreviewScreen() {
           size: fileSize,
           uri: fileUri,
           mimeType: fileMimeType,
+          guestSessionId: effectiveGuestSessionId ?? undefined,
         },
       });
       return;

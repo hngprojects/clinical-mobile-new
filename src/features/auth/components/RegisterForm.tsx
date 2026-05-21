@@ -145,7 +145,7 @@ export function RegisterForm({ onContinueAsGuest }: RegisterFormProps) {
         isLoading={isPending}
         style={{
           marginTop: spacing.xs,
-          height: 45,
+          height: 48,
           borderRadius: 12,
           backgroundColor: isPending || passwordValue.length === 0 ? '#F5F5F5' : colors.primary,
         }}
