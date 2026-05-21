@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 
 import { useResendOtp } from '@/features/auth/hooks/useResendOtp';
+import { useResetPassword } from '@/features/auth/hooks/useResetPassword';
 import { useVerifyOtp } from '@/features/auth/hooks/useVerifyOtp';
 import { useAuthStore } from '@/features/auth/store/auth.store';
 import type { ApiError } from '@/shared/api/types';
@@ -19,15 +20,25 @@ import { Typography } from '@/shared/components';
 
 const CODE_LENGTH = 6;
 
+function formatCountdown(totalSeconds: number) {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
 export function VerifyOtp({
   email,
   expiresInSeconds,
+  type = 'signup',
 }: {
   email?: string;
   expiresInSeconds?: number;
+  type?: 'signup' | 'reset-password';
 }) {
   const verifyOtpMutation = useVerifyOtp();
   const resendOtpMutation = useResendOtp();
+  const resetPasswordMutation = useResetPassword();
 
   const [code, setCode] = useState('');
 
@@ -74,17 +85,28 @@ export function VerifyOtp({
   const handleVerify = () => {
     if (code.length !== CODE_LENGTH) return;
     Keyboard.dismiss();
-    verifyOtpMutation.mutate({ email: email || '', code });
+    if (type === 'reset-password') {
+      router.push({
+        pathname: '/(auth)/new-password',
+        params: { email: email || '', token: code },
+      });
+    } else {
+      verifyOtpMutation.mutate({ email: email || '', code });
+    }
   };
 
   const handleResend = () => {
-    if (timer > 0 || resendOtpMutation.isPending) return;
+    if (timer > 0 || resendOtpMutation.isPending || resetPasswordMutation.isPending) return;
     setTimer(initialCooldown);
     setHasOtpError(false);
     setHasNetworkError(false);
     setCode('');
     verifyOtpMutation.reset();
-    resendOtpMutation.mutate({ email: email || '' });
+    if (type === 'reset-password') {
+      resetPasswordMutation.mutate({ email: email || '' });
+    } else {
+      resendOtpMutation.mutate({ email: email || '' });
+    }
   };
 
   const handleTextChange = (val: string) => {
@@ -129,13 +151,17 @@ export function VerifyOtp({
         <Pressable onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="chevron-back" size={24} color="#1B1B1B" />
         </Pressable>
-        <Typography style={styles.headerTitle}>OTP Verification</Typography>
+        <Typography style={styles.headerTitle}>
+          {type === 'reset-password' ? 'Reset Password' : 'OTP Verification'}
+        </Typography>
         <View style={{ width: 24 }} />
       </View>
 
       {/* Main Content */}
       <View style={{ marginTop: 24 }}>
-        <Typography style={styles.mainTitle}>Verify Your Email</Typography>
+        <Typography style={styles.mainTitle}>
+          {type === 'reset-password' ? 'Verify Reset Code' : 'Verify Your Email'}
+        </Typography>
         <Typography style={styles.description}>
           Enter the 6 digit code we sent to{' '}
           <Typography style={styles.boldEmail}>{email || 'your email'}</Typography>
@@ -200,11 +226,13 @@ export function VerifyOtp({
         {isLoading ? (
           <View style={styles.loadingRow}>
             <ActivityIndicator size="small" color="#1565C0" />
-            <Typography style={styles.loadingText}>Verifying Email</Typography>
+            <Typography style={styles.loadingText}>
+              {type === 'reset-password' ? 'Verifying Code' : 'Verifying Email'}
+            </Typography>
           </View>
         ) : (
           <Typography style={[styles.btnText, { color: isCodeComplete ? '#FFFFFF' : '#BDBDBD' }]}>
-            Verify Email
+            {type === 'reset-password' ? 'Continue' : 'Verify Email'}
           </Typography>
         )}
       </Pressable>
@@ -214,14 +242,19 @@ export function VerifyOtp({
         {timer > 0 ? (
           <Typography style={styles.timerText}>
             Code expires in{' '}
-            <Typography style={styles.boldTimer}>00:{timer < 10 ? `0${timer}` : timer}</Typography>
+            <Typography style={styles.boldTimer}>{formatCountdown(timer)}</Typography>
           </Typography>
         ) : (
           <View style={styles.resendRow}>
             <Typography style={styles.timerText}>Didn&apos;t receive code? </Typography>
-            <Pressable onPress={handleResend} disabled={resendOtpMutation.isPending}>
+            <Pressable
+              onPress={handleResend}
+              disabled={resendOtpMutation.isPending || resetPasswordMutation.isPending}
+            >
               <Typography style={styles.resendLink}>
-                {resendOtpMutation.isPending ? 'Sending...' : 'Resend code'}
+                {resendOtpMutation.isPending || resetPasswordMutation.isPending
+                  ? 'Sending...'
+                  : 'Resend code'}
               </Typography>
             </Pressable>
           </View>

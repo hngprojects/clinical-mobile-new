@@ -19,6 +19,7 @@
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
+    "test:ai-polling": "node scripts/test-ai-polling.mjs",
     "security:scan": "bash scripts/check-shai-hulud.sh"
   },
   "jest": {
@@ -42,6 +43,8 @@
     "axios": "^1.9.0",
     "expo": "~54.0.34",
     "expo-constants": "~18.0.13",
+    "expo-document-picker": "^55.0.13",
+    "expo-image-picker": "^55.0.20",
     "expo-linking": "~8.0.12",
     "expo-router": "~6.0.23",
     "expo-secure-store": "~15.0.8",
@@ -57,6 +60,7 @@
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
     "react-native-svg": "^15.15.5",
+    "react-native-web": "^0.21.0",
     "react-native-worklets": "0.5.1",
     "zod": "^3.24.4",
     "zustand": "^5.0.5"

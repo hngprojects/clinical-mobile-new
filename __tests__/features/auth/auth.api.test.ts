@@ -164,7 +164,11 @@ describe('authApi', () => {
     });
 
     await expect(
-      authApi.completePasswordReset({ token: 'reset-token', password: 'Password1' }),
+      authApi.completePasswordReset({
+        email: 'jane@example.com',
+        token: 'reset-token',
+        newPassword: 'Password1',
+      }),
     ).resolves.toEqual({
       message: 'Password reset successfully. You can now log in.',
     });

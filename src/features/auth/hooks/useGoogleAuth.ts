@@ -7,6 +7,35 @@ import { env } from '@/shared/constants/env';
 import { authApi } from '../api/auth.api';
 import { useAuthStore } from '../store/auth.store';
 
+const GOOGLE_AUTH_PATH = '/api/v1/auth/google';
+const TOKEN_KEYS = ['access_token', 'token', 'accessToken'];
+
+function buildGoogleAuthUrl(redirectUrl: string) {
+  const baseUrl = env.API_BASE_URL.replace(/\/$/, '');
+  const encodedRedirectUrl = encodeURIComponent(redirectUrl);
+
+  return `${baseUrl}${GOOGLE_AUTH_PATH}?redirect_uri=${encodedRedirectUrl}&return_url=${encodedRedirectUrl}`;
+}
+
+function getTokenFromUrl(url: string) {
+  const parsed = Linking.parse(url);
+
+  for (const key of TOKEN_KEYS) {
+    const value = parsed.queryParams?.[key];
+    if (typeof value === 'string') return value;
+  }
+
+  const [, fragment = ''] = url.split('#');
+  const fragmentParams = new URLSearchParams(fragment);
+
+  for (const key of TOKEN_KEYS) {
+    const value = fragmentParams.get(key);
+    if (value) return value;
+  }
+
+  return null;
+}
+
 export function useGoogleAuth() {
   const [isPending, setIsPending] = useState(false);
 
@@ -15,20 +44,15 @@ export function useGoogleAuth() {
     setIsPending(true);
 
     try {
-      const redirectUrl = Linking.createURL('/');
-      // Build the backend OAuth URL (clean, param-free as per OpenAPI spec)
-      const googleAuthUrl = `${env.API_BASE_URL}/api/v1/auth/google`;
+      const redirectUrl = Linking.createURL('auth/google');
+      const googleAuthUrl = buildGoogleAuthUrl(redirectUrl);
 
       const result = await WebBrowser.openAuthSessionAsync(googleAuthUrl, redirectUrl);
 
       if (result.type === 'success' && result.url) {
-        const parsed = Linking.parse(result.url);
-        const token =
-          parsed.queryParams?.access_token ||
-          parsed.queryParams?.token ||
-          parsed.queryParams?.accessToken;
+        const token = getTokenFromUrl(result.url);
 
-        if (token && typeof token === 'string') {
+        if (token) {
           // Temporarily save tokens for API authorization headers
           useAuthStore.getState().setTokens({ accessToken: token, refreshToken: token });
 

@@ -1,11 +1,18 @@
 import { Href, router, Stack } from 'expo-router';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { LoginForm } from '@/features/auth';
 import { useLogin } from '@/features/auth/hooks/useLogin';
-import { Screen, Typography } from '@/shared/components';
+import { useAuthStore } from '@/features/auth/store/auth.store';
+import {
+  Screen,
+  Typography,
+  UploadBottomSheet,
+  UploadedFile,
+  UploadError,
+} from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 const RESET_PASSWORD_ROUTE = '/(auth)/reset-password' as Href;
@@ -13,7 +20,34 @@ const RESET_PASSWORD_ROUTE = '/(auth)/reset-password' as Href;
 export default function LoginScreen() {
   const { spacing, colors } = useTheme();
   const loginMutation = useLogin();
+  const startGuestSession = useAuthStore((s) => s.startGuestSession);
+  const [showUploadSheet, setShowUploadSheet] = useState(false);
   const bannerY = useSharedValue(-100);
+
+  const handleContinueAsGuest = () => {
+    setShowUploadSheet(true);
+  };
+
+  const handleUpload = (file: UploadedFile) => {
+    startGuestSession();
+    router.replace({
+      pathname: '/(main)/preview-upload',
+      params: {
+        name: file.name,
+        size: file.size,
+        uri: file.uri,
+        mimeType: file.mimeType,
+      },
+    });
+  };
+
+  const handleUploadError = (error: UploadError) => {
+    startGuestSession();
+    router.replace({
+      pathname: '/(main)/preview-upload',
+      params: { errorType: error.type },
+    });
+  };
 
   useEffect(() => {
     if (loginMutation.error) {
@@ -64,6 +98,7 @@ export default function LoginScreen() {
 
         <LoginForm
           mutation={loginMutation}
+          onContinueAsGuest={handleContinueAsGuest}
           onForgotPassword={() => router.push(RESET_PASSWORD_ROUTE)}
           onInteract={() => loginMutation.reset()}
         />
@@ -96,6 +131,13 @@ export default function LoginScreen() {
           </Pressable>
         </View>
       </Screen>
+
+      <UploadBottomSheet
+        visible={showUploadSheet}
+        onClose={() => setShowUploadSheet(false)}
+        onUpload={handleUpload}
+        onUploadError={handleUploadError}
+      />
     </>
   );
 }
