@@ -3,59 +3,22 @@ import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
-import { LoginForm } from '@/features/auth';
-import { authApi } from '@/features/auth/api/auth.api';
+import { LoginForm, useGuestUploadSession } from '@/features/auth';
 import { useLogin } from '@/features/auth/hooks/useLogin';
-import { getOrCreateGuestDeviceFingerprint, useAuthStore } from '@/features/auth/store/auth.store';
-import {
-  Screen,
-  Typography,
-  UploadBottomSheet,
-  UploadedFile,
-  UploadError,
-} from '@/shared/components';
+import { Screen, Typography, UploadBottomSheet } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 const RESET_PASSWORD_ROUTE = '/(auth)/reset-password' as Href;
 
-function navigateAfterGuestSession(params: Record<string, string | undefined>) {
-  setTimeout(() => {
-    router.replace({
-      pathname: '/(main)/preview-upload',
-      params,
-    });
-  }, 0);
-}
-
 export default function LoginScreen() {
   const { spacing, colors } = useTheme();
   const loginMutation = useLogin();
-  const startGuestSession = useAuthStore((s) => s.startGuestSession);
+  const { handleUpload, handleUploadError } = useGuestUploadSession();
   const [showUploadSheet, setShowUploadSheet] = useState(false);
   const bannerY = useSharedValue(-100);
 
   const handleContinueAsGuest = () => {
     setShowUploadSheet(true);
-  };
-
-  const handleUpload = async (file: UploadedFile) => {
-    const deviceFingerprint = await getOrCreateGuestDeviceFingerprint();
-    const guestSession = await authApi.createGuestSession(deviceFingerprint);
-    const guestSessionId = startGuestSession(guestSession.guestSessionId);
-    navigateAfterGuestSession({
-      guestSessionId,
-      name: file.name,
-      size: file.size,
-      uri: file.uri,
-      mimeType: file.mimeType,
-    });
-  };
-
-  const handleUploadError = async (error: UploadError) => {
-    const deviceFingerprint = await getOrCreateGuestDeviceFingerprint();
-    const guestSession = await authApi.createGuestSession(deviceFingerprint);
-    const guestSessionId = startGuestSession(guestSession.guestSessionId);
-    navigateAfterGuestSession({ errorType: error.type, guestSessionId });
   };
 
   useEffect(() => {

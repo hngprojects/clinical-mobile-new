@@ -45,8 +45,7 @@ export default function ResetPasswordScreen() {
 
   const notificationMessage = resetPasswordMutation.error
     ? 'We could not send a reset code. Please try again.'
-    : resetPasswordMutation.data?.message ||
-      'If an account exists for this email, a reset code has been sent.';
+    : 'If an account exists for this email, a reset code has been sent.';
 
   return (
     <>

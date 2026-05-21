@@ -8,9 +8,9 @@ import { terms } from '../../onboarding/data/TandC';
 
 export function TermsAndConditions() {
   const { spacing, colors } = useTheme();
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({
-    [terms[0].title]: true,
-  });
+  const [expanded, setExpanded] = useState<Record<string, boolean>>(
+    terms.length > 0 ? { [terms[0].title]: true } : {},
+  );
 
   const toggle = useCallback((key: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -22,7 +22,13 @@ export function TermsAndConditions() {
 
     return (
       <View style={styles.termCard}>
-        <Pressable onPress={() => toggle(item.title)} style={styles.headerRow}>
+        <Pressable
+          onPress={() => toggle(item.title)}
+          style={styles.headerRow}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: isOpen }}
+          accessibilityLabel={item.title}
+        >
           <Typography style={styles.termTitle}>{item.title}</Typography>
           <Svg
             width={24}

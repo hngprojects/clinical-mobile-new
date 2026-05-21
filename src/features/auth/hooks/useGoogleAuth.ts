@@ -48,13 +48,13 @@ function getTokensFromUrl(url: string) {
 
   if (!accessToken) return null;
 
-  return {
-    accessToken,
-    refreshToken:
-      getParamValue(parsed.queryParams, REFRESH_TOKEN_KEYS) ||
-      getParamValue(fragmentParams, REFRESH_TOKEN_KEYS) ||
-      accessToken,
-  };
+  const refreshToken =
+    getParamValue(parsed.queryParams, REFRESH_TOKEN_KEYS) ||
+    getParamValue(fragmentParams, REFRESH_TOKEN_KEYS);
+
+  if (!refreshToken) return null;
+
+  return { accessToken, refreshToken };
 }
 
 function getAuthErrorFromUrl(url: string) {
@@ -85,13 +85,15 @@ export function useGoogleAuth() {
         const tokens = getTokensFromUrl(result.url);
 
         if (tokens) {
-          // Temporarily save tokens for API authorization headers
           useAuthStore.getState().setTokens(tokens);
-
-          // Fetch full user profile details dynamically
-          const userProfile = await authApi.getMe();
-          useAuthStore.getState().setSession(tokens, userProfile);
-          return { success: true };
+          try {
+            const userProfile = await authApi.getMe();
+            useAuthStore.getState().setSession(tokens, userProfile);
+            return { success: true };
+          } catch (profileError) {
+            useAuthStore.getState().clearSession();
+            console.error('Google Auth Profile Fetch Error:', profileError);
+          }
         }
 
         const authError = getAuthErrorFromUrl(result.url);

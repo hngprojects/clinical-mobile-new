@@ -46,15 +46,20 @@ function createGuestDeviceFingerprint() {
   return `mobile-${Date.now()}-${randomPart}`;
 }
 
-export async function getOrCreateGuestDeviceFingerprint() {
-  const storedFingerprint = await asyncStorage.getItem<string>(
-    STORAGE_KEYS.GUEST_DEVICE_FINGERPRINT,
-  );
-  if (storedFingerprint) return storedFingerprint;
+let guestFingerprintCache: Promise<string> | null = null;
 
-  const fingerprint = createGuestDeviceFingerprint();
-  await asyncStorage.setItem(STORAGE_KEYS.GUEST_DEVICE_FINGERPRINT, fingerprint);
-  return fingerprint;
+export function getOrCreateGuestDeviceFingerprint(): Promise<string> {
+  if (!guestFingerprintCache) {
+    guestFingerprintCache = asyncStorage
+      .getItem<string>(STORAGE_KEYS.GUEST_DEVICE_FINGERPRINT)
+      .then(async (stored) => {
+        if (stored) return stored;
+        const fingerprint = createGuestDeviceFingerprint();
+        await asyncStorage.setItem(STORAGE_KEYS.GUEST_DEVICE_FINGERPRINT, fingerprint);
+        return fingerprint;
+      });
+  }
+  return guestFingerprintCache;
 }
 
 export const useAuthStore = createStore<AuthState & AuthActions>((set, get) => ({

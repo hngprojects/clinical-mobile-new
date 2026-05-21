@@ -2,54 +2,17 @@ import { router, Stack } from 'expo-router';
 import React, { useState } from 'react';
 import { View, Pressable } from 'react-native';
 
-import { RegisterForm } from '@/features/auth';
-import { authApi } from '@/features/auth/api/auth.api';
-import { getOrCreateGuestDeviceFingerprint, useAuthStore } from '@/features/auth/store/auth.store';
-import {
-  Screen,
-  Typography,
-  UploadBottomSheet,
-  UploadedFile,
-  UploadError,
-} from '@/shared/components';
+import { RegisterForm, useGuestUploadSession } from '@/features/auth';
+import { Screen, Typography, UploadBottomSheet } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
-
-function navigateAfterGuestSession(params: Record<string, string | undefined>) {
-  setTimeout(() => {
-    router.replace({
-      pathname: '/(main)/preview-upload',
-      params,
-    });
-  }, 0);
-}
 
 export default function RegisterScreen() {
   const { spacing, colors } = useTheme();
-  const startGuestSession = useAuthStore((s) => s.startGuestSession);
+  const { handleUpload, handleUploadError } = useGuestUploadSession();
   const [showUploadSheet, setShowUploadSheet] = useState(false);
 
   const handleContinueAsGuest = () => {
     setShowUploadSheet(true);
-  };
-
-  const handleUpload = async (file: UploadedFile) => {
-    const deviceFingerprint = await getOrCreateGuestDeviceFingerprint();
-    const guestSession = await authApi.createGuestSession(deviceFingerprint);
-    const guestSessionId = startGuestSession(guestSession.guestSessionId);
-    navigateAfterGuestSession({
-      guestSessionId,
-      name: file.name,
-      size: file.size,
-      uri: file.uri,
-      mimeType: file.mimeType,
-    });
-  };
-
-  const handleUploadError = async (error: UploadError) => {
-    const deviceFingerprint = await getOrCreateGuestDeviceFingerprint();
-    const guestSession = await authApi.createGuestSession(deviceFingerprint);
-    const guestSessionId = startGuestSession(guestSession.guestSessionId);
-    navigateAfterGuestSession({ errorType: error.type, guestSessionId });
   };
 
   return (
