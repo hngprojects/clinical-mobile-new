@@ -104,28 +104,19 @@ async function upload({ baseUrl, filePath, guestSessionId, authToken }) {
   const absolutePath = path.resolve(filePath);
   const buffer = await readFile(absolutePath);
   const mimeType = getMimeType(absolutePath);
-  const dataUrl = `data:${mimeType};base64,${buffer.toString('base64')}`;
   const fileName = path.basename(absolutePath);
+  const body = new FormData();
+  body.append('file', new Blob([buffer], { type: mimeType }), fileName);
 
-  const headers = { 'Content-Type': 'application/json' };
+  const headers = {};
   if (authToken) headers.Authorization = `Bearer ${authToken}`;
-
-  const body = {
-    file: {
-      name: fileName,
-      url: dataUrl,
-    },
-  };
-
-  if (!authToken && guestSessionId) {
-    body.guest_session_id = guestSessionId;
-  }
+  else if (guestSessionId) headers['x-guest-session-id'] = guestSessionId;
 
   console.log(`Uploading ${fileName} to ${baseUrl}/api/v1/upload`);
   const result = await requestJson(`${baseUrl}/api/v1/upload`, {
     method: 'POST',
     headers,
-    body: JSON.stringify(body),
+    body,
   });
 
   if (!result?.data?.case_id) {

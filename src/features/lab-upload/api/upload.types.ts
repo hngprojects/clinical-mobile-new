@@ -9,8 +9,14 @@ export interface FileObject {
   url: string;
 }
 
+export interface UploadFile {
+  name: string;
+  uri: string;
+  mimeType?: string;
+}
+
 export interface UploadRequest {
-  file: FileObject;
+  file: UploadFile;
   guest_session_id?: string | null;
 }
 

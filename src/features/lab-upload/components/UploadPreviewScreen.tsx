@@ -70,7 +70,8 @@ export function UploadPreviewScreen() {
     uploadMutation.mutate({
       file: {
         name: fileName,
-        url: fileUri,
+        uri: fileUri,
+        mimeType: fileMimeType,
       },
       guest_session_id: effectiveGuestSessionId,
     });
@@ -78,6 +79,7 @@ export function UploadPreviewScreen() {
     effectiveGuestSessionId,
     fileName,
     fileUri,
+    fileMimeType,
     hasSelectedFile,
     hasUploadIdentity,
     uploadMutation,
