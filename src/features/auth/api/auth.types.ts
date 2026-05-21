@@ -61,3 +61,13 @@ export interface GuestSessionResponse {
   expiresIn: number;
   expiresAt: string;
 }
+
+export interface UpdateProfileRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
+export interface UpdateProfileResponse {
+  user: UserProfile;
+}
