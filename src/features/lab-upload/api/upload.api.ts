@@ -13,7 +13,7 @@ async function uploadLabResult(request: UploadRequest): Promise<UploadResponse> 
 
     const blob = await response.blob();
 
-    const base64Data = await new Promise<string>((resolve, reject) => {
+    const dataUrl = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onloadend = () => {
         resolve(reader.result as string);
@@ -22,16 +22,20 @@ async function uploadLabResult(request: UploadRequest): Promise<UploadResponse> 
       reader.readAsDataURL(blob);
     });
 
-    fileUrl = base64Data;
+    // Send a compact base64 payload after reading the local file URI.
+    const commaIndex = dataUrl.indexOf(',');
+    fileUrl = commaIndex !== -1 ? dataUrl.slice(commaIndex + 1) : dataUrl;
   }
 
-  const { data } = await client.post<ApiSuccessResponse<UploadResponse>>('/api/v1/upload', {
-    ...request,
-    file: {
-      ...request.file,
-      url: fileUrl,
-    },
-  });
+  const body: Record<string, unknown> = {
+    file: { ...request.file, url: fileUrl },
+  };
+
+  if (request.guest_session_id) {
+    body.guest_session_id = request.guest_session_id;
+  }
+
+  const { data } = await client.post<ApiSuccessResponse<UploadResponse>>('/api/v1/upload', body);
 
   if (!data.data) {
     throw new Error(data.message || 'Upload failed');

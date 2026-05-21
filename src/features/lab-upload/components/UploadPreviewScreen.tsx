@@ -106,10 +106,26 @@ export function UploadPreviewScreen() {
   const handleGetAiReview = () => {
     if (!canRequestAiReview) return;
 
+    const caseId = uploadMutation.data?.case_id;
+
+    if (!caseId) {
+      router.push({
+        pathname: '/(main)/ai-review',
+        params: {
+          errorType: 'system',
+          name: fileName,
+          size: fileSize,
+          uri: fileUri,
+          mimeType: fileMimeType,
+        },
+      });
+      return;
+    }
+
     router.push({
       pathname: '/(main)/ai-review',
       params: {
-        caseId: uploadMutation.data.case_id,
+        caseId,
         guestSessionId: effectiveGuestSessionId ?? undefined,
         name: fileName,
         size: fileSize,

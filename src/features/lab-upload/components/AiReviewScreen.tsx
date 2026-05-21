@@ -6,6 +6,7 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { Screen, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
+import { useAiReview } from '../hooks/useAiReview';
 import { FlowErrorScreen } from './FlowErrorScreen';
 
 const processingSteps = [
@@ -28,12 +29,16 @@ export function AiReviewScreen() {
   }>();
   const [stepIndex, setStepIndex] = useState(0);
   const [hasShownAllSteps, setHasShownAllSteps] = useState(false);
-  const isReadyForChat = Boolean(caseId && hasShownAllSteps && !errorType);
+  const reviewQuery = useAiReview(caseId || '', guestSessionId);
+  const review = reviewQuery.data;
+  const isComplete = review?.status === 'complete' && hasShownAllSteps;
   const missingCaseErrorType = !caseId ? 'system' : undefined;
   const configuredErrorType =
     errorType === 'network' || errorType === 'system' ? errorType : undefined;
+  const processingErrorType = review?.status === 'failed' ? 'processing' : undefined;
+  const queryErrorType = reviewQuery.isError ? 'network' : undefined;
   const visibleErrorType = hasShownAllSteps
-    ? missingCaseErrorType || configuredErrorType
+    ? missingCaseErrorType || configuredErrorType || processingErrorType || queryErrorType
     : undefined;
 
   useEffect(() => {
@@ -54,13 +59,23 @@ export function AiReviewScreen() {
   const handleBackToPreview = () => {
     router.replace({
       pathname: '/(main)/preview-upload',
-      params: { name, size, uri, mimeType },
+      params: { guestSessionId, name, size, uri, mimeType },
     });
   };
 
   const handleRetry = () => {
     setStepIndex(0);
     setHasShownAllSteps(false);
+
+    if (processingErrorType) {
+      handleBackToPreview();
+      return;
+    }
+
+    if (queryErrorType) {
+      reviewQuery.refetch();
+      return;
+    }
 
     if (configuredErrorType) {
       router.replace({
@@ -74,12 +89,11 @@ export function AiReviewScreen() {
           mimeType,
         },
       });
-      return;
     }
   };
 
   useEffect(() => {
-    if (isReadyForChat) {
+    if (isComplete) {
       router.replace({
         pathname: '/(main)/chat-review',
         params: {
@@ -92,18 +106,27 @@ export function AiReviewScreen() {
         },
       });
     }
-  }, [caseId, guestSessionId, isReadyForChat, mimeType, name, router, size, uri]);
+  }, [caseId, guestSessionId, isComplete, mimeType, name, router, size, uri]);
 
   if (visibleErrorType) {
     const isNetworkError = visibleErrorType === 'network';
+    const isProcessingError = visibleErrorType === 'processing';
 
     return (
       <FlowErrorScreen
-        title={isNetworkError ? 'There was an issue processing your file' : 'Something went wrong.'}
+        title={
+          isNetworkError
+            ? 'There was an issue processing your file'
+            : isProcessingError
+              ? 'We could not read your lab result'
+              : 'Something went wrong.'
+        }
         message={
           isNetworkError
             ? "We couldn't connect to the server.\nPlease check your internet connection and try again."
-            : 'The system encountered an issue.\nPlease try again later.'
+            : isProcessingError
+              ? 'Your file was uploaded, but the lab values could not be extracted.\nPlease try a clearer image or upload a PDF.'
+              : 'The system encountered an issue.\nPlease try again later.'
         }
         icon={isNetworkError ? 'network' : 'warning'}
         onClose={handleBackToPreview}

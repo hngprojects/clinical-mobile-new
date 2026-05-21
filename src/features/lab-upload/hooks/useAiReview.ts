@@ -8,8 +8,13 @@ export function useAiReview(caseId: string, guestSessionId?: string | null) {
     () => aiReviewApi.getLatestInterpretation(caseId, guestSessionId),
     {
       enabled: Boolean(caseId),
-      refetchInterval: false,
       retry: false,
+      refetchInterval: (query) => {
+        if (query.state.error) return false;
+
+        const status = query.state.data?.status;
+        return status === 'complete' || status === 'failed' ? false : 1200;
+      },
     },
   );
 }
