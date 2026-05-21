@@ -3,15 +3,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import {
-  Animated,
-  Dimensions,
-  Image,
-  Modal,
-  Pressable,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { Animated, Dimensions, Image, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAuthStore } from '@/features/auth/store/auth.store';
@@ -38,7 +30,12 @@ interface AvatarPickerSheetProps {
   onPickLibrary: () => void;
 }
 
-function AvatarPickerSheet({ visible, onClose, onPickCamera, onPickLibrary }: AvatarPickerSheetProps) {
+function AvatarPickerSheet({
+  visible,
+  onClose,
+  onPickCamera,
+  onPickLibrary,
+}: AvatarPickerSheetProps) {
   const { colors } = useTheme();
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
 
@@ -52,7 +49,11 @@ function AvatarPickerSheet({ visible, onClose, onPickCamera, onPickLibrary }: Av
   }, [visible, slideAnim]);
 
   const dismiss = () => {
-    Animated.timing(slideAnim, { toValue: SCREEN_HEIGHT, duration: 220, useNativeDriver: true }).start(() => onClose());
+    Animated.timing(slideAnim, {
+      toValue: SCREEN_HEIGHT,
+      duration: 220,
+      useNativeDriver: true,
+    }).start(() => onClose());
   };
 
   if (!visible) return null;
@@ -73,15 +74,28 @@ function AvatarPickerSheet({ visible, onClose, onPickCamera, onPickLibrary }: Av
             Edit profile picture
           </Typography>
           <Pressable onPress={dismiss} hitSlop={8} style={styles.sheetHeaderSpacer}>
-            <Ionicons name="close" size={22} color={colors.text} style={{ alignSelf: 'flex-end' }} />
+            <Ionicons
+              name="close"
+              size={22}
+              color={colors.text}
+              style={{ alignSelf: 'flex-end' }}
+            />
           </Pressable>
         </View>
 
         {/* Options */}
-        <View style={[styles.sheetOptions, { backgroundColor: colors.background, borderColor: colors.borderSubtle }]}>
+        <View
+          style={[
+            styles.sheetOptions,
+            { backgroundColor: colors.background, borderColor: colors.borderSubtle },
+          ]}
+        >
           <Pressable
             style={({ pressed }) => [styles.sheetRow, { opacity: pressed ? 0.6 : 1 }]}
-            onPress={() => { dismiss(); setTimeout(onPickCamera, 300); }}
+            onPress={() => {
+              dismiss();
+              setTimeout(onPickCamera, 300);
+            }}
           >
             <Typography variant="body1">Take photo</Typography>
             <Ionicons name="camera-outline" size={22} color={colors.text} />
@@ -89,7 +103,10 @@ function AvatarPickerSheet({ visible, onClose, onPickCamera, onPickLibrary }: Av
           <View style={[styles.sheetDivider, { backgroundColor: colors.borderSubtle }]} />
           <Pressable
             style={({ pressed }) => [styles.sheetRow, { opacity: pressed ? 0.6 : 1 }]}
-            onPress={() => { dismiss(); setTimeout(onPickLibrary, 300); }}
+            onPress={() => {
+              dismiss();
+              setTimeout(onPickLibrary, 300);
+            }}
           >
             <Typography variant="body1">Choose photo</Typography>
             <Ionicons name="image-outline" size={22} color={colors.text} />
@@ -118,19 +135,32 @@ export function EditProfileScreen() {
     email: user?.email ?? '',
   };
 
-  const { control, handleSubmit, formState: { isDirty } } = useForm<EditProfileForm>({ defaultValues });
+  const {
+    control,
+    handleSubmit,
+    formState: { isDirty },
+  } = useForm<EditProfileForm>({ defaultValues });
 
   const pickFromCamera = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') return;
-    const result = await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [1, 1], quality: 0.8 });
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
     if (!result.canceled && result.assets[0]) setAvatarUri(result.assets[0].uri);
   };
 
   const pickFromLibrary = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') return;
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1], quality: 0.8 });
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
     if (!result.canceled && result.assets[0]) setAvatarUri(result.assets[0].uri);
   };
 
@@ -138,12 +168,13 @@ export function EditProfileScreen() {
     const parts = data.fullName.trim().split(/\s+/);
     const firstName = parts[0] ?? '';
     const lastName = parts.slice(1).join(' ') || firstName;
-    updateProfile({ firstName, lastName, email: data.email.trim() }, { onSuccess: () => router.back() });
+    updateProfile(
+      { firstName, lastName, email: data.email.trim() },
+      { onSuccess: () => router.back() },
+    );
   };
 
-  const initials = user
-    ? `${user.firstName[0] ?? ''}${user.lastName[0] ?? ''}`.toUpperCase()
-    : 'G';
+  const initials = user ? `${user.firstName[0] ?? ''}${user.lastName[0] ?? ''}`.toUpperCase() : 'G';
 
   const canSave = isDirty || avatarUri !== null;
 
@@ -162,10 +193,7 @@ export function EditProfileScreen() {
 
       <View style={styles.content}>
         {/* Tappable avatar */}
-        <Pressable
-          onPress={() => setShowAvatarSheet(true)}
-          style={styles.avatarWrapper}
-        >
+        <Pressable onPress={() => setShowAvatarSheet(true)} style={styles.avatarWrapper}>
           <View style={[styles.avatarCircle, { backgroundColor: colors.primarySubtle }]}>
             {avatarUri ? (
               <Image source={{ uri: avatarUri }} style={styles.avatarImage} />

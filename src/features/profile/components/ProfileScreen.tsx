@@ -148,7 +148,11 @@ export function ProfileScreen() {
             onPress={() => router.push('/(main)/edit-profile')}
           />
           <MenuRow icon="lock-closed-outline" label="Change Password" onPress={() => {}} />
-          <MenuRow icon="notifications-outline" label="Notifications" onPress={() => {}} />
+          <MenuRow
+            icon="notifications-outline"
+            label="Notifications"
+            onPress={() => router.push('/(main)/notifications')}
+          />
           <MenuRow icon="log-out-outline" label="Logout" onPress={handleLogout} isLast danger />
         </Section>
 
