@@ -55,3 +55,9 @@ export interface OtpDispatchResponse {
   email: string;
   expiresInSeconds: number;
 }
+
+export interface GuestSessionResponse {
+  guestSessionId: string;
+  expiresIn: number;
+  expiresAt: string;
+}
