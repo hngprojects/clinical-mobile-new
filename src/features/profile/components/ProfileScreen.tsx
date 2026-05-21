@@ -270,6 +270,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 10,
     paddingVertical: 15,
+    borderRadius: 12,
   },
   deleteLabel: {
     fontWeight: '500',
