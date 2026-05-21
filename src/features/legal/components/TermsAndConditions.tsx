@@ -8,7 +8,9 @@ import { terms } from '../../onboarding/data/TandC';
 
 export function TermsAndConditions() {
   const { spacing, colors } = useTheme();
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({
+    [terms[0].title]: true,
+  });
 
   const toggle = useCallback((key: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -21,35 +23,26 @@ export function TermsAndConditions() {
     return (
       <View style={styles.termCard}>
         <Pressable onPress={() => toggle(item.title)} style={styles.headerRow}>
-          <Typography
-            variant="h3"
-            style={{ flex: 1, color: '#000000', fontSize: 18, fontWeight: '500' }}
+          <Typography style={styles.termTitle}>{item.title}</Typography>
+          <Svg
+            width={24}
+            height={24}
+            viewBox="0 0 24 24"
+            fill="none"
+            style={isOpen ? styles.chevronUp : styles.chevronDown}
           >
-            {item.title}
-          </Typography>
-          <Svg width={24} height={24} viewBox="0 0 14 8" fill="none">
-            {isOpen ? (
-              <Path
-                d="M0.75 6.74995C0.75 6.74995 5.16893 0.750013 6.75005 0.75C8.33116 0.749987 12.75 6.75 12.75 6.75"
-                stroke="#141B34"
-                strokeWidth={1.5}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            ) : (
-              <Path
-                d="M0.75 0.750046C0.75 0.750046 5.16893 6.74999 6.75005 6.75C8.33116 6.75001 12.75 0.749999 12.75 0.749999"
-                stroke="#141B34"
-                strokeWidth={1.5}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            )}
+            <Path
+              d="M15 6L9 12L15 18"
+              stroke="#141B34"
+              strokeWidth={1.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </Svg>
         </Pressable>
 
         {isOpen ? (
-          <View style={{ marginTop: 13 }}>
+          <View style={styles.termBody}>
             {item.content ? (
               <Typography variant="body1" style={{ marginBottom: spacing.sm, ...styles.text }}>
                 {item.content}
@@ -106,9 +99,9 @@ export function TermsAndConditions() {
     <FlatList
       data={terms}
       keyExtractor={(it) => it.title}
-      contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: spacing.lg }}
+      contentContainerStyle={styles.content}
       renderItem={renderItem}
-      ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
+      ItemSeparatorComponent={() => <View style={styles.separator} />}
       showsVerticalScrollIndicator={false}
       scrollEnabled={true}
     />
@@ -118,7 +111,14 @@ export function TermsAndConditions() {
 const styles = StyleSheet.create({
   termCard: {
     width: '100%',
-    paddingHorizontal: 16,
+    paddingHorizontal: 30,
+  },
+  content: {
+    paddingBottom: 48,
+    paddingTop: 24,
+  },
+  separator: {
+    height: 24,
   },
   bulletRow: {
     flexDirection: 'row',
@@ -132,19 +132,36 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerRow: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: 'row',
     gap: 12,
-    paddingVertical: 12,
+    justifyContent: 'space-between',
+    minHeight: 40,
   },
-  icon: {
-    width: 24,
-    height: 24,
+  termTitle: {
+    color: '#000000',
+    flex: 1,
+    fontFamily: 'Inter_400Regular',
+    fontSize: 16,
+    fontWeight: '400',
+    letterSpacing: -0.16,
+    lineHeight: 24,
+  },
+  termBody: {
+    marginTop: 20,
+  },
+  chevronDown: {
+    transform: [{ rotate: '-90deg' }],
+  },
+  chevronUp: {
+    transform: [{ rotate: '90deg' }],
   },
   text: {
-    color: '#5E5E5E',
+    color: '#6A6A6A',
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
     fontWeight: '400',
-    fontSize: 18,
+    letterSpacing: -0.14,
+    lineHeight: 21,
   },
 });

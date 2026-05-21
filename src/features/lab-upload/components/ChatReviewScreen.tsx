@@ -67,8 +67,8 @@ export function ChatReviewScreen() {
     () => buildTimeline(messages, hasInterpretation ? review : undefined),
     [hasInterpretation, messages, review],
   );
-  const isInitialLoading = !isMockChat && (chatQuery.isLoading || reviewQuery.isLoading);
-  const isInitialError = !isMockChat && (chatQuery.isError || reviewQuery.isError);
+  const isInitialLoading = !isMockChat && chatQuery.isLoading;
+  const isInitialError = !isMockChat && chatQuery.isError;
 
   useEffect(() => {
     if (timelineItems.length > 0) {
@@ -144,10 +144,9 @@ export function ChatReviewScreen() {
             </View>
           ) : isInitialError ? (
             <StateMessage
-              message="We could not load your AI review. Please check your connection and try again."
+              message="We could not load your chat. Please check your connection and try again."
               actionLabel="Retry"
               onAction={() => {
-                reviewQuery.refetch();
                 chatQuery.refetch();
               }}
             />

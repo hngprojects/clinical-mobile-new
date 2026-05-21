@@ -7,7 +7,6 @@ import { Screen, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 import { FlowErrorScreen } from './FlowErrorScreen';
-import { useAiReview } from '../hooks/useAiReview';
 
 const processingSteps = [
   'Extracting data from your file...',
@@ -29,16 +28,12 @@ export function AiReviewScreen() {
   }>();
   const [stepIndex, setStepIndex] = useState(0);
   const [hasShownAllSteps, setHasShownAllSteps] = useState(false);
-  const reviewQuery = useAiReview(caseId || '', guestSessionId);
-  const review = reviewQuery.data;
-  const isComplete = review?.status === 'complete' && hasShownAllSteps;
+  const isReadyForChat = Boolean(caseId && hasShownAllSteps && !errorType);
   const missingCaseErrorType = !caseId ? 'system' : undefined;
   const configuredErrorType =
     errorType === 'network' || errorType === 'system' ? errorType : undefined;
-  const failedErrorType = review?.status === 'failed' ? 'system' : undefined;
-  const queryErrorType = reviewQuery.isError ? 'network' : undefined;
   const visibleErrorType = hasShownAllSteps
-    ? missingCaseErrorType || configuredErrorType || failedErrorType || queryErrorType
+    ? missingCaseErrorType || configuredErrorType
     : undefined;
 
   useEffect(() => {
@@ -81,12 +76,10 @@ export function AiReviewScreen() {
       });
       return;
     }
-
-    reviewQuery.refetch();
   };
 
   useEffect(() => {
-    if (isComplete) {
+    if (isReadyForChat) {
       router.replace({
         pathname: '/(main)/chat-review',
         params: {
@@ -99,7 +92,7 @@ export function AiReviewScreen() {
         },
       });
     }
-  }, [caseId, guestSessionId, isComplete, mimeType, name, router, size, uri]);
+  }, [caseId, guestSessionId, isReadyForChat, mimeType, name, router, size, uri]);
 
   if (visibleErrorType) {
     const isNetworkError = visibleErrorType === 'network';

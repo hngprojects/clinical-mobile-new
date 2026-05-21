@@ -145,10 +145,11 @@ export function RegisterForm({ onContinueAsGuest }: RegisterFormProps) {
         isLoading={isPending}
         style={{
           marginTop: spacing.xs,
-          height: 56,
+          height: 45,
+          borderRadius: 12,
           backgroundColor: isPending || passwordValue.length === 0 ? '#F5F5F5' : colors.primary,
         }}
-        textColor={isPending || passwordValue.length === 0 ? '#9CA3AF' : '#FFFFFF'}
+        textColor={isPending || passwordValue.length === 0 ? '#767676' : '#FFFFFF'}
       />
 
       <View style={styles.separatorContainer}>
@@ -170,7 +171,7 @@ export function RegisterForm({ onContinueAsGuest }: RegisterFormProps) {
             !isGooglePending && (
               <Image
                 source={require('../../../../assets/images/auth/Google.png')}
-                style={{ width: 20, height: 20 }}
+                style={{ width: 24, height: 24 }}
               />
             )
           }
@@ -228,10 +229,10 @@ const styles = StyleSheet.create({
     height: 1,
   },
   socialIconButton: {
-    height: 56,
+    height: 52,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#D0D0D0',
     backgroundColor: '#FFFFFF',
   },
 });

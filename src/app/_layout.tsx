@@ -10,8 +10,6 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect } from 'react';
 
-import { useAuthSession } from '@/features/auth/hooks/useAuthSession';
-import { useOnboardingStore } from '@/features/onboarding/store/onboarding.store';
 import { AppProviders } from '@/providers/AppProviders';
 import { useAppReady } from '@/shared/hooks/useAppReady';
 
@@ -25,8 +23,6 @@ SplashScreen.preventAutoHideAsync().catch(() => {
 
 function RootLayoutNav() {
   const { isReady: isAppReady } = useAppReady();
-  const { isAuthenticated } = useAuthSession();
-  const hasCompleted = useOnboardingStore((s) => s.hasCompleted);
 
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -48,13 +44,9 @@ function RootLayoutNav() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      {hasCompleted && isAuthenticated ? (
-        <Stack.Screen name="(main)" options={{ animation: 'fade' }} />
-      ) : hasCompleted && !isAuthenticated ? (
-        <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
-      ) : (
-        <Stack.Screen name="(onboarding)" options={{ animation: 'fade' }} />
-      )}
+      <Stack.Screen name="(onboarding)" options={{ animation: 'fade' }} />
+      <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
+      <Stack.Screen name="(main)" options={{ animation: 'fade' }} />
       <Stack.Screen name="+not-found" />
     </Stack>
   );

@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   Keyboard,
   Modal,
   Pressable,
@@ -18,6 +19,14 @@ import type { ApiError } from '@/shared/api/types';
 import { Typography } from '@/shared/components';
 
 const CODE_LENGTH = 6;
+
+function formatTimer(seconds: number) {
+  const safeSeconds = Math.max(0, seconds);
+  const minutes = Math.floor(safeSeconds / 60);
+  const remainingSeconds = safeSeconds % 60;
+
+  return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+}
 
 export function VerifyOtp({
   email,
@@ -213,8 +222,7 @@ export function VerifyOtp({
       <View style={styles.timerContainer}>
         {timer > 0 ? (
           <Typography style={styles.timerText}>
-            Code expires in{' '}
-            <Typography style={styles.boldTimer}>00:{timer < 10 ? `0${timer}` : timer}</Typography>
+            Code expires in <Typography style={styles.boldTimer}>{formatTimer(timer)}</Typography>
           </Typography>
         ) : (
           <View style={styles.resendRow}>
@@ -232,9 +240,10 @@ export function VerifyOtp({
       <Modal visible={showSuccessModal} transparent animationType="fade" statusBarTranslucent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <View style={styles.checkmarkCircle}>
-              <Ionicons name="checkmark" size={54} color="#FFFFFF" />
-            </View>
+            <Image
+              source={require('../../../../assets/images/auth/Checked.png')}
+              style={styles.successCheckImage}
+            />
 
             <Typography style={styles.modalTitle}>Sign-up successful</Typography>
 
@@ -420,18 +429,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     alignItems: 'center',
   },
-  checkmarkCircle: {
+  successCheckImage: {
     width: 96,
     height: 96,
-    borderRadius: 48,
-    backgroundColor: '#10B981',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#10B981',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
   },
   modalTitle: {
     fontFamily: 'Inter_700Bold',
