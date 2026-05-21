@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -12,8 +11,6 @@ interface HomeHeaderProps {
 
 export function HomeHeader({ name = 'User' }: HomeHeaderProps) {
   const { colors, spacing } = useTheme();
-  const router = useRouter();
-
   return (
     <View
       style={[styles.container, { paddingHorizontal: spacing.md, paddingVertical: spacing.md }]}
@@ -25,7 +22,7 @@ export function HomeHeader({ name = 'User' }: HomeHeaderProps) {
         </Typography>
       </View>
       <Pressable
-        onPress={() => router.push('/(main)/notifications' as never)}
+        onPress={() => {}}
         style={[styles.bellButton, { backgroundColor: colors.cardBackground }]}
       >
         <Ionicons name="notifications-outline" size={22} color={colors.text} />

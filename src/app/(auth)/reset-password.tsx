@@ -25,6 +25,19 @@ export default function ResetPasswordScreen() {
     bannerY.value = withTiming(-100, { duration: 300 });
   }, [resetPasswordMutation.error, resetPasswordMutation.isSuccess, bannerY]);
 
+  useEffect(() => {
+    if (resetPasswordMutation.isSuccess) {
+      const enteredEmail = resetPasswordMutation.variables?.email || '';
+      const timeout = setTimeout(() => {
+        router.push({
+          pathname: '/(auth)/verify-otp',
+          params: { email: enteredEmail, type: 'reset-password' },
+        });
+      }, 1500);
+      return () => clearTimeout(timeout);
+    }
+  }, [resetPasswordMutation.isSuccess, resetPasswordMutation.variables]);
+
   const animatedBannerStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: bannerY.value }],
     opacity: withTiming(bannerY.value === 0 ? 1 : 0),

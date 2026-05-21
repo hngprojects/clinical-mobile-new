@@ -10,16 +10,17 @@ import { useTheme } from '@/shared/theme';
 
 export default function NewPasswordScreen() {
   const { colors, spacing } = useTheme();
-  const { token } = useLocalSearchParams<{ token?: string | string[] }>();
+  const { email, token } = useLocalSearchParams<{ email?: string; token?: string | string[] }>();
   const completeResetMutation = useCompletePasswordReset();
   const bannerY = useSharedValue(-100);
   const resetToken = (Array.isArray(token) ? (token[0] ?? '') : (token ?? '')).trim();
+  const resetEmail = (Array.isArray(email) ? (email[0] ?? '') : (email ?? '')).trim();
 
   useEffect(() => {
-    if (!resetToken) {
+    if (!resetToken || !resetEmail) {
       router.replace('/(auth)/reset-password');
     }
-  }, [resetToken]);
+  }, [resetToken, resetEmail]);
 
   useEffect(() => {
     if (completeResetMutation.error || completeResetMutation.isSuccess) {
@@ -45,7 +46,7 @@ export default function NewPasswordScreen() {
     ? 'We could not reset your password. Please request a new link and try again.'
     : completeResetMutation.data?.message || 'Password reset successfully. You can now log in.';
 
-  if (!resetToken) return null;
+  if (!resetToken || !resetEmail) return null;
 
   return (
     <>
@@ -77,7 +78,11 @@ export default function NewPasswordScreen() {
           </Typography>
         </View>
 
-        <CompletePasswordResetForm mutation={completeResetMutation} resetToken={resetToken} />
+        <CompletePasswordResetForm
+          mutation={completeResetMutation}
+          email={resetEmail}
+          resetToken={resetToken}
+        />
 
         <View style={styles.footer}>
           <Typography

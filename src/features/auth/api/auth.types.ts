@@ -19,8 +19,9 @@ export interface ResetPasswordResponse {
 }
 
 export interface CompletePasswordResetRequest {
+  email: string;
   token: string;
-  password: string;
+  newPassword: string;
 }
 
 export interface CompletePasswordResetResponse {
@@ -59,4 +60,14 @@ export interface GuestSessionResponse {
   guestSessionId: string;
   expiresIn: number;
   expiresAt: string;
+}
+
+export interface UpdateProfileRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
+export interface UpdateProfileResponse {
+  user: UserProfile;
 }
