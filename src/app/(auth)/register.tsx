@@ -6,15 +6,6 @@ import { RegisterForm, useGuestUploadSession } from '@/features/auth';
 import { Screen, Typography, UploadBottomSheet } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
-function navigateAfterGuestSession(params: Record<string, string | undefined>) {
-  setTimeout(() => {
-    router.replace({
-      pathname: '/(main)/preview-upload',
-      params,
-    });
-  }, 0);
-}
-
 export default function RegisterScreen() {
   const { spacing, colors } = useTheme();
   const { handleUpload, handleUploadError } = useGuestUploadSession();

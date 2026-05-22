@@ -10,15 +10,6 @@ import { useTheme } from '@/shared/theme';
 
 const RESET_PASSWORD_ROUTE = '/(auth)/reset-password' as Href;
 
-function navigateAfterGuestSession(params: Record<string, string | undefined>) {
-  setTimeout(() => {
-    router.replace({
-      pathname: '/(main)/preview-upload',
-      params,
-    });
-  }, 0);
-}
-
 export default function LoginScreen() {
   const { spacing, colors } = useTheme();
   const loginMutation = useLogin();

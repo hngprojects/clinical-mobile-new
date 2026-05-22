@@ -24,7 +24,6 @@ interface AuthActions {
   clearSession: () => void;
 }
 
-
 function getSecureRandomBytes(length: number) {
   const randomBytes = new Uint8Array(length);
   const cryptoApi = globalThis.crypto;
