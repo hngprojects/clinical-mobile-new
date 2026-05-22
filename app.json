@@ -55,6 +55,8 @@
       "reactCompiler": true
     },
     "extra": {
+      "EXPO_PUBLIC_API_BASE_URL": "https://api.staging.clinsight.hng14.com",
+      "EXPO_PUBLIC_APP_ENV": "staging",
       "eas": {
         "projectId": "fdbd24ae-4425-4853-b0fb-52b15d8a5574"
       },
