@@ -5,6 +5,7 @@ import type {
   AuthTokens,
   CompletePasswordResetRequest,
   CompletePasswordResetResponse,
+  GuestSessionResponse,
   LoginRequest,
   OtpDispatchResponse,
   RegisterRequest,
@@ -46,6 +47,12 @@ interface BackendOtpResponse {
   expires_in_seconds: number;
 }
 
+interface BackendGuestSessionResponse {
+  guest_session_id: string;
+  expires_in: number;
+  expires_at: string;
+}
+
 function mapUser(user: BackendUserResponse): UserProfile {
   return {
     id: user.id,
@@ -75,6 +82,14 @@ function mapOtpResponse(data: BackendOtpResponse): OtpDispatchResponse {
   return {
     email: data.email,
     expiresInSeconds: data.expires_in_seconds,
+  };
+}
+
+function mapGuestSessionResponse(data: BackendGuestSessionResponse): GuestSessionResponse {
+  return {
+    guestSessionId: data.guest_session_id,
+    expiresIn: data.expires_in,
+    expiresAt: data.expires_at,
   };
 }
 
@@ -113,6 +128,19 @@ async function resendOtp(data: { email: string }): Promise<OtpDispatchResponse> 
   return mapOtpResponse(response.data.data);
 }
 
+async function createGuestSession(
+  deviceFingerprint?: string | null,
+): Promise<GuestSessionResponse> {
+  const response = await client.post<SuccessResponse<BackendGuestSessionResponse>>(
+    '/api/v1/guest-session',
+    undefined,
+    {
+      headers: deviceFingerprint ? { 'X-Device-Fingerprint': deviceFingerprint } : undefined,
+    },
+  );
+  return mapGuestSessionResponse(response.data.data);
+}
+
 async function refreshTokens(refreshToken: string): Promise<AuthTokens> {
   const response = await client.post<SuccessResponse<BackendTokenResponse>>('/api/v1/auth/refresh');
   return {
@@ -135,6 +163,7 @@ async function completePasswordReset(
   data: CompletePasswordResetRequest,
 ): Promise<CompletePasswordResetResponse> {
   const response = await client.post<SuccessResponse<unknown>>('/api/v1/auth/reset-password', {
+    email: data.email,
     token: data.token,
     new_password: data.newPassword,
   });
@@ -166,6 +195,7 @@ export const authApi = {
   register,
   verifyOtp,
   resendOtp,
+  createGuestSession,
   refreshTokens,
   resetPassword,
   completePasswordReset,

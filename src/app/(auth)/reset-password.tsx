@@ -44,9 +44,8 @@ export default function ResetPasswordScreen() {
   }));
 
   const notificationMessage = resetPasswordMutation.error
-    ? 'We could not send reset instructions. Please try again.'
-    : resetPasswordMutation.data?.message ||
-      'If an account exists for this email, reset instructions have been sent.';
+    ? 'We could not send a reset code. Please try again.'
+    : 'If an account exists for this email, a reset code has been sent.';
 
   return (
     <>
@@ -74,7 +73,7 @@ export default function ResetPasswordScreen() {
             Reset Password
           </Typography>
           <Typography variant="body1" style={{ color: colors.textSecondary }}>
-            Enter your email and we will send password reset instructions.
+            Enter your email and we will send a password reset code.
           </Typography>
         </View>
 

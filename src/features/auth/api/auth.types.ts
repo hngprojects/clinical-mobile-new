@@ -56,6 +56,12 @@ export interface OtpDispatchResponse {
   expiresInSeconds: number;
 }
 
+export interface GuestSessionResponse {
+  guestSessionId: string;
+  expiresIn: number;
+  expiresAt: string;
+}
+
 export interface UpdateProfileRequest {
   firstName: string;
   lastName: string;

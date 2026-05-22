@@ -17,18 +17,12 @@ interface AuthState {
 interface AuthActions {
   setSession: (tokens: AuthTokens, user: UserProfile) => void;
   setTokens: (tokens: AuthTokens) => void;
-  startGuestSession: () => void;
+  startGuestSession: (guestSessionId?: string | null) => string;
   setGuestSession: (isGuest: boolean, guestSessionId?: string | null) => void;
   clearSession: () => void;
 }
 
-function createGuestSessionId() {
-  const randomBytes = getRandomBytes(8);
-  const randomPart = Array.from(randomBytes, (b) => b.toString(16).padStart(2, '0')).join('');
-  return `guest-${Date.now()}-${randomPart}`;
-}
-
-function getRandomBytes(length: number) {
+function getSecureRandomBytes(length: number) {
   const randomBytes = new Uint8Array(length);
   const cryptoApi = globalThis.crypto;
 
@@ -38,6 +32,34 @@ function getRandomBytes(length: number) {
   }
 
   throw new Error('Secure random number generation is unavailable.');
+}
+
+function createGuestSessionId() {
+  const randomBytes = getSecureRandomBytes(8);
+  const randomPart = Array.from(randomBytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  return `guest-${Date.now()}-${randomPart}`;
+}
+
+function createGuestDeviceFingerprint() {
+  const randomBytes = getSecureRandomBytes(16);
+  const randomPart = Array.from(randomBytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  return `mobile-${Date.now()}-${randomPart}`;
+}
+
+let guestFingerprintCache: Promise<string> | null = null;
+
+export function getOrCreateGuestDeviceFingerprint(): Promise<string> {
+  if (!guestFingerprintCache) {
+    guestFingerprintCache = asyncStorage
+      .getItem<string>(STORAGE_KEYS.GUEST_DEVICE_FINGERPRINT)
+      .then(async (stored) => {
+        if (stored) return stored;
+        const fingerprint = createGuestDeviceFingerprint();
+        await asyncStorage.setItem(STORAGE_KEYS.GUEST_DEVICE_FINGERPRINT, fingerprint);
+        return fingerprint;
+      });
+  }
+  return guestFingerprintCache;
 }
 
 export const useAuthStore = createStore<AuthState & AuthActions>((set, get) => ({
@@ -60,12 +82,20 @@ export const useAuthStore = createStore<AuthState & AuthActions>((set, get) => (
     asyncStorage.removeItem(STORAGE_KEYS.GUEST_SESSION_ID).catch(console.warn);
   },
 
-  startGuestSession: () => {
-    const guestSessionId = get().guestSessionId ?? createGuestSessionId();
-    set({ accessToken: null, refreshToken: null, user: null, isGuest: true, guestSessionId });
+  startGuestSession: (providedGuestSessionId) => {
+    const nextGuestSessionId =
+      providedGuestSessionId ?? get().guestSessionId ?? createGuestSessionId();
+    set({
+      accessToken: null,
+      refreshToken: null,
+      user: null,
+      isGuest: true,
+      guestSessionId: nextGuestSessionId,
+    });
     secureStorage.clearTokens().catch(console.warn);
     asyncStorage.setItem(STORAGE_KEYS.GUEST_SESSION, true).catch(console.warn);
-    asyncStorage.setItem(STORAGE_KEYS.GUEST_SESSION_ID, guestSessionId).catch(console.warn);
+    asyncStorage.setItem(STORAGE_KEYS.GUEST_SESSION_ID, nextGuestSessionId).catch(console.warn);
+    return nextGuestSessionId;
   },
 
   setGuestSession: (isGuest, guestSessionId = null) => {
