@@ -43,10 +43,12 @@ jobs:
 
       - name: Publish EAS Update
         id: eas-update
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
           UPDATE_OUTPUT=$(npx eas-cli update \
             --channel development \
-            --message "[dev] ${{ github.event.head_commit.message }}" \
+            --message "[dev] $SAFE_MESSAGE" \
             --non-interactive \
             --json 2>/dev/null || true)
 
