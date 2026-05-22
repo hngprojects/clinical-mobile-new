@@ -25,6 +25,7 @@ export function UploadPreviewScreen() {
   const accessToken = useAuthStore((s) => s.accessToken);
   const storedGuestSessionId = useAuthStore((s) => s.guestSessionId);
   const uploadMutation = useUploadLabResult();
+  const { mutate: uploadMutate } = uploadMutation;
   const lastUploadUriRef = useRef<string | null>(null);
   const { name, size, uri, mimeType, errorType, guestSessionId } = useLocalSearchParams<{
     name?: string;
@@ -67,7 +68,7 @@ export function UploadPreviewScreen() {
     if (lastUploadUriRef.current === uploadKey) return;
 
     lastUploadUriRef.current = uploadKey;
-    uploadMutation.mutate({
+    uploadMutate({
       file: {
         name: fileName,
         uri: fileUri,
@@ -82,7 +83,7 @@ export function UploadPreviewScreen() {
     fileMimeType,
     hasSelectedFile,
     hasUploadIdentity,
-    uploadMutation.mutate,
+    uploadMutate,
   ]);
 
   const handleUploadAnother = (file: UploadedFile) => {
