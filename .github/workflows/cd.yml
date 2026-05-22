@@ -46,6 +46,7 @@ jobs:
         env:
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
+          SAFE_MESSAGE="$(printf '%s' "$COMMIT_MESSAGE" | tr '\n' ' ')"
           UPDATE_OUTPUT=$(npx eas-cli update \
             --channel development \
             --message "[dev] $SAFE_MESSAGE" \
