@@ -73,10 +73,9 @@ jobs:
             android-gradle-${{ runner.os }}-
 
       - name: Bundle JS and build APK
-        working-directory: android
         run: |
           npx expo export --platform android --output-dir android/app/src/main/assets
-          ./gradlew assembleDebug --no-daemon
+          cd android && ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK artifact
         id: artifact
