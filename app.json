@@ -8,7 +8,7 @@
     "scheme": "clinsight",
     "userInterfaceStyle": "automatic",
     "updates": {
-      "url": "https://u.expo.dev/4d95fa1c-259d-4031-b0fb-ff56c14c1f98"
+      "url": "https://u.expo.dev/fdbd24ae-4425-4853-b0fb-52b15d8a5574"
     },
     "ios": {
       "supportsTablet": true
@@ -53,8 +53,9 @@
     },
     "extra": {
       "eas": {
-        "projectId": "4d95fa1c-259d-4031-b0fb-ff56c14c1f98"
-      }
+        "projectId": "fdbd24ae-4425-4853-b0fb-52b15d8a5574"
+      },
+      "router": {}
     }
   }
 }
