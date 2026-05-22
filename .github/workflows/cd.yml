@@ -50,7 +50,7 @@ jobs:
             --channel development \
             --message "[dev] $SAFE_MESSAGE" \
             --non-interactive \
-            --json 2>/dev/null || true)
+            --json)
 
           UPDATE_GROUP_ID=$(echo "$UPDATE_OUTPUT" | python3 -c "
           import sys, json
@@ -58,9 +58,14 @@ jobs:
             data = json.load(sys.stdin)
             items = data if isinstance(data, list) else [data]
             print(items[0].get('group', ''))
-          except:
+          except Exception:
             print('')
-          " 2>/dev/null || true)
+          ")
+
+          if [ -z "$UPDATE_GROUP_ID" ]; then
+            echo 'EAS update publish failed: missing update group id' >&2
+            exit 1
+          fi
 
           echo "updateGroupId=$UPDATE_GROUP_ID" >> $GITHUB_OUTPUT
 
