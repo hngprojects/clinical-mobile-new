@@ -48,25 +48,19 @@ export function ChatReviewScreen() {
   const router = useRouter();
   const scrollRef = useRef<ScrollView | null>(null);
   const insets = useSafeAreaInsets();
-  const { caseId, guestSessionId, mock } = useLocalSearchParams<{
+  const { caseId, guestSessionId } = useLocalSearchParams<{
     caseId?: string;
     guestSessionId?: string;
-    mock?: string;
   }>();
   const [draft, setDraft] = useState('');
   const [inputHeight, setInputHeight] = useState(COMPOSER_INPUT_MIN_HEIGHT);
-  const [mockMessages, setMockMessages] = useState<ChatMessage[]>(MOCK_CHAT_MESSAGES);
-  const isMockChat = typeof __DEV__ !== 'undefined' && __DEV__ && mock === 'chat';
   const reviewQuery = useAiReview(caseId || '', guestSessionId);
   const chatQuery = useCaseChat(caseId || '', guestSessionId);
   const sendMessage = useSendChatMessage(caseId || '', guestSessionId);
-  const review = isMockChat ? MOCK_REVIEW : reviewQuery.data;
-  const messages = useMemo(
-    () => (isMockChat ? mockMessages : (chatQuery.data ?? [])),
-    [chatQuery.data, isMockChat, mockMessages],
-  );
+  const review = reviewQuery.data;
+  const messages = chatQuery.data ?? [];
   const trimmedDraft = draft.trim();
-  const canSend = Boolean((caseId || isMockChat) && trimmedDraft && !sendMessage.isPending);
+  const canSend = Boolean(caseId && trimmedDraft && !sendMessage.isPending);
   const hasInterpretation = Boolean(
     review?.status === 'complete' &&
     (review.summary || review.valueBreakdown?.length || review.suggestedQuestions?.length),
@@ -75,8 +69,8 @@ export function ChatReviewScreen() {
     () => buildTimeline(messages, hasInterpretation ? review : undefined),
     [hasInterpretation, messages, review],
   );
-  const isInitialLoading = !isMockChat && chatQuery.isLoading;
-  const isInitialError = !isMockChat && chatQuery.isError;
+  const isInitialLoading = chatQuery.isLoading;
+  const isInitialError = chatQuery.isError;
   const composerHeight = Math.max(COMPOSER_MIN_HEIGHT, inputHeight + COMPOSER_VERTICAL_PADDING);
 
   useEffect(() => {
@@ -107,23 +101,6 @@ export function ChatReviewScreen() {
     const message = trimmedDraft;
     setDraft('');
     setInputHeight(COMPOSER_INPUT_MIN_HEIGHT);
-
-    if (isMockChat) {
-      setMockMessages((current) => [
-        ...current,
-        createMockMessage({
-          id: `mock-patient-${current.length + 1}`,
-          senderType: 'patient',
-          text: message,
-        }),
-        createMockMessage({
-          id: `mock-ai-${current.length + 2}`,
-          senderType: 'ai',
-          text: 'That is a good follow-up. In the real chat, Flo would respond using the uploaded lab context.',
-        }),
-      ]);
-      return;
-    }
 
     try {
       await sendMessage.mutateAsync(message);
@@ -163,7 +140,7 @@ export function ChatReviewScreen() {
           showsVerticalScrollIndicator={false}
           style={styles.scroll}
         >
-          {!caseId && !isMockChat ? (
+          {!caseId ? (
             <StateMessage message="We could not find the case for this chat." />
           ) : isInitialLoading ? (
             <View style={styles.loadingState}>
@@ -307,71 +284,6 @@ function getTimestamp(value?: string) {
   const timestamp = Date.parse(value);
   return Number.isNaN(timestamp) ? 0 : timestamp;
 }
-
-function createMockMessage({
-  id,
-  senderType,
-  text,
-}: {
-  id: string;
-  senderType: ChatMessage['senderType'];
-  text: string;
-}): ChatMessage {
-  return {
-    id,
-    senderType,
-    content: { message: text },
-    text,
-    medicalCaseId: 'mock-case',
-    userId: senderType === 'patient' ? 'mock-user' : null,
-    sentAt: new Date().toISOString(),
-  };
-}
-
-const MOCK_REVIEW: AiReviewResult = {
-  id: 'mock-interpretation',
-  medicalCaseId: 'mock-case',
-  status: 'complete',
-  generatedAt: '2026-05-20T09:05:00.000Z',
-  summary:
-    'Your HbA1c result is higher than the usual reference range, which can mean your average blood sugar has been elevated over the last few months. This is worth discussing with a clinician so they can interpret it alongside your history, symptoms, and any other tests.',
-  riskLevel: 'moderate',
-  confidence: 'high',
-  valueBreakdown: [
-    { metric: 'HbA1c', value: '15.5', unit: '%', status: 'high' },
-    { metric: 'Fasting glucose', value: '7.8', unit: 'mmol/L', status: 'high' },
-    { metric: 'Total cholesterol', value: '4.6', unit: 'mmol/L', status: 'normal' },
-  ],
-  suggestedQuestions: [
-    'What does HbA1c mean?',
-    'What should I ask my doctor?',
-    'Which results need attention first?',
-  ],
-};
-
-const MOCK_CHAT_MESSAGES: ChatMessage[] = [
-  {
-    id: 'mock-chat-1',
-    senderType: 'patient',
-    content: { message: 'Can you explain this in simple terms?' },
-    text: 'Can you explain this in simple terms?',
-    medicalCaseId: 'mock-case',
-    userId: 'mock-user',
-    sentAt: '2026-05-20T09:06:00.000Z',
-  },
-  {
-    id: 'mock-chat-2',
-    senderType: 'ai',
-    content: {
-      message:
-        'In simple terms, this result suggests your blood sugar may have been running high over time. It does not replace a diagnosis, but it is important enough to follow up.',
-    },
-    text: 'In simple terms, this result suggests your blood sugar may have been running high over time. It does not replace a diagnosis, but it is important enough to follow up.',
-    medicalCaseId: 'mock-case',
-    userId: null,
-    sentAt: '2026-05-20T09:07:00.000Z',
-  },
-];
 
 function StateMessage({
   message,
