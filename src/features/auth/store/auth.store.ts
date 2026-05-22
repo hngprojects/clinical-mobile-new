@@ -1,3 +1,5 @@
+import * as Crypto from 'expo-crypto';
+
 import { registerAuthStore } from '@/shared/api/client';
 import { STORAGE_KEYS } from '@/shared/constants/keys';
 import { asyncStorage } from '@/shared/storage/asyncStorage';
@@ -31,7 +33,7 @@ function getSecureRandomBytes(length: number) {
     return randomBytes;
   }
 
-  throw new Error('Secure random number generation is unavailable.');
+  return Crypto.getRandomBytes(length);
 }
 
 function createGuestSessionId() {

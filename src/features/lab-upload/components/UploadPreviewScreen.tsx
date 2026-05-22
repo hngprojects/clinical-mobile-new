@@ -22,15 +22,18 @@ const UPLOAD_LOADING_DURATION_MS = 2400;
 export function UploadPreviewScreen() {
   const { colors, spacing } = useTheme();
   const router = useRouter();
-  const guestSessionId = useAuthStore((s) => s.guestSessionId);
+  const accessToken = useAuthStore((s) => s.accessToken);
+  const storedGuestSessionId = useAuthStore((s) => s.guestSessionId);
   const uploadMutation = useUploadLabResult();
+  const { mutate: uploadMutate } = uploadMutation;
   const lastUploadUriRef = useRef<string | null>(null);
-  const { name, size, uri, mimeType, errorType } = useLocalSearchParams<{
+  const { name, size, uri, mimeType, errorType, guestSessionId } = useLocalSearchParams<{
     name?: string;
     size?: string;
     uri?: string;
     mimeType?: string;
     errorType?: string;
+    guestSessionId?: string;
   }>();
   const [isUploading, setIsUploading] = useState(true);
   const [showUploadSheet, setShowUploadSheet] = useState(false);
@@ -40,6 +43,9 @@ export function UploadPreviewScreen() {
   const fileType = fileName.split('.').pop()?.toUpperCase() || 'JPG';
   const fileUri = typeof uri === 'string' ? uri : undefined;
   const fileMimeType = typeof mimeType === 'string' ? mimeType : undefined;
+  const effectiveGuestSessionId =
+    typeof guestSessionId === 'string' ? guestSessionId : storedGuestSessionId;
+  const hasUploadIdentity = Boolean(accessToken || effectiveGuestSessionId);
   const hasSelectedFile = Boolean(fileUri);
   const isImagePreview =
     hasSelectedFile &&
@@ -56,17 +62,29 @@ export function UploadPreviewScreen() {
   }, [fileName, fileSize, fileUri]);
 
   useEffect(() => {
-    if (!hasSelectedFile || !fileUri || lastUploadUriRef.current === fileUri) return;
+    if (!hasSelectedFile || !fileUri || !hasUploadIdentity) return;
 
-    lastUploadUriRef.current = fileUri;
-    uploadMutation.mutate({
+    const uploadKey = `${fileUri}:${effectiveGuestSessionId ?? 'auth'}`;
+    if (lastUploadUriRef.current === uploadKey) return;
+
+    lastUploadUriRef.current = uploadKey;
+    uploadMutate({
       file: {
         name: fileName,
-        url: fileUri,
+        uri: fileUri,
+        mimeType: fileMimeType,
       },
-      guest_session_id: guestSessionId,
+      guest_session_id: effectiveGuestSessionId,
     });
-  }, [fileName, fileUri, guestSessionId, hasSelectedFile, uploadMutation]);
+  }, [
+    effectiveGuestSessionId,
+    fileName,
+    fileUri,
+    fileMimeType,
+    hasSelectedFile,
+    hasUploadIdentity,
+    uploadMutate,
+  ]);
 
   const handleUploadAnother = (file: UploadedFile) => {
     router.replace({
@@ -76,6 +94,7 @@ export function UploadPreviewScreen() {
         size: file.size,
         uri: file.uri,
         mimeType: file.mimeType,
+        guestSessionId: effectiveGuestSessionId ?? undefined,
       },
     });
   };
@@ -83,18 +102,35 @@ export function UploadPreviewScreen() {
   const handleUploadError = (error: UploadError) => {
     router.replace({
       pathname: '/(main)/preview-upload',
-      params: { errorType: error.type },
+      params: { errorType: error.type, guestSessionId: effectiveGuestSessionId ?? undefined },
     });
   };
 
   const handleGetAiReview = () => {
     if (!canRequestAiReview) return;
 
+    const caseId = uploadMutation.data?.case_id;
+
+    if (!caseId) {
+      router.push({
+        pathname: '/(main)/ai-review',
+        params: {
+          errorType: 'system',
+          name: fileName,
+          size: fileSize,
+          uri: fileUri,
+          mimeType: fileMimeType,
+          guestSessionId: effectiveGuestSessionId ?? undefined,
+        },
+      });
+      return;
+    }
+
     router.push({
       pathname: '/(main)/ai-review',
       params: {
-        caseId: uploadMutation.data.case_id,
-        guestSessionId: guestSessionId ?? undefined,
+        caseId,
+        guestSessionId: effectiveGuestSessionId ?? undefined,
         name: fileName,
         size: fileSize,
         uri: fileUri,

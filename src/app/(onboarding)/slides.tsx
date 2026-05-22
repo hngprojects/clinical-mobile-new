@@ -1,10 +1,23 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 
+import { authApi } from '@/features/auth/api/auth.api';
+import { getOrCreateGuestDeviceFingerprint, useAuthStore } from '@/features/auth/store/auth.store';
 import { OnboardingPager, SLIDES } from '@/features/onboarding';
-import { useAuthStore } from '@/features/auth/store/auth.store';
 import { useOnboardingStore } from '@/features/onboarding/store/onboarding.store';
 import { Screen, UploadBottomSheet, UploadedFile, UploadError } from '@/shared/components';
+
+function navigateAfterGuestSession(
+  router: ReturnType<typeof useRouter>,
+  params: Record<string, string | undefined>,
+) {
+  setTimeout(() => {
+    router.replace({
+      pathname: '/(main)/preview-upload',
+      params,
+    });
+  }, 0);
+}
 
 export default function SlidesScreen() {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -24,25 +37,40 @@ export default function SlidesScreen() {
 
   const handleUpload = async (file: UploadedFile) => {
     await completeOnboarding();
-    startGuestSession();
-    router.replace({
-      pathname: '/(main)/preview-upload',
-      params: {
+    try {
+      const deviceFingerprint = await getOrCreateGuestDeviceFingerprint();
+      const guestSession = await authApi.createGuestSession(deviceFingerprint);
+      const guestSessionId = startGuestSession(guestSession.guestSessionId);
+      navigateAfterGuestSession(router, {
+        guestSessionId,
         name: file.name,
         size: file.size,
         uri: file.uri,
         mimeType: file.mimeType,
-      },
-    });
+      });
+    } catch {
+      const guestSessionId = startGuestSession();
+      navigateAfterGuestSession(router, {
+        guestSessionId,
+        name: file.name,
+        size: file.size,
+        uri: file.uri,
+        mimeType: file.mimeType,
+      });
+    }
   };
 
   const handleUploadError = async (error: UploadError) => {
     await completeOnboarding();
-    startGuestSession();
-    router.replace({
-      pathname: '/(main)/preview-upload',
-      params: { errorType: error.type },
-    });
+    try {
+      const deviceFingerprint = await getOrCreateGuestDeviceFingerprint();
+      const guestSession = await authApi.createGuestSession(deviceFingerprint);
+      const guestSessionId = startGuestSession(guestSession.guestSessionId);
+      navigateAfterGuestSession(router, { errorType: error.type, guestSessionId });
+    } catch {
+      const guestSessionId = startGuestSession();
+      navigateAfterGuestSession(router, { errorType: error.type, guestSessionId });
+    }
   };
 
   const handleLogin = async () => {

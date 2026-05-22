@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Redirect, Tabs, usePathname } from 'expo-router';
+import { Redirect, Tabs, useGlobalSearchParams, usePathname } from 'expo-router';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -30,14 +30,21 @@ export default function MainLayout() {
   const { colors } = useTheme();
   const { isLoggedIn, isGuest } = useAuthSession();
   const pathname = usePathname();
+  const { guestSessionId } = useGlobalSearchParams<{ guestSessionId?: string }>();
 
   const isGuestFlowRoute =
     pathname.endsWith('/preview-upload') ||
     pathname.endsWith('/ai-review') ||
     pathname.endsWith('/chat-review');
+  const hasGuestFlowSession = isGuestFlowRoute && typeof guestSessionId === 'string';
 
-  if (!isLoggedIn && !isGuest) return <Redirect href="/(auth)/login" />;
-  if (isGuest && !isGuestFlowRoute) return <Redirect href="/(auth)/register" />;
+  if (!isLoggedIn && !isGuest && !hasGuestFlowSession) {
+    return <Redirect href="/(auth)/login" />;
+  }
+
+  if ((isGuest || hasGuestFlowSession) && !isGuestFlowRoute) {
+    return <Redirect href="/(auth)/register" />;
+  }
 
   return (
     <Tabs
