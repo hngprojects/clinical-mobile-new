@@ -75,7 +75,7 @@ jobs:
       - name: Bundle JS and build APK
         working-directory: android
         run: |
-          npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res
+          npx expo export --platform android --output-dir android/app/src/main/assets
           ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK artifact
