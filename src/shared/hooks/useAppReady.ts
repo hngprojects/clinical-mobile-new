@@ -9,6 +9,10 @@ export function useAppReady() {
 
   // 1. Session Restoration on App Launch
   useEffect(() => {
+    // Fallback: if any storage/network call hangs indefinitely (e.g. SecureStore
+    // in certain emulated environments), ensure the splash is always dismissed.
+    const fallback = setTimeout(() => setIsReady(true), 5_000);
+
     async function init() {
       try {
         const { useAuthStore } = await import('@/features/auth/store/auth.store');
@@ -44,11 +48,14 @@ export function useAppReady() {
       } catch (e) {
         console.warn('App init error:', e);
       } finally {
+        clearTimeout(fallback);
         setIsReady(true);
       }
     }
 
     init();
+
+    return () => clearTimeout(fallback);
   }, []);
 
   return { isReady };
