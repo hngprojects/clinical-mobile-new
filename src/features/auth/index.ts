@@ -17,6 +17,7 @@ export { RegisterForm } from './components/RegisterForm';
 export { ResetPasswordForm } from './components/ResetPasswordForm';
 export { VerifyOtp } from './components/VerifyOtp';
 export { useAuthSession } from './hooks/useAuthSession';
+export { useGuestUploadSession } from './hooks/useGuestUploadSession';
 export { useCompletePasswordReset } from './hooks/useCompletePasswordReset';
 export { useGoogleAuth } from './hooks/useGoogleAuth';
 export { useLogin } from './hooks/useLogin';

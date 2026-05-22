@@ -22,7 +22,13 @@ export function TermsAndConditions() {
 
     return (
       <View style={styles.termCard}>
-        <Pressable onPress={() => toggle(item.title)} style={styles.headerRow}>
+        <Pressable
+          onPress={() => toggle(item.title)}
+          style={styles.headerRow}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: isOpen }}
+          accessibilityLabel={item.title}
+        >
           <Typography style={styles.termTitle}>{item.title}</Typography>
           <Svg
             width={24}
@@ -65,16 +71,16 @@ export function TermsAndConditions() {
               <View style={{ marginTop: spacing.xs }}>
                 {item.bullets.map((bullet, idx) => (
                   <View key={idx} style={styles.bulletRow}>
-                    <Typography variant="body1" style={{ marginRight: 10, color: '#5E5E5E' }}>
+                    <Typography variant="body1" style={{ marginRight: 10, color: '#6A6A6A' }}>
                       •
                     </Typography>
                     {typeof bullet === 'string' ? (
-                      <Typography variant="body1" style={{ color: '#5E5E5E', flex: 1 }}>
+                      <Typography variant="body1" style={{ color: '#6A6A6A', flex: 1 }}>
                         {bullet}
                       </Typography>
                     ) : (
                       <View style={styles.bulletInlineRow}>
-                        <Typography variant="body1" style={{ color: '#5E5E5E' }}>
+                        <Typography variant="body1" style={{ color: '#6A6A6A' }}>
                           {bullet.label}:
                         </Typography>
                         <Typography

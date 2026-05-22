@@ -46,8 +46,8 @@ export function ResetPasswordForm({ mutation }: ResetPasswordFormProps) {
       />
 
       <Button
-        label="Send reset link"
-        loadingLabel="Sending link"
+        label="Send reset code"
+        loadingLabel="Sending code"
         loadingIndicatorColor={colors.primary}
         onPress={handleSubmit(onSubmit)}
         isLoading={isPending}

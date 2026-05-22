@@ -24,17 +24,6 @@ interface AuthActions {
   clearSession: () => void;
 }
 
-function createGuestSessionId() {
-  const randomBytes = getSecureRandomBytes(8);
-  const randomPart = Array.from(randomBytes, (b) => b.toString(16).padStart(2, '0')).join('');
-  return `guest-${Date.now()}-${randomPart}`;
-}
-
-function createGuestDeviceFingerprint() {
-  const randomBytes = getSecureRandomBytes(16);
-  const randomPart = Array.from(randomBytes, (b) => b.toString(16).padStart(2, '0')).join('');
-  return `mobile-${Date.now()}-${randomPart}`;
-}
 
 function getSecureRandomBytes(length: number) {
   const randomBytes = new Uint8Array(length);
@@ -48,15 +37,32 @@ function getSecureRandomBytes(length: number) {
   return Crypto.getRandomBytes(length);
 }
 
-export async function getOrCreateGuestDeviceFingerprint() {
-  const storedFingerprint = await asyncStorage.getItem<string>(
-    STORAGE_KEYS.GUEST_DEVICE_FINGERPRINT,
-  );
-  if (storedFingerprint) return storedFingerprint;
+function createGuestSessionId() {
+  const randomBytes = getSecureRandomBytes(8);
+  const randomPart = Array.from(randomBytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  return `guest-${Date.now()}-${randomPart}`;
+}
 
-  const fingerprint = createGuestDeviceFingerprint();
-  await asyncStorage.setItem(STORAGE_KEYS.GUEST_DEVICE_FINGERPRINT, fingerprint);
-  return fingerprint;
+function createGuestDeviceFingerprint() {
+  const randomBytes = getSecureRandomBytes(16);
+  const randomPart = Array.from(randomBytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  return `mobile-${Date.now()}-${randomPart}`;
+}
+
+let guestFingerprintCache: Promise<string> | null = null;
+
+export function getOrCreateGuestDeviceFingerprint(): Promise<string> {
+  if (!guestFingerprintCache) {
+    guestFingerprintCache = asyncStorage
+      .getItem<string>(STORAGE_KEYS.GUEST_DEVICE_FINGERPRINT)
+      .then(async (stored) => {
+        if (stored) return stored;
+        const fingerprint = createGuestDeviceFingerprint();
+        await asyncStorage.setItem(STORAGE_KEYS.GUEST_DEVICE_FINGERPRINT, fingerprint);
+        return fingerprint;
+      });
+  }
+  return guestFingerprintCache;
 }
 
 export const useAuthStore = createStore<AuthState & AuthActions>((set, get) => ({

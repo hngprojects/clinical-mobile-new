@@ -163,6 +163,7 @@ async function completePasswordReset(
   data: CompletePasswordResetRequest,
 ): Promise<CompletePasswordResetResponse> {
   const response = await client.post<SuccessResponse<unknown>>('/api/v1/auth/reset-password', {
+    email: data.email,
     token: data.token,
     new_password: data.newPassword,
   });
