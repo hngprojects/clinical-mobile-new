@@ -99,7 +99,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 24,
-    minHeight: 45,
   },
   outline: {
     backgroundColor: 'transparent',

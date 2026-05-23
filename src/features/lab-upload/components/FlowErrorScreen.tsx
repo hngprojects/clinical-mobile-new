@@ -105,7 +105,6 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     alignItems: 'center',
-    height: 24,
     justifyContent: 'center',
     alignSelf: 'flex-end',
     width: 24,
@@ -181,7 +180,6 @@ const styles = StyleSheet.create({
   },
   retryButton: {
     borderRadius: 8,
-    height: 45,
     paddingHorizontal: 24,
     paddingVertical: 12,
   },
@@ -193,7 +191,6 @@ const styles = StyleSheet.create({
     lineHeight: 21,
   },
   disabledButton: {
-    height: 45,
     borderRadius: 8,
     paddingHorizontal: 24,
     paddingVertical: 12,

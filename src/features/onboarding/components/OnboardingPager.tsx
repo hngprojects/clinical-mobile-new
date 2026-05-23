@@ -122,7 +122,6 @@ const styles = StyleSheet.create({
   },
   primaryBtn: {
     width: 343,
-    height: 45,
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 24,
@@ -137,7 +136,6 @@ const styles = StyleSheet.create({
   },
   guestBtn: {
     width: 343,
-    height: 45,
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 24,

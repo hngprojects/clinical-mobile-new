@@ -398,8 +398,9 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   verifyBtn: {
-    height: 52,
     borderRadius: 12,
+    paddingVertical: 15,
+    paddingHorizontal: 24,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 36,
@@ -475,10 +476,11 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   modalBtn: {
-    height: 52,
     width: '100%',
     backgroundColor: '#1565C0',
     borderRadius: 12,
+    paddingVertical: 15,
+    paddingHorizontal: 24,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 28,

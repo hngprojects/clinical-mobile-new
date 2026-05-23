@@ -63,7 +63,6 @@ export function ResetPasswordForm({ mutation }: ResetPasswordFormProps) {
 const styles = StyleSheet.create({
   container: { width: '100%' },
   submitButton: {
-    height: 45,
     borderRadius: 12,
     marginTop: 16,
   },
