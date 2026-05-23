@@ -36,7 +36,13 @@ export function RecentInsightsSection({
 
       <View style={{ gap: spacing.md }}>
         {insights.map((insight) => (
-          <InsightCard key={insight.id} insight={insight} onRename={onRename} onView={onView} onDelete={onDelete} />
+          <InsightCard
+            key={insight.id}
+            insight={insight}
+            onRename={onRename}
+            onView={onView}
+            onDelete={onDelete}
+          />
         ))}
       </View>
     </View>

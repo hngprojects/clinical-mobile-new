@@ -155,8 +155,18 @@ export function ProfileScreen() {
             label="Edit Profile"
             onPress={() => router.push('/(main)/edit-profile')}
           />
-          <MenuRow icon="lock-closed-outline" label="Change Password" onPress={() => {}} comingSoon />
-          <MenuRow icon="notifications-outline" label="Notifications" onPress={() => {}} comingSoon />
+          <MenuRow
+            icon="lock-closed-outline"
+            label="Change Password"
+            onPress={() => {}}
+            comingSoon
+          />
+          <MenuRow
+            icon="notifications-outline"
+            label="Notifications"
+            onPress={() => {}}
+            comingSoon
+          />
           <MenuRow icon="log-out-outline" label="Logout" onPress={handleLogout} isLast danger />
         </Section>
 
@@ -167,7 +177,13 @@ export function ProfileScreen() {
             label="Terms"
             onPress={() => router.push('/(legal)/terms-and-condition')}
           />
-          <MenuRow icon="help-circle-outline" label="Support" onPress={() => {}} isLast comingSoon />
+          <MenuRow
+            icon="help-circle-outline"
+            label="Support"
+            onPress={() => {}}
+            isLast
+            comingSoon
+          />
         </Section>
 
         <View style={styles.section}>

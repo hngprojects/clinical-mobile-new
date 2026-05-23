@@ -216,84 +216,89 @@ export function ChatReviewScreen() {
           )}
         </ScrollView>
 
-        {!isDemoMode && <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-          {sendMessage.isError ? (
-            <Typography style={styles.sendError}>Message failed. Please try again.</Typography>
-          ) : null}
-          <View style={styles.composerRow}>
-            <View
-              style={[
-                styles.inputPill,
-                {
-                  height: composerHeight,
-                },
-              ]}
-            >
+        {!isDemoMode && (
+          <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+            {sendMessage.isError ? (
+              <Typography style={styles.sendError}>Message failed. Please try again.</Typography>
+            ) : null}
+            <View style={styles.composerRow}>
+              <View
+                style={[
+                  styles.inputPill,
+                  {
+                    height: composerHeight,
+                  },
+                ]}
+              >
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Attach image"
+                  onPress={() => {}}
+                  style={styles.attachButton}
+                >
+                  <Ionicons name="arrow-up-circle-outline" size={24} color="#767676" />
+                </Pressable>
+                <View style={[styles.inputWrap, { height: inputHeight }]}>
+                  <Text
+                    aria-hidden
+                    onLayout={(event) => {
+                      updateInputHeight(event.nativeEvent.layout.height);
+                    }}
+                    pointerEvents="none"
+                    style={styles.inputMeasure}
+                  >
+                    {draft || COMPOSER_MEASURE_TEXT}
+                  </Text>
+                  <TextInput
+                    multiline
+                    blurOnSubmit={false}
+                    onContentSizeChange={(event) => {
+                      updateInputHeight(event.nativeEvent.contentSize.height);
+                    }}
+                    onChangeText={handleDraftChange}
+                    placeholder="Ask about results"
+                    placeholderTextColor="#767676"
+                    returnKeyType="default"
+                    scrollEnabled={inputHeight >= COMPOSER_INPUT_MAX_HEIGHT}
+                    style={[styles.input, { height: inputHeight }]}
+                    value={draft}
+                  />
+                </View>
+              </View>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Attach image"
-                onPress={() => {}}
-                style={styles.attachButton}
+                accessibilityLabel="Record voice"
+                disabled
+                style={[styles.iconButton, styles.disabledButton]}
               >
-                <Ionicons name="arrow-up-circle-outline" size={24} color="#767676" />
+                <Ionicons name="mic-outline" size={28} color="#767676" />
               </Pressable>
-              <View style={[styles.inputWrap, { height: inputHeight }]}>
-                <Text
-                  aria-hidden
-                  onLayout={(event) => {
-                    updateInputHeight(event.nativeEvent.layout.height);
-                  }}
-                  pointerEvents="none"
-                  style={styles.inputMeasure}
-                >
-                  {draft || COMPOSER_MEASURE_TEXT}
-                </Text>
-                <TextInput
-                  multiline
-                  blurOnSubmit={false}
-                  onContentSizeChange={(event) => {
-                    updateInputHeight(event.nativeEvent.contentSize.height);
-                  }}
-                  onChangeText={handleDraftChange}
-                  placeholder="Ask about results"
-                  placeholderTextColor="#767676"
-                  returnKeyType="default"
-                  scrollEnabled={inputHeight >= COMPOSER_INPUT_MAX_HEIGHT}
-                  style={[styles.input, { height: inputHeight }]}
-                  value={draft}
-                />
-              </View>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Send message"
+                disabled={!canSend}
+                onPress={handleSend}
+                style={[
+                  styles.sendButton,
+                  (canSend || sendMessage.isPending) && styles.sendButtonActive,
+                ]}
+              >
+                {sendMessage.isPending ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Ionicons
+                    name="paper-plane-outline"
+                    size={26}
+                    color={canSend ? '#FFFFFF' : '#767676'}
+                  />
+                )}
+              </Pressable>
             </View>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Record voice"
-              disabled
-              style={[styles.iconButton, styles.disabledButton]}
-            >
-              <Ionicons name="mic-outline" size={28} color="#767676" />
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Send message"
-              disabled={!canSend}
-              onPress={handleSend}
-              style={[styles.sendButton, (canSend || sendMessage.isPending) && styles.sendButtonActive]}
-            >
-              {sendMessage.isPending ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
-              ) : (
-                <Ionicons
-                  name="paper-plane-outline"
-                  size={26}
-                  color={canSend ? '#FFFFFF' : '#767676'}
-                />
-              )}
-            </Pressable>
+            <Typography style={styles.disclaimer}>
+              Flo provides AI-powered explanations, not medical diagnoses.
+            </Typography>
           </View>
-          <Typography style={styles.disclaimer}>
-            Flo provides AI-powered explanations, not medical diagnoses.
-          </Typography>
-        </View>}
+        )}
       </KeyboardAvoidingView>
     </Screen>
   );
