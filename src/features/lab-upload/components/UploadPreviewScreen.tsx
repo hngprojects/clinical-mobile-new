@@ -237,7 +237,7 @@ export function UploadPreviewScreen() {
               )}
               {isUploadProcessing ? (
                 <View style={styles.uploadOverlay}>
-                  <ActivityIndicator color="#FFFFFF" size="large" />
+                  <ActivityIndicator color={colors.primary} size="large" />
                 </View>
               ) : null}
             </View>
