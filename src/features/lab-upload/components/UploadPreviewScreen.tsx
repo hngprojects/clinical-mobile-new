@@ -171,6 +171,28 @@ export function UploadPreviewScreen() {
     );
   }
 
+  const isUploadLimitError =
+    uploadMutation.isError && uploadMutation.error?.status === 403;
+
+  if (isUploadLimitError && !isUploadProcessing) {
+    return (
+      <FlowErrorScreen
+        title="Upload limit reached"
+        message="You've used your free guest upload. Sign up for a free account to upload more lab results and keep your history."
+        onClose={handleBack}
+        onRetry={handleBack}
+        footer={
+          <Button
+            label="Sign Up — It's Free"
+            onPress={() => router.replace('/(auth)/register')}
+            style={{ backgroundColor: '#1565C0', borderRadius: 8, height: 45 }}
+            textColor="#FFFFFF"
+          />
+        }
+      />
+    );
+  }
+
   if (uploadMutation.isError && !isUploadProcessing) {
     return (
       <>

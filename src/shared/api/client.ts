@@ -14,6 +14,7 @@ export const client = create({
 type AuthStateAccessor = () => {
   accessToken: string | null;
   refreshToken: string | null;
+  isGuest: boolean;
 
   setTokens: (tokens: { accessToken: string; refreshToken: string }) => void;
   clearSession: () => void;
@@ -41,7 +42,10 @@ client.interceptors.response.use(
       const { refreshToken, clearSession } = getAuthState();
 
       if (!refreshToken) {
-        clearSession();
+        // Guest users authenticate via x-guest-session-id, not tokens — don't wipe their session
+        if (!getAuthState().isGuest) {
+          clearSession();
+        }
         return Promise.reject(toApiError(error));
       }
 
@@ -63,7 +67,25 @@ client.interceptors.response.use(
 
 function toApiError(error: unknown): ApiError {
   if (isAxiosError(error)) {
-    const msg = (error.response?.data as { message?: string })?.message ?? error.message;
+    const data = error.response?.data as
+      | { message?: string; detail?: string | { loc: string[]; msg: string }[] }
+      | undefined;
+
+    let msg: string;
+    if (Array.isArray(data?.detail) && data.detail.length > 0) {
+      msg = (data.detail as { loc: string[]; msg: string }[])
+        .map((d) => `${d.loc.slice(1).join('.')}: ${d.msg}`)
+        .join(', ');
+    } else if (typeof data?.detail === 'string' && data.detail) {
+      msg = data.detail;
+    } else {
+      msg = data?.message ?? error.message;
+    }
+
+    if (__DEV__) {
+      console.warn('[API Error]', error.response?.status, error.config?.url, msg, data);
+    }
+
     return new ApiError(msg, error.response?.status ?? 0);
   }
   return new ApiError('Unknown error', 0);
