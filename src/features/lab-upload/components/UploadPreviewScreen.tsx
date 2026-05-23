@@ -171,8 +171,7 @@ export function UploadPreviewScreen() {
     );
   }
 
-  const isUploadLimitError =
-    uploadMutation.isError && uploadMutation.error?.status === 403;
+  const isUploadLimitError = uploadMutation.isError && uploadMutation.error?.status === 403;
 
   if (isUploadLimitError && !isUploadProcessing) {
     return (

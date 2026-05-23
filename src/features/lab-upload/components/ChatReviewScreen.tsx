@@ -71,7 +71,7 @@ export function ChatReviewScreen() {
   const canSend = Boolean((caseId || isMockChat) && trimmedDraft && !sendMessage.isPending);
   const hasInterpretation = Boolean(
     review?.status === 'complete' &&
-      (review.summary || review.valueBreakdown?.length || review.suggestedQuestions?.length),
+    (review.summary || review.valueBreakdown?.length || review.suggestedQuestions?.length),
   );
   const timelineItems = useMemo(
     () => buildTimeline(messages, hasInterpretation ? review : undefined),
