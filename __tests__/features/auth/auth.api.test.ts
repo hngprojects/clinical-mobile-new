@@ -82,6 +82,7 @@ describe('authApi', () => {
       lastName: 'Doe',
       email: 'jane@example.com',
       password: 'Password1',
+      confirmPassword: 'Password1',
     });
 
     expect(mockPost).toHaveBeenCalledWith('/api/v1/auth/signup', {
@@ -130,9 +131,9 @@ describe('authApi', () => {
   it('refreshes tokens through the backend', async () => {
     mockPost.mockResolvedValueOnce(tokenResponse);
 
-    await expect(authApi.refreshTokens('old-token')).resolves.toEqual({
+    await expect(authApi.refreshTokens()).resolves.toEqual({
       accessToken: 'access-token',
-      refreshToken: 'access-token',
+      refreshToken: null,
     });
     expect(mockPost).toHaveBeenCalledWith('/api/v1/auth/refresh');
   });

@@ -73,7 +73,7 @@ function mapAuthResponse(data: BackendTokenResponse): AuthResponse {
     user: mapUser(data.user),
     tokens: {
       accessToken: data.access_token,
-      refreshToken: data.access_token,
+      refreshToken: null,
     },
   };
 }
@@ -96,7 +96,7 @@ function mapGuestSessionResponse(data: BackendGuestSessionResponse): GuestSessio
 async function login(data: LoginRequest): Promise<AuthResponse> {
   const response = await client.post<SuccessResponse<BackendTokenResponse>>(
     '/api/v1/auth/login',
-    data,
+    { email: data.email, password: data.password, device_id: 'mobile', platform: 'mobile' },
   );
   return mapAuthResponse(response.data.data);
 }
@@ -107,15 +107,25 @@ async function register(data: RegisterRequest): Promise<OtpDispatchResponse> {
     last_name: data.lastName,
     email: data.email,
     password: data.password,
-    confirm_password: data.password,
+    confirm_password: data.confirmPassword,
   });
   return mapOtpResponse(response.data.data);
 }
 
-async function verifyOtp(data: { email: string; code: string }): Promise<AuthResponse> {
+async function verifyOtp(data: {
+  email: string;
+  code: string;
+  guestSessionId?: string;
+}): Promise<AuthResponse> {
   const response = await client.post<SuccessResponse<BackendTokenResponse>>(
     '/api/v1/auth/verify-otp',
-    data,
+    {
+      email: data.email,
+      code: data.code,
+      device_id: 'mobile',
+      platform: 'mobile',
+      ...(data.guestSessionId ? { guest_session_id: data.guestSessionId } : {}),
+    },
   );
   return mapAuthResponse(response.data.data);
 }
@@ -141,11 +151,11 @@ async function createGuestSession(
   return mapGuestSessionResponse(response.data.data);
 }
 
-async function refreshTokens(refreshToken: string): Promise<AuthTokens> {
+async function refreshTokens(): Promise<AuthTokens> {
   const response = await client.post<SuccessResponse<BackendTokenResponse>>('/api/v1/auth/refresh');
   return {
     accessToken: response.data.data.access_token,
-    refreshToken: response.data.data.access_token,
+    refreshToken: null,
   };
 }
 
