@@ -8,7 +8,11 @@ import { authApi } from '../api/auth.api';
 import { useAuthStore } from '../store/auth.store';
 
 const GOOGLE_AUTH_PATH = '/api/v1/auth/google';
-const TOKEN_KEYS = ['access_token', 'token', 'accessToken'];
+const GOOGLE_AUTH_REDIRECT_URL = 'clinsight://auth/google';
+const ACCESS_TOKEN_KEYS = ['access_token', 'token', 'accessToken'];
+const REFRESH_TOKEN_KEYS = ['refresh_token', 'refreshToken'];
+
+type UrlQueryParams = NonNullable<ReturnType<typeof Linking.parse>['queryParams']>;
 
 function buildGoogleAuthUrl(redirectUrl: string) {
   const baseUrl = env.API_BASE_URL.replace(/\/$/, '');
@@ -17,23 +21,51 @@ function buildGoogleAuthUrl(redirectUrl: string) {
   return `${baseUrl}${GOOGLE_AUTH_PATH}?redirect_uri=${encodedRedirectUrl}&return_url=${encodedRedirectUrl}`;
 }
 
-function getTokenFromUrl(url: string) {
-  const parsed = Linking.parse(url);
+function getParamValue(
+  params: UrlQueryParams | URLSearchParams | null | undefined,
+  keys: string[],
+) {
+  if (!params) return null;
 
-  for (const key of TOKEN_KEYS) {
-    const value = parsed.queryParams?.[key];
-    if (typeof value === 'string') return value;
-  }
-
-  const [, fragment = ''] = url.split('#');
-  const fragmentParams = new URLSearchParams(fragment);
-
-  for (const key of TOKEN_KEYS) {
-    const value = fragmentParams.get(key);
-    if (value) return value;
+  for (const key of keys) {
+    const value = params instanceof URLSearchParams ? params.get(key) : params[key];
+    if (typeof value === 'string' && value.length > 0) return value;
+    if (Array.isArray(value) && typeof value[0] === 'string' && value[0].length > 0) {
+      return value[0];
+    }
   }
 
   return null;
+}
+
+function getTokensFromUrl(url: string) {
+  const parsed = Linking.parse(url);
+  const [, fragment = ''] = url.split('#');
+  const fragmentParams = new URLSearchParams(fragment);
+  const accessToken =
+    getParamValue(parsed.queryParams, ACCESS_TOKEN_KEYS) ||
+    getParamValue(fragmentParams, ACCESS_TOKEN_KEYS);
+
+  if (!accessToken) return null;
+
+  const refreshToken =
+    getParamValue(parsed.queryParams, REFRESH_TOKEN_KEYS) ||
+    getParamValue(fragmentParams, REFRESH_TOKEN_KEYS);
+
+  if (!refreshToken) return null;
+
+  return { accessToken, refreshToken };
+}
+
+function getAuthErrorFromUrl(url: string) {
+  const parsed = Linking.parse(url);
+  const [, fragment = ''] = url.split('#');
+  const fragmentParams = new URLSearchParams(fragment);
+
+  return (
+    getParamValue(parsed.queryParams, ['error_description', 'error', 'message']) ||
+    getParamValue(fragmentParams, ['error_description', 'error', 'message'])
+  );
 }
 
 export function useGoogleAuth() {
@@ -44,25 +76,28 @@ export function useGoogleAuth() {
     setIsPending(true);
 
     try {
-      const redirectUrl = Linking.createURL('auth/google');
+      const redirectUrl = GOOGLE_AUTH_REDIRECT_URL;
       const googleAuthUrl = buildGoogleAuthUrl(redirectUrl);
 
       const result = await WebBrowser.openAuthSessionAsync(googleAuthUrl, redirectUrl);
 
       if (result.type === 'success' && result.url) {
-        const token = getTokenFromUrl(result.url);
+        const tokens = getTokensFromUrl(result.url);
 
-        if (token) {
-          // Temporarily save tokens for API authorization headers
-          useAuthStore.getState().setTokens({ accessToken: token, refreshToken: token });
-
-          // Fetch full user profile details dynamically
-          const userProfile = await authApi.getMe();
-          useAuthStore
-            .getState()
-            .setSession({ accessToken: token, refreshToken: token }, userProfile);
-          return { success: true };
+        if (tokens) {
+          useAuthStore.getState().setTokens(tokens);
+          try {
+            const userProfile = await authApi.getMe();
+            useAuthStore.getState().setSession(tokens, userProfile);
+            return { success: true };
+          } catch (profileError) {
+            useAuthStore.getState().clearSession();
+            console.error('Google Auth Profile Fetch Error:', profileError);
+          }
         }
+
+        const authError = getAuthErrorFromUrl(result.url);
+        if (authError) console.error('Google Auth Redirect Error:', authError);
       }
     } catch (e) {
       console.error('Google Auth Session Error:', e);

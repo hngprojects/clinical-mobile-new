@@ -2,36 +2,35 @@ import { client } from '@/shared/api/client';
 
 import type { ApiSuccessResponse, UploadRequest, UploadResponse } from './upload.types';
 
+function inferMimeType(fileName: string) {
+  const extension = fileName.split('.').pop()?.toLowerCase();
+
+  if (extension === 'pdf') return 'application/pdf';
+  if (extension === 'png') return 'image/png';
+  if (extension === 'jpg' || extension === 'jpeg') return 'image/jpeg';
+
+  return 'application/octet-stream';
+}
+
 async function uploadLabResult(request: UploadRequest): Promise<UploadResponse> {
-  let fileUrl = request.file.url;
+  const formData = new FormData();
+  formData.append('file', {
+    uri: request.file.uri,
+    name: request.file.name,
+    type: request.file.mimeType ?? inferMimeType(request.file.name),
+  } as unknown as Blob);
 
-  if (fileUrl.startsWith('file://') || fileUrl.startsWith('content://')) {
-    const response = await fetch(fileUrl);
-    if (!response.ok) {
-      throw new Error(`Could not read selected file for upload: ${response.status}`);
-    }
+  const headers: Record<string, string> = {};
 
-    const blob = await response.blob();
-
-    const base64Data = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        resolve(reader.result as string);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-
-    fileUrl = base64Data;
+  if (request.guest_session_id) {
+    headers['x-guest-session-id'] = request.guest_session_id;
   }
 
-  const { data } = await client.post<ApiSuccessResponse<UploadResponse>>('/api/v1/upload', {
-    ...request,
-    file: {
-      ...request.file,
-      url: fileUrl,
-    },
-  });
+  const { data } = await client.post<ApiSuccessResponse<UploadResponse>>(
+    '/api/v1/upload',
+    formData,
+    { headers },
+  );
 
   if (!data.data) {
     throw new Error(data.message || 'Upload failed');

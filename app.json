@@ -41,13 +41,16 @@
             "imageWidth": 200
           }
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
     },
     "extra": {
+      "EXPO_PUBLIC_API_BASE_URL": "https://api.staging.clinsight.hng14.com",
+      "EXPO_PUBLIC_APP_ENV": "staging",
       "eas": {
         "projectId": "4d95fa1c-259d-4031-b0fb-ff56c14c1f98"
       }

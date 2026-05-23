@@ -6,8 +6,8 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { Screen, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
-import { FlowErrorScreen } from './FlowErrorScreen';
 import { useAiReview } from '../hooks/useAiReview';
+import { FlowErrorScreen } from './FlowErrorScreen';
 
 const processingSteps = [
   'Extracting data from your file...',
@@ -35,10 +35,10 @@ export function AiReviewScreen() {
   const missingCaseErrorType = !caseId ? 'system' : undefined;
   const configuredErrorType =
     errorType === 'network' || errorType === 'system' ? errorType : undefined;
-  const failedErrorType = review?.status === 'failed' ? 'system' : undefined;
+  const processingErrorType = review?.status === 'failed' ? 'processing' : undefined;
   const queryErrorType = reviewQuery.isError ? 'network' : undefined;
   const visibleErrorType = hasShownAllSteps
-    ? missingCaseErrorType || configuredErrorType || failedErrorType || queryErrorType
+    ? missingCaseErrorType || configuredErrorType || processingErrorType || queryErrorType
     : undefined;
 
   useEffect(() => {
@@ -59,13 +59,23 @@ export function AiReviewScreen() {
   const handleBackToPreview = () => {
     router.replace({
       pathname: '/(main)/preview-upload',
-      params: { name, size, uri, mimeType },
+      params: { guestSessionId, name, size, uri, mimeType },
     });
   };
 
   const handleRetry = () => {
     setStepIndex(0);
     setHasShownAllSteps(false);
+
+    if (processingErrorType) {
+      handleBackToPreview();
+      return;
+    }
+
+    if (queryErrorType) {
+      reviewQuery.refetch();
+      return;
+    }
 
     if (configuredErrorType) {
       router.replace({
@@ -79,10 +89,7 @@ export function AiReviewScreen() {
           mimeType,
         },
       });
-      return;
     }
-
-    reviewQuery.refetch();
   };
 
   useEffect(() => {
@@ -103,14 +110,23 @@ export function AiReviewScreen() {
 
   if (visibleErrorType) {
     const isNetworkError = visibleErrorType === 'network';
+    const isProcessingError = visibleErrorType === 'processing';
 
     return (
       <FlowErrorScreen
-        title={isNetworkError ? 'There was an issue processing your file' : 'Something went wrong.'}
+        title={
+          isNetworkError
+            ? 'There was an issue processing your file'
+            : isProcessingError
+              ? 'We could not read your lab result'
+              : 'Something went wrong.'
+        }
         message={
           isNetworkError
             ? "We couldn't connect to the server.\nPlease check your internet connection and try again."
-            : 'The system encountered an issue.\nPlease try again later.'
+            : isProcessingError
+              ? 'Your file was uploaded, but the lab values could not be extracted.\nPlease try a clearer image or upload a PDF.'
+              : 'The system encountered an issue.\nPlease try again later.'
         }
         icon={isNetworkError ? 'network' : 'warning'}
         onClose={handleBackToPreview}

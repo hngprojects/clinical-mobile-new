@@ -13,6 +13,7 @@ interface HomeHeaderProps {
 export function HomeHeader({ name = 'User' }: HomeHeaderProps) {
   const { colors, spacing } = useTheme();
   const router = useRouter();
+
   return (
     <View
       style={[styles.container, { paddingHorizontal: spacing.md, paddingVertical: spacing.md }]}

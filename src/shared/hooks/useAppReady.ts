@@ -21,6 +21,11 @@ export function useAppReady() {
           useOnboardingStore.getState().loadFromStorage(),
         ]);
 
+        const currentAuthState = useAuthStore.getState();
+        if (currentAuthState.isGuest || currentAuthState.accessToken) {
+          return;
+        }
+
         if (tokens) {
           try {
             // Restore full user profile
@@ -29,7 +34,9 @@ export function useAppReady() {
             useAuthStore.getState().setSession(tokens, userProfile);
           } catch (e) {
             console.warn('Launch session restore failed, clearing tokens:', e);
-            useAuthStore.getState().clearSession();
+            if (!useAuthStore.getState().isGuest) {
+              useAuthStore.getState().clearSession();
+            }
           }
         } else if (isGuest) {
           useAuthStore.getState().setGuestSession(true, guestSessionId);

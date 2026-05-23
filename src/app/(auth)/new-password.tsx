@@ -43,7 +43,7 @@ export default function NewPasswordScreen() {
   }));
 
   const notificationMessage = completeResetMutation.error
-    ? 'We could not reset your password. Please request a new link and try again.'
+    ? 'We could not reset your password. Please request a new code and try again.'
     : completeResetMutation.data?.message || 'Password reset successfully. You can now log in.';
 
   if (!resetToken || !resetEmail) return null;

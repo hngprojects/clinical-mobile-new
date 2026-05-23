@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Keyboard,
@@ -9,6 +9,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Text,
   TextInput,
   View,
 } from 'react-native';
@@ -37,6 +38,12 @@ type TimelineItem =
       message: ChatMessage;
     };
 
+const COMPOSER_INPUT_MIN_HEIGHT = 24;
+const COMPOSER_INPUT_MAX_HEIGHT = 112;
+const COMPOSER_VERTICAL_PADDING = 20;
+const COMPOSER_MIN_HEIGHT = 48;
+const COMPOSER_MEASURE_TEXT = ' ';
+
 export function ChatReviewScreen() {
   const router = useRouter();
   const scrollRef = useRef<ScrollView | null>(null);
@@ -47,6 +54,7 @@ export function ChatReviewScreen() {
     mock?: string;
   }>();
   const [draft, setDraft] = useState('');
+  const [inputHeight, setInputHeight] = useState(COMPOSER_INPUT_MIN_HEIGHT);
   const [mockMessages, setMockMessages] = useState<ChatMessage[]>(MOCK_CHAT_MESSAGES);
   const isMockChat = typeof __DEV__ !== 'undefined' && __DEV__ && mock === 'chat';
   const reviewQuery = useAiReview(caseId || '', guestSessionId);
@@ -67,8 +75,9 @@ export function ChatReviewScreen() {
     () => buildTimeline(messages, hasInterpretation ? review : undefined),
     [hasInterpretation, messages, review],
   );
-  const isInitialLoading = !isMockChat && (chatQuery.isLoading || reviewQuery.isLoading);
-  const isInitialError = !isMockChat && (chatQuery.isError || reviewQuery.isError);
+  const isInitialLoading = !isMockChat && chatQuery.isLoading;
+  const isInitialError = !isMockChat && chatQuery.isError;
+  const composerHeight = Math.max(COMPOSER_MIN_HEIGHT, inputHeight + COMPOSER_VERTICAL_PADDING);
 
   useEffect(() => {
     if (timelineItems.length > 0) {
@@ -76,11 +85,28 @@ export function ChatReviewScreen() {
     }
   }, [timelineItems.length]);
 
+  const updateInputHeight = useCallback((height: number) => {
+    const nextHeight = Math.min(
+      Math.max(Math.ceil(height), COMPOSER_INPUT_MIN_HEIGHT),
+      COMPOSER_INPUT_MAX_HEIGHT,
+    );
+
+    setInputHeight((currentHeight) => (currentHeight === nextHeight ? currentHeight : nextHeight));
+  }, []);
+
+  const handleDraftChange = (value: string) => {
+    setDraft(value);
+    if (!value) {
+      setInputHeight(COMPOSER_INPUT_MIN_HEIGHT);
+    }
+  };
+
   const handleSend = async () => {
     if (!canSend) return;
 
     const message = trimmedDraft;
     setDraft('');
+    setInputHeight(COMPOSER_INPUT_MIN_HEIGHT);
 
     if (isMockChat) {
       setMockMessages((current) => [
@@ -93,7 +119,7 @@ export function ChatReviewScreen() {
         createMockMessage({
           id: `mock-ai-${current.length + 2}`,
           senderType: 'ai',
-          text: 'That is a good follow-up. In the real chat, Chris would respond using the uploaded lab context.',
+          text: 'That is a good follow-up. In the real chat, Flo would respond using the uploaded lab context.',
         }),
       ]);
       return;
@@ -118,7 +144,9 @@ export function ChatReviewScreen() {
         >
           <Ionicons name="chevron-back" size={24} color="#111827" />
         </Pressable>
-        <Typography style={styles.headerTitle}>Review Chat</Typography>
+        <Typography style={styles.headerTitle}>
+          Chat with <Typography style={styles.floHeaderWord}>Flo</Typography>
+        </Typography>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -144,15 +172,21 @@ export function ChatReviewScreen() {
             </View>
           ) : isInitialError ? (
             <StateMessage
-              message="We could not load your AI review. Please check your connection and try again."
+              message="We could not load your chat. Please check your connection and try again."
               actionLabel="Retry"
               onAction={() => {
-                reviewQuery.refetch();
                 chatQuery.refetch();
               }}
             />
           ) : timelineItems.length === 0 ? (
-            <StateMessage message="Ask a question about your AI review to start the chat." />
+            <StateMessage
+              message={
+                <>
+                  Ask a question about your <Typography style={styles.floInline}>Flo</Typography>{' '}
+                  review to start the chat.
+                </>
+              }
+            />
           ) : (
             <>
               {timelineItems.map((item) =>
@@ -175,20 +209,37 @@ export function ChatReviewScreen() {
             <Typography style={styles.sendError}>Message failed. Please try again.</Typography>
           ) : null}
           <View style={styles.composerRow}>
-            <View style={styles.inputPill}>
-              <Ionicons name="arrow-up-circle-outline" size={24} color="#767676" />
-              <View style={styles.inputWrap}>
-                {!draft ? (
-                  <Typography pointerEvents="none" style={styles.customPlaceholder}>
-                    Ask about results
-                  </Typography>
-                ) : null}
+            <View
+              style={[
+                styles.inputPill,
+                {
+                  height: composerHeight,
+                },
+              ]}
+            >
+              <View style={[styles.inputWrap, { height: inputHeight }]}>
+                <Text
+                  aria-hidden
+                  onLayout={(event) => {
+                    updateInputHeight(event.nativeEvent.layout.height);
+                  }}
+                  pointerEvents="none"
+                  style={styles.inputMeasure}
+                >
+                  {draft || COMPOSER_MEASURE_TEXT}
+                </Text>
                 <TextInput
-                  onChangeText={setDraft}
-                  onSubmitEditing={handleSend}
-                  placeholder=""
-                  returnKeyType="send"
-                  style={styles.input}
+                  multiline
+                  blurOnSubmit={false}
+                  onContentSizeChange={(event) => {
+                    updateInputHeight(event.nativeEvent.contentSize.height);
+                  }}
+                  onChangeText={handleDraftChange}
+                  placeholder="Ask about results"
+                  placeholderTextColor="#767676"
+                  returnKeyType="default"
+                  scrollEnabled={inputHeight >= COMPOSER_INPUT_MAX_HEIGHT}
+                  style={[styles.input, { height: inputHeight }]}
                   value={draft}
                 />
               </View>
@@ -220,7 +271,7 @@ export function ChatReviewScreen() {
             </Pressable>
           </View>
           <Typography style={styles.disclaimer}>
-            Clinsight provides AI-powered explanations, not medical diagnoses.
+            Flo provides AI-powered explanations, not medical diagnoses.
           </Typography>
         </View>
       </KeyboardAvoidingView>
@@ -327,7 +378,7 @@ function StateMessage({
   actionLabel,
   onAction,
 }: {
-  message: string;
+  message: React.ReactNode;
   actionLabel?: string;
   onAction?: () => void;
 }) {
@@ -346,11 +397,19 @@ function StateMessage({
 function ChatBubble({ message }: { message: ChatMessage }) {
   const isPatient = message.senderType === 'patient';
 
+  if (!isPatient) {
+    return (
+      <View style={styles.aiMessageGroup}>
+        <View style={[styles.bubble, styles.aiBubble]}>
+          <Typography style={styles.bubbleText}>{message.text}</Typography>
+        </View>
+      </View>
+    );
+  }
+
   return (
-    <View style={[styles.bubble, isPatient ? styles.patientBubble : styles.aiBubble]}>
-      <Typography style={[styles.bubbleText, isPatient && styles.patientBubbleText]}>
-        {message.text}
-      </Typography>
+    <View style={[styles.bubble, styles.patientBubble]}>
+      <Typography style={[styles.bubbleText, styles.patientBubbleText]}>{message.text}</Typography>
     </View>
   );
 }
@@ -372,7 +431,9 @@ function InterpretationCard({
           <Ionicons name="sparkles-outline" size={16} color="#1565C0" />
         </View>
         <View style={styles.interpretationTitleBlock}>
-          <Typography style={styles.interpretationTitle}>AI Review</Typography>
+          <Typography style={styles.interpretationTitle}>
+            <Typography style={styles.floTitle}>Flo&apos;s</Typography> Review
+          </Typography>
           <Typography style={styles.interpretationSubtitle}>Your lab result is ready</Typography>
         </View>
       </View>
@@ -468,6 +529,12 @@ const styles = StyleSheet.create({
     letterSpacing: -0.18,
     lineHeight: 27,
   },
+  floHeaderWord: {
+    color: '#1565C0',
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 18,
+    lineHeight: 27,
+  },
   scroll: {
     flex: 1,
   },
@@ -511,6 +578,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 21,
   },
+  floInline: {
+    color: '#1565C0',
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 14,
+    lineHeight: 21,
+  },
   bubble: {
     borderRadius: 12,
     maxWidth: '88%',
@@ -520,6 +593,9 @@ const styles = StyleSheet.create({
   aiBubble: {
     alignSelf: 'flex-start',
     backgroundColor: '#FAFAFA',
+  },
+  aiMessageGroup: {
+    alignSelf: 'flex-start',
   },
   patientBubble: {
     alignSelf: 'flex-end',
@@ -564,6 +640,12 @@ const styles = StyleSheet.create({
   interpretationTitle: {
     color: '#1B1B1B',
     fontFamily: 'Inter_500Medium',
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  floTitle: {
+    color: '#1565C0',
+    fontFamily: 'Inter_600SemiBold',
     fontSize: 16,
     lineHeight: 22,
   },
@@ -681,44 +763,61 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   composerRow: {
-    alignItems: 'center',
+    alignItems: 'flex-end',
     flexDirection: 'row',
     gap: 14,
   },
   inputPill: {
-    alignItems: 'center',
+    alignItems: 'flex-end',
     backgroundColor: '#FFFFFF',
     borderColor: '#E5E5E5',
     borderRadius: 24,
     borderWidth: 1,
     flex: 1,
+    flexShrink: 1,
     flexDirection: 'row',
     gap: 12,
-    minHeight: 48,
+    maxHeight: COMPOSER_INPUT_MAX_HEIGHT + COMPOSER_VERTICAL_PADDING,
+    minHeight: COMPOSER_MIN_HEIGHT,
+    overflow: 'hidden',
     paddingHorizontal: 12,
+    paddingVertical: 10,
   },
   inputWrap: {
     flex: 1,
-    justifyContent: 'center',
-    height: 48,
+    flexShrink: 1,
+    minHeight: COMPOSER_INPUT_MIN_HEIGHT,
   },
-  customPlaceholder: {
-    color: '#767676',
+  inputMeasure: {
+    color: 'transparent',
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
+    includeFontPadding: false,
     left: 0,
     lineHeight: 21,
+    opacity: 0,
+    padding: 0,
+    paddingBottom: 0,
+    paddingHorizontal: 0,
+    paddingTop: 0,
     position: 'absolute',
-    top: 13.5,
+    right: 0,
+    top: 0,
   },
   input: {
     color: '#1B1B1B',
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
-    height: 48,
+    includeFontPadding: false,
     lineHeight: 21,
+    maxHeight: COMPOSER_INPUT_MAX_HEIGHT,
+    minHeight: COMPOSER_INPUT_MIN_HEIGHT,
+    padding: 0,
     paddingBottom: 0,
+    paddingHorizontal: 0,
     paddingTop: 0,
+    textAlignVertical: 'top',
+    width: '100%',
   },
   iconButton: {
     alignItems: 'center',

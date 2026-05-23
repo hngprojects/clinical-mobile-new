@@ -72,9 +72,10 @@ jobs:
           restore-keys: |
             android-gradle-${{ runner.os }}-
 
-      - name: Build debug APK
-        working-directory: android
-        run: ./gradlew assembleDebug --no-daemon
+      - name: Bundle JS and build APK
+        run: |
+          npx expo export --platform android --output-dir android/app/src/main/assets
+          cd android && ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK artifact
         id: artifact
