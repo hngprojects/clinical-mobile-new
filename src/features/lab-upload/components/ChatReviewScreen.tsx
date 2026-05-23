@@ -48,15 +48,17 @@ export function ChatReviewScreen() {
   const router = useRouter();
   const scrollRef = useRef<ScrollView | null>(null);
   const insets = useSafeAreaInsets();
-  const { caseId, guestSessionId, mock } = useLocalSearchParams<{
+  const { caseId, guestSessionId, mock, demo } = useLocalSearchParams<{
     caseId?: string;
     guestSessionId?: string;
     mock?: string;
+    demo?: string;
   }>();
   const [draft, setDraft] = useState('');
   const [inputHeight, setInputHeight] = useState(COMPOSER_INPUT_MIN_HEIGHT);
   const [mockMessages, setMockMessages] = useState<ChatMessage[]>(MOCK_CHAT_MESSAGES);
   const isMockChat = typeof __DEV__ !== 'undefined' && __DEV__ && mock === 'chat';
+  const isDemoMode = demo === 'true';
   const reviewQuery = useAiReview(caseId || '', guestSessionId);
   const chatQuery = useCaseChat(caseId || '', guestSessionId);
   const sendMessage = useSendChatMessage(caseId || '', guestSessionId);
@@ -163,7 +165,17 @@ export function ChatReviewScreen() {
           showsVerticalScrollIndicator={false}
           style={styles.scroll}
         >
-          {!caseId && !isMockChat ? (
+          {isDemoMode ? (
+            <View style={styles.demoState}>
+              <View style={styles.demoIconWrap}>
+                <Ionicons name="chatbubbles-outline" size={52} color="#1565C0" />
+              </View>
+              <Typography style={styles.demoTitle}>Coming Soon</Typography>
+              <Typography style={styles.demoSubtitle}>
+                This is still a demo. Full chat review with Flo is on its way — stay tuned!
+              </Typography>
+            </View>
+          ) : !caseId && !isMockChat ? (
             <StateMessage message="We could not find the case for this chat." />
           ) : isInitialLoading ? (
             <View style={styles.loadingState}>
@@ -204,76 +216,89 @@ export function ChatReviewScreen() {
           )}
         </ScrollView>
 
-        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-          {sendMessage.isError ? (
-            <Typography style={styles.sendError}>Message failed. Please try again.</Typography>
-          ) : null}
-          <View style={styles.composerRow}>
-            <View
-              style={[
-                styles.inputPill,
-                {
-                  height: composerHeight,
-                },
-              ]}
-            >
-              <View style={[styles.inputWrap, { height: inputHeight }]}>
-                <Text
-                  aria-hidden
-                  onLayout={(event) => {
-                    updateInputHeight(event.nativeEvent.layout.height);
-                  }}
-                  pointerEvents="none"
-                  style={styles.inputMeasure}
+        {!isDemoMode && (
+          <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+            {sendMessage.isError ? (
+              <Typography style={styles.sendError}>Message failed. Please try again.</Typography>
+            ) : null}
+            <View style={styles.composerRow}>
+              <View
+                style={[
+                  styles.inputPill,
+                  {
+                    height: composerHeight,
+                  },
+                ]}
+              >
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Attach image"
+                  onPress={() => {}}
+                  style={styles.attachButton}
                 >
-                  {draft || COMPOSER_MEASURE_TEXT}
-                </Text>
-                <TextInput
-                  multiline
-                  blurOnSubmit={false}
-                  onContentSizeChange={(event) => {
-                    updateInputHeight(event.nativeEvent.contentSize.height);
-                  }}
-                  onChangeText={handleDraftChange}
-                  placeholder="Ask about results"
-                  placeholderTextColor="#767676"
-                  returnKeyType="default"
-                  scrollEnabled={inputHeight >= COMPOSER_INPUT_MAX_HEIGHT}
-                  style={[styles.input, { height: inputHeight }]}
-                  value={draft}
-                />
+                  <Ionicons name="arrow-up-circle-outline" size={24} color="#767676" />
+                </Pressable>
+                <View style={[styles.inputWrap, { height: inputHeight }]}>
+                  <Text
+                    aria-hidden
+                    onLayout={(event) => {
+                      updateInputHeight(event.nativeEvent.layout.height);
+                    }}
+                    pointerEvents="none"
+                    style={styles.inputMeasure}
+                  >
+                    {draft || COMPOSER_MEASURE_TEXT}
+                  </Text>
+                  <TextInput
+                    multiline
+                    blurOnSubmit={false}
+                    onContentSizeChange={(event) => {
+                      updateInputHeight(event.nativeEvent.contentSize.height);
+                    }}
+                    onChangeText={handleDraftChange}
+                    placeholder="Ask about results"
+                    placeholderTextColor="#767676"
+                    returnKeyType="default"
+                    scrollEnabled={inputHeight >= COMPOSER_INPUT_MAX_HEIGHT}
+                    style={[styles.input, { height: inputHeight }]}
+                    value={draft}
+                  />
+                </View>
               </View>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Record voice"
+                disabled
+                style={[styles.iconButton, styles.disabledButton]}
+              >
+                <Ionicons name="mic-outline" size={28} color="#767676" />
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Send message"
+                disabled={!canSend}
+                onPress={handleSend}
+                style={[
+                  styles.sendButton,
+                  (canSend || sendMessage.isPending) && styles.sendButtonActive,
+                ]}
+              >
+                {sendMessage.isPending ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Ionicons
+                    name="paper-plane-outline"
+                    size={26}
+                    color={canSend ? '#FFFFFF' : '#767676'}
+                  />
+                )}
+              </Pressable>
             </View>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Record voice"
-              disabled
-              style={[styles.iconButton, styles.disabledButton]}
-            >
-              <Ionicons name="mic-outline" size={28} color="#767676" />
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Send message"
-              disabled={!canSend}
-              onPress={handleSend}
-              style={[styles.sendButton, canSend && styles.sendButtonActive]}
-            >
-              {sendMessage.isPending ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
-              ) : (
-                <Ionicons
-                  name="paper-plane-outline"
-                  size={26}
-                  color={canSend ? '#FFFFFF' : '#767676'}
-                />
-              )}
-            </Pressable>
+            <Typography style={styles.disclaimer}>
+              Flo provides AI-powered explanations, not medical diagnoses.
+            </Typography>
           </View>
-          <Typography style={styles.disclaimer}>
-            Flo provides AI-powered explanations, not medical diagnoses.
-          </Typography>
-        </View>
+        )}
       </KeyboardAvoidingView>
     </Screen>
   );
@@ -819,14 +844,19 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
     width: '100%',
   },
+  attachButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingRight: 4,
+  },
+  disabledButton: {
+    opacity: 0.5,
+  },
   iconButton: {
     alignItems: 'center',
     height: 48,
     justifyContent: 'center',
     width: 32,
-  },
-  disabledButton: {
-    opacity: 0.5,
   },
   sendButton: {
     alignItems: 'center',
@@ -846,6 +876,37 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     lineHeight: 16.5,
     marginTop: 14,
+    textAlign: 'center',
+  },
+  demoState: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+    paddingVertical: 48,
+  },
+  demoIconWrap: {
+    alignItems: 'center',
+    backgroundColor: '#E8EFF8',
+    borderRadius: 40,
+    height: 80,
+    justifyContent: 'center',
+    marginBottom: 20,
+    width: 80,
+  },
+  demoTitle: {
+    color: '#111827',
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  demoSubtitle: {
+    color: '#5E5E5E',
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+    lineHeight: 22,
     textAlign: 'center',
   },
 });

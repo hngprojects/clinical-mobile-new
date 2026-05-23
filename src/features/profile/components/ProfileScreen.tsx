@@ -16,9 +16,10 @@ interface MenuRowProps {
   onPress: () => void;
   isLast?: boolean;
   danger?: boolean;
+  comingSoon?: boolean;
 }
 
-function MenuRow({ icon, label, onPress, isLast, danger }: MenuRowProps) {
+function MenuRow({ icon, label, onPress, isLast, danger, comingSoon }: MenuRowProps) {
   const { colors } = useTheme();
   const tint = danger ? colors.error : colors.textSecondary;
   const textColor = danger ? colors.error : colors.text;
@@ -35,6 +36,13 @@ function MenuRow({ icon, label, onPress, isLast, danger }: MenuRowProps) {
           <Typography variant="body1" color={textColor}>
             {label}
           </Typography>
+          {comingSoon && (
+            <View style={[styles.comingSoonBadge, { backgroundColor: colors.primarySubtle }]}>
+              <Typography variant="label" color={colors.primary} style={styles.comingSoonText}>
+                Coming Soon
+              </Typography>
+            </View>
+          )}
         </View>
         <Ionicons name="chevron-forward" size={18} color={tint} />
       </Pressable>
@@ -147,19 +155,35 @@ export function ProfileScreen() {
             label="Edit Profile"
             onPress={() => router.push('/(main)/edit-profile')}
           />
-          <MenuRow icon="lock-closed-outline" label="Change Password" onPress={() => {}} />
-          <MenuRow icon="notifications-outline" label="Notifications" onPress={() => {}} />
+          <MenuRow
+            icon="lock-closed-outline"
+            label="Change Password"
+            onPress={() => {}}
+            comingSoon
+          />
+          <MenuRow
+            icon="notifications-outline"
+            label="Notifications"
+            onPress={() => {}}
+            comingSoon
+          />
           <MenuRow icon="log-out-outline" label="Logout" onPress={handleLogout} isLast danger />
         </Section>
 
         <Section title="Support and Legal">
-          <MenuRow icon="shield-outline" label="Privacy Policy" onPress={() => {}} />
+          <MenuRow icon="shield-outline" label="Privacy Policy" onPress={() => {}} comingSoon />
           <MenuRow
             icon="document-text-outline"
             label="Terms"
             onPress={() => router.push('/(legal)/terms-and-condition')}
           />
-          <MenuRow icon="help-circle-outline" label="Support" onPress={() => {}} isLast />
+          <MenuRow
+            icon="help-circle-outline"
+            label="Support"
+            onPress={() => {}}
+            isLast
+            comingSoon
+          />
         </Section>
 
         <View style={styles.section}>
@@ -274,5 +298,17 @@ const styles = StyleSheet.create({
   },
   deleteLabel: {
     fontWeight: '500',
+  },
+
+  comingSoonBadge: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 20,
+    marginLeft: 6,
+  },
+  comingSoonText: {
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 0.2,
   },
 });
