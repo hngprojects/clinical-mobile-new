@@ -50,10 +50,11 @@ export function RegisterForm({ onContinueAsGuest }: RegisterFormProps) {
     }
   };
 
-  // Password validation logic
   const has8Chars = passwordValue.length >= 8;
   const hasUpper = /[A-Z]/.test(passwordValue);
+  const hasLower = /[a-z]/.test(passwordValue);
   const hasNumber = /[0-9]/.test(passwordValue);
+  const hasSpecial = /[^A-Za-z0-9]/.test(passwordValue);
 
   return (
     <View style={[styles.container, { gap: spacing.md }]}>
@@ -110,14 +111,22 @@ export function RegisterForm({ onContinueAsGuest }: RegisterFormProps) {
         }
       />
 
-      {passwordValue.length > 0 && !(has8Chars && hasUpper && hasNumber) && (
+      {passwordValue.length > 0 && !(has8Chars && hasUpper && hasLower && hasNumber && hasSpecial) && (
         <View style={styles.validationList}>
           <ValidationItem label="Password must have at least 8 characters" isValid={has8Chars} />
           <ValidationItem
             label="Password must have at least one uppercase letter"
             isValid={hasUpper}
           />
+          <ValidationItem
+            label="Password must have at least one lowercase letter"
+            isValid={hasLower}
+          />
           <ValidationItem label="Password must have at least one number" isValid={hasNumber} />
+          <ValidationItem
+            label="Password must have at least one special character"
+            isValid={hasSpecial}
+          />
         </View>
       )}
 
