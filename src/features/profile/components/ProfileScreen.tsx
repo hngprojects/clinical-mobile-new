@@ -164,8 +164,7 @@ export function ProfileScreen() {
           <MenuRow
             icon="notifications-outline"
             label="Notifications"
-            onPress={() => {}}
-            comingSoon
+            onPress={() => router.push('/(main)/notifications')}
           />
           <MenuRow icon="log-out-outline" label="Logout" onPress={handleLogout} isLast danger />
         </Section>

@@ -30,8 +30,8 @@ describe('registerSchema', () => {
     firstName: 'Jane',
     lastName: 'Doe',
     email: 'jane@example.com',
-    password: 'Password1',
-    confirmPassword: 'Password1',
+    password: 'Password1!',
+    confirmPassword: 'Password1!',
   };
 
   it('passes valid registration data', () => {
@@ -39,21 +39,35 @@ describe('registerSchema', () => {
   });
 
   it('rejects mismatched passwords', () => {
-    expect(registerSchema.safeParse({ ...valid, confirmPassword: 'Different1' }).success).toBe(
+    expect(registerSchema.safeParse({ ...valid, confirmPassword: 'Different1!' }).success).toBe(
       false,
     );
   });
 
   it('rejects password without uppercase', () => {
     expect(
-      registerSchema.safeParse({ ...valid, password: 'password1', confirmPassword: 'password1' })
+      registerSchema.safeParse({ ...valid, password: 'password1!', confirmPassword: 'password1!' })
+        .success,
+    ).toBe(false);
+  });
+
+  it('rejects password without lowercase', () => {
+    expect(
+      registerSchema.safeParse({ ...valid, password: 'PASSWORD1!', confirmPassword: 'PASSWORD1!' })
         .success,
     ).toBe(false);
   });
 
   it('rejects password without number', () => {
     expect(
-      registerSchema.safeParse({ ...valid, password: 'PasswordA', confirmPassword: 'PasswordA' })
+      registerSchema.safeParse({ ...valid, password: 'PasswordA!', confirmPassword: 'PasswordA!' })
+        .success,
+    ).toBe(false);
+  });
+
+  it('rejects password without special character', () => {
+    expect(
+      registerSchema.safeParse({ ...valid, password: 'Password1', confirmPassword: 'Password1' })
         .success,
     ).toBe(false);
   });
@@ -71,8 +85,8 @@ describe('resetPasswordSchema', () => {
 
 describe('completePasswordResetSchema', () => {
   const valid = {
-    password: 'Password1',
-    confirmPassword: 'Password1',
+    password: 'Password1!',
+    confirmPassword: 'Password1!',
   };
 
   it('passes valid password reset data', () => {
@@ -82,23 +96,23 @@ describe('completePasswordResetSchema', () => {
   it('rejects password under 8 chars', () => {
     expect(
       completePasswordResetSchema.safeParse({
-        password: 'Pass1',
-        confirmPassword: 'Pass1',
+        password: 'Aa1!',
+        confirmPassword: 'Aa1!',
       }).success,
     ).toBe(false);
   });
 
   it('rejects mismatched passwords', () => {
     expect(
-      completePasswordResetSchema.safeParse({ ...valid, confirmPassword: 'Different1' }).success,
+      completePasswordResetSchema.safeParse({ ...valid, confirmPassword: 'Different1!' }).success,
     ).toBe(false);
   });
 
   it('rejects password without uppercase', () => {
     expect(
       completePasswordResetSchema.safeParse({
-        password: 'password1',
-        confirmPassword: 'password1',
+        password: 'password1!',
+        confirmPassword: 'password1!',
       }).success,
     ).toBe(false);
   });
@@ -106,8 +120,17 @@ describe('completePasswordResetSchema', () => {
   it('rejects password without number', () => {
     expect(
       completePasswordResetSchema.safeParse({
-        password: 'PasswordA',
-        confirmPassword: 'PasswordA',
+        password: 'PasswordA!',
+        confirmPassword: 'PasswordA!',
+      }).success,
+    ).toBe(false);
+  });
+
+  it('rejects password without special character', () => {
+    expect(
+      completePasswordResetSchema.safeParse({
+        password: 'Password1',
+        confirmPassword: 'Password1',
       }).success,
     ).toBe(false);
   });
