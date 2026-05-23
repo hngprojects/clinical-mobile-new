@@ -63,10 +63,12 @@ client.interceptors.response.use(
 
 function toApiError(error: unknown): ApiError {
   if (isAxiosError(error)) {
-    const data = error.response?.data as {
-      message?: string;
-      detail?: string | { loc: string[]; msg: string; type: string }[];
-    } | undefined;
+    const data = error.response?.data as
+      | {
+          message?: string;
+          detail?: string | { loc: string[]; msg: string; type: string }[];
+        }
+      | undefined;
 
     if (__DEV__) {
       console.warn('[API Error]', {

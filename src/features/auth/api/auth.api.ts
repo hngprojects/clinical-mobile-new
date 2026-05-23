@@ -94,10 +94,12 @@ function mapGuestSessionResponse(data: BackendGuestSessionResponse): GuestSessio
 }
 
 async function login(data: LoginRequest): Promise<AuthResponse> {
-  const response = await client.post<SuccessResponse<BackendTokenResponse>>(
-    '/api/v1/auth/login',
-    { email: data.email, password: data.password, device_id: 'mobile', platform: 'mobile' },
-  );
+  const response = await client.post<SuccessResponse<BackendTokenResponse>>('/api/v1/auth/login', {
+    email: data.email,
+    password: data.password,
+    device_id: 'mobile',
+    platform: 'mobile',
+  });
   return mapAuthResponse(response.data.data);
 }
 
