@@ -54,6 +54,8 @@ describe('authApi', () => {
     expect(mockPost).toHaveBeenCalledWith('/api/v1/auth/login', {
       email: 'jane@example.com',
       password: 'Password1',
+      device_id: 'mobile',
+      platform: 'mobile',
     });
     expect(result.user).toMatchObject({
       id: 'user-1',
@@ -64,7 +66,7 @@ describe('authApi', () => {
     });
     expect(result.tokens).toEqual({
       accessToken: 'access-token',
-      refreshToken: 'access-token',
+      refreshToken: null,
     });
   });
 
@@ -82,6 +84,7 @@ describe('authApi', () => {
       lastName: 'Doe',
       email: 'jane@example.com',
       password: 'Password1',
+      confirmPassword: 'Password1',
     });
 
     expect(mockPost).toHaveBeenCalledWith('/api/v1/auth/signup', {
@@ -105,6 +108,8 @@ describe('authApi', () => {
     expect(mockPost).toHaveBeenCalledWith('/api/v1/auth/verify-otp', {
       email: 'jane@example.com',
       code: '123456',
+      device_id: 'mobile',
+      platform: 'mobile',
     });
     expect(result.tokens.accessToken).toBe('access-token');
   });
@@ -130,9 +135,9 @@ describe('authApi', () => {
   it('refreshes tokens through the backend', async () => {
     mockPost.mockResolvedValueOnce(tokenResponse);
 
-    await expect(authApi.refreshTokens('old-token')).resolves.toEqual({
+    await expect(authApi.refreshTokens()).resolves.toEqual({
       accessToken: 'access-token',
-      refreshToken: 'access-token',
+      refreshToken: null,
     });
     expect(mockPost).toHaveBeenCalledWith('/api/v1/auth/refresh');
   });

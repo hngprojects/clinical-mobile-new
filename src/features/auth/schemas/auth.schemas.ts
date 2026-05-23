@@ -33,7 +33,7 @@ export const registerSchema = z
     lastName: z.string().min(1, 'Last name is required'),
     email: z.string().email('Enter a valid email'),
     password: passwordPolicySchema,
-    confirmPassword: z.string(),
+    confirmPassword: z.string().min(8, 'Minimum 8 characters'),
   })
   .refine((d) => d.password === d.confirmPassword, {
     message: "Passwords don't match",
