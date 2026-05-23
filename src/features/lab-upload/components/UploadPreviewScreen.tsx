@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, StyleSheet, View } from 'react-native';
 
@@ -184,7 +184,12 @@ export function UploadPreviewScreen() {
           <Button
             label="Sign Up — It's Free"
             onPress={() => router.replace('/(auth)/register')}
-            style={{ backgroundColor: '#1565C0', borderRadius: 8, height: 45 }}
+            style={{
+              backgroundColor: '#1565C0',
+              borderRadius: 8,
+              paddingVertical: 12,
+              paddingHorizontal: 24,
+            }}
             textColor="#FFFFFF"
           />
         }
@@ -581,7 +586,6 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   actionButton: {
-    height: 45,
     borderRadius: 12,
   },
   outlineButton: {

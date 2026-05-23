@@ -854,17 +854,16 @@ const styles = StyleSheet.create({
   },
   iconButton: {
     alignItems: 'center',
-    height: 48,
     justifyContent: 'center',
-    width: 32,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
   },
   sendButton: {
     alignItems: 'center',
     backgroundColor: '#F5F5F5',
     borderRadius: 24,
-    height: 48,
+    padding: 12,
     justifyContent: 'center',
-    width: 48,
   },
   sendButtonActive: {
     backgroundColor: '#1565C0',

@@ -219,7 +219,8 @@ const styles = StyleSheet.create({
     height: 1,
   },
   socialIconButton: {
-    height: 52,
+    paddingVertical: 15,
+    paddingHorizontal: 24,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#D0D0D0',
