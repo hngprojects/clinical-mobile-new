@@ -259,7 +259,7 @@ export function UploadPreviewScreen() {
               )}
               {isUploadProcessing ? (
                 <View style={styles.uploadOverlay}>
-                  <ActivityIndicator color="#FFFFFF" size="large" />
+                  <ActivityIndicator color={colors.primary} size="large" />
                 </View>
               ) : null}
             </View>
@@ -270,14 +270,7 @@ export function UploadPreviewScreen() {
               label="Get AI Review"
               disabled={isUploadProcessing || !canRequestAiReview}
               onPress={handleGetAiReview}
-              style={[
-                styles.actionButton,
-                {
-                  backgroundColor:
-                    isUploadProcessing || !canRequestAiReview ? '#F5F5F5' : colors.primary,
-                },
-              ]}
-              textColor={isUploadProcessing || !canRequestAiReview ? '#767676' : '#FFFFFF'}
+              style={styles.actionButton}
             />
 
             {!isUploadProcessing ? (

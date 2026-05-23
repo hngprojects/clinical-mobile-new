@@ -52,6 +52,10 @@ export function HomeScreen() {
     setInsights((prev) => prev.filter((i) => i.id !== id));
   };
 
+  const handleViewInsight = (_id: string) => {
+    router.push('/(main)/chat-review?demo=true');
+  };
+
   return (
     <>
       <SafeAreaView style={[styles.fill, { backgroundColor: colors.background }]} edges={['top']}>
@@ -66,6 +70,7 @@ export function HomeScreen() {
             insights={insights}
             onViewAll={() => router.push('/(main)/insights')}
             onRename={handleRename}
+            onView={handleViewInsight}
             onDelete={handleDelete}
           />
         </ScrollView>

@@ -6,6 +6,7 @@ export interface LoginRequest {
 export interface RegisterRequest {
   email: string;
   password: string;
+  confirmPassword: string;
   firstName: string;
   lastName: string;
 }
@@ -30,7 +31,7 @@ export interface CompletePasswordResetResponse {
 
 export interface AuthTokens {
   accessToken: string;
-  refreshToken: string;
+  refreshToken: string | null;
 }
 
 export interface UserProfile {

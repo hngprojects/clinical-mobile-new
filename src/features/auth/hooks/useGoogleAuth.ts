@@ -10,7 +10,7 @@ import { useAuthStore } from '../store/auth.store';
 const GOOGLE_AUTH_PATH = '/api/v1/auth/google';
 const GOOGLE_AUTH_REDIRECT_URL = 'clinsight://auth/google';
 const ACCESS_TOKEN_KEYS = ['access_token', 'token', 'accessToken'];
-const REFRESH_TOKEN_KEYS = ['refresh_token', 'refreshToken'];
+const REFRESH_TOKEN_KEYS = ['refresh_token', 'refreshToken']; // cookie-based; may not be in URL
 
 type UrlQueryParams = NonNullable<ReturnType<typeof Linking.parse>['queryParams']>;
 
@@ -18,7 +18,7 @@ function buildGoogleAuthUrl(redirectUrl: string) {
   const baseUrl = env.API_BASE_URL.replace(/\/$/, '');
   const encodedRedirectUrl = encodeURIComponent(redirectUrl);
 
-  return `${baseUrl}${GOOGLE_AUTH_PATH}?redirect_uri=${encodedRedirectUrl}&return_url=${encodedRedirectUrl}`;
+  return `${baseUrl}${GOOGLE_AUTH_PATH}?redirect_uri=${encodedRedirectUrl}&return_url=${encodedRedirectUrl}&platform=mobile&device_id=mobile`;
 }
 
 function getParamValue(
@@ -50,9 +50,8 @@ function getTokensFromUrl(url: string) {
 
   const refreshToken =
     getParamValue(parsed.queryParams, REFRESH_TOKEN_KEYS) ||
-    getParamValue(fragmentParams, REFRESH_TOKEN_KEYS);
-
-  if (!refreshToken) return null;
+    getParamValue(fragmentParams, REFRESH_TOKEN_KEYS) ||
+    null;
 
   return { accessToken, refreshToken };
 }

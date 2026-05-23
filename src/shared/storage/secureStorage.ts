@@ -4,14 +4,16 @@ import { STORAGE_KEYS } from '@/shared/constants/keys';
 
 export interface AuthTokens {
   accessToken: string;
-  refreshToken: string;
+  refreshToken: string | null;
 }
 
 export const secureStorage = {
   async saveTokens(tokens: AuthTokens): Promise<void> {
     await Promise.all([
       SecureStore.setItemAsync(STORAGE_KEYS.ACCESS_TOKEN, tokens.accessToken),
-      SecureStore.setItemAsync(STORAGE_KEYS.REFRESH_TOKEN, tokens.refreshToken),
+      tokens.refreshToken
+        ? SecureStore.setItemAsync(STORAGE_KEYS.REFRESH_TOKEN, tokens.refreshToken)
+        : SecureStore.deleteItemAsync(STORAGE_KEYS.REFRESH_TOKEN),
     ]);
   },
 
@@ -20,8 +22,8 @@ export const secureStorage = {
       SecureStore.getItemAsync(STORAGE_KEYS.ACCESS_TOKEN),
       SecureStore.getItemAsync(STORAGE_KEYS.REFRESH_TOKEN),
     ]);
-    if (!accessToken || !refreshToken) return null;
-    return { accessToken, refreshToken };
+    if (!accessToken) return null;
+    return { accessToken, refreshToken: refreshToken ?? null };
   },
 
   async clearTokens(): Promise<void> {

@@ -16,7 +16,7 @@ type AuthStateAccessor = () => {
   refreshToken: string | null;
   isGuest: boolean;
 
-  setTokens: (tokens: { accessToken: string; refreshToken: string }) => void;
+  setTokens: (tokens: { accessToken: string; refreshToken: string | null }) => void;
   clearSession: () => void;
 };
 
@@ -51,7 +51,7 @@ client.interceptors.response.use(
 
       try {
         const { authApi } = await import('@/features/auth/api/auth.api');
-        const newTokens = await authApi.refreshTokens(refreshToken);
+        const newTokens = await authApi.refreshTokens();
         getAuthState().setTokens(newTokens);
         original.headers.Authorization = `Bearer ${newTokens.accessToken}`;
         return client(original);
@@ -68,22 +68,30 @@ client.interceptors.response.use(
 function toApiError(error: unknown): ApiError {
   if (isAxiosError(error)) {
     const data = error.response?.data as
-      | { message?: string; detail?: string | { loc: string[]; msg: string }[] }
+      | {
+          message?: string;
+          detail?: string | { loc: string[]; msg: string; type: string }[];
+        }
       | undefined;
 
+    if (__DEV__) {
+      console.warn('[API Error]', {
+        status: error.response?.status,
+        url: error.config?.url,
+        body: error.config?.data,
+        response: data,
+      });
+    }
+
     let msg: string;
+
     if (Array.isArray(data?.detail) && data.detail.length > 0) {
-      msg = (data.detail as { loc: string[]; msg: string }[])
-        .map((d) => `${d.loc.slice(1).join('.')}: ${d.msg}`)
-        .join(', ');
+      // FastAPI / Pydantic validation errors — detail takes priority
+      msg = data.detail.map((d) => `${d.loc.slice(1).join('.')}: ${d.msg}`).join(', ');
     } else if (typeof data?.detail === 'string' && data.detail) {
       msg = data.detail;
     } else {
       msg = data?.message ?? error.message;
-    }
-
-    if (__DEV__) {
-      console.warn('[API Error]', error.response?.status, error.config?.url, msg, data);
     }
 
     return new ApiError(msg, error.response?.status ?? 0);

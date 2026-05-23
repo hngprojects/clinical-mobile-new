@@ -8,6 +8,8 @@ import { useTheme } from '@/shared/theme';
 
 import { ResetPasswordFormData, resetPasswordSchema } from '../schemas/auth.schemas';
 
+const BLUE = '#1565C0';
+
 interface ResetPasswordFormProps {
   mutation: {
     mutate: (data: ResetPasswordFormData) => void;
@@ -17,7 +19,7 @@ interface ResetPasswordFormProps {
 }
 
 export function ResetPasswordForm({ mutation }: ResetPasswordFormProps) {
-  const { colors, spacing } = useTheme();
+  const { spacing } = useTheme();
   const { mutate: resetPassword, isPending, reset } = mutation;
 
   const { control, handleSubmit, watch } = useForm<ResetPasswordFormData>({
@@ -48,12 +50,11 @@ export function ResetPasswordForm({ mutation }: ResetPasswordFormProps) {
       <Button
         label="Send reset code"
         loadingLabel="Sending code"
-        loadingIndicatorColor={colors.primary}
+        loadingIndicatorColor={BLUE}
         onPress={handleSubmit(onSubmit)}
         isLoading={isPending}
         disabled={isDisabled}
-        style={[styles.submitButton, { backgroundColor: isDisabled ? '#F5F5F5' : colors.primary }]}
-        textColor={isDisabled ? '#767676' : '#FFFFFF'}
+        style={styles.submitButton}
       />
     </View>
   );

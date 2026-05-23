@@ -42,7 +42,7 @@ export function DeleteModal({ visible, onCancel, onConfirm }: DeleteModalProps) 
               />
             </View>
             <View style={styles.btn}>
-              <Button label="Delete" onPress={onConfirm} style={{ backgroundColor: '#EF4444' }} />
+              <Button label="Delete" backgroundColor="#EF4444" onPress={onConfirm} />
             </View>
           </View>
         </View>
