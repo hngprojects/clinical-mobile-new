@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
 import React, { useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 
 import { Button, FormField, Typography } from '@/shared/components';
@@ -33,13 +33,13 @@ export function LoginForm({
 
   const { startGoogleAuth, isPending: isGooglePending } = useGoogleAuth();
 
-  const { control, handleSubmit, watch } = useForm<LoginFormData>({
+  const { control, handleSubmit } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' },
     mode: 'onChange',
   });
 
-  const passwordValue = watch('password');
+  const passwordValue = useWatch({ control, name: 'password', defaultValue: '' }) ?? '';
   const onSubmit = (data: LoginFormData) => login(data);
 
   const handleSocialPress = async (provider: string) => {
@@ -124,13 +124,8 @@ export function LoginForm({
           label={isPending ? 'Logging in...' : 'Login'}
           onPress={handleSubmit(onSubmit)}
           isLoading={isPending}
-          style={{
-            marginTop: 32,
-            height: 45,
-            borderRadius: 12,
-            backgroundColor: isPending || passwordValue.length === 0 ? '#F5F5F5' : colors.primary,
-          }}
-          textColor={isPending || passwordValue.length === 0 ? '#767676' : '#FFFFFF'}
+          disabled={isPending || passwordValue.length === 0}
+          style={{ marginTop: 32 }}
         />
 
         <View style={styles.separatorContainer}>

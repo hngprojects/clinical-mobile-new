@@ -1,30 +1,35 @@
 import React from 'react';
 import {
   ActivityIndicator,
-  Pressable,
-  PressableProps,
   StyleProp,
   StyleSheet,
   TextStyle,
+  TouchableOpacity,
+  TouchableOpacityProps,
   View,
   ViewStyle,
 } from 'react-native';
 
-import { useTheme } from '@/shared/theme';
-
 import { Typography } from './Typography';
+
+/** Hardcoded — avoids theme/Pressable issues on Android release builds. */
+const BLUE = '#1565C0';
+const GRAY_BG = '#F5F5F5';
+const GRAY_TEXT = '#767676';
 
 type ButtonVariant = 'primary' | 'outline' | 'ghost';
 
-interface ButtonProps extends Omit<PressableProps, 'style'> {
+interface ButtonProps extends Omit<TouchableOpacityProps, 'style'> {
   label: string;
   variant?: ButtonVariant;
   isLoading?: boolean;
   loadingLabel?: string;
   loadingIndicatorColor?: string;
   leftIcon?: React.ReactNode;
-  style?: StyleProp<ViewStyle>;
+  /** Override fill color (e.g. delete red). */
+  backgroundColor?: string;
   textColor?: string;
+  style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
 }
 
@@ -36,72 +41,73 @@ export function Button({
   loadingIndicatorColor,
   leftIcon,
   disabled,
+  backgroundColor,
+  textColor,
   style,
-  textColor: customTextColor,
   textStyle,
   ...props
 }: ButtonProps) {
-  const { colors, spacing } = useTheme();
-  const isDisabled = disabled || isLoading;
+  const isInactive = Boolean(disabled || isLoading);
 
-  const containerStyle = [
-    styles.base,
-    {
-      paddingVertical: spacing.sm + 4,
-      paddingHorizontal: spacing.lg,
-      borderRadius: spacing.sm,
-      opacity: isDisabled ? 0.6 : 1,
-    },
-    variant === 'primary' && { backgroundColor: colors.primary },
-    variant === 'outline' && {
-      backgroundColor: 'transparent',
-      borderWidth: 1.5,
-      borderColor: colors.primary,
-    },
-    variant === 'ghost' && { backgroundColor: 'transparent' },
-    style,
-  ];
+  const fill =
+    backgroundColor ?? (variant === 'primary' ? (isInactive ? GRAY_BG : BLUE) : 'transparent');
 
-  const textColor = customTextColor ?? (variant === 'primary' ? '#FFFFFF' : colors.primary);
+  const labelColor =
+    textColor ??
+    (variant === 'primary' ? (isInactive && !backgroundColor ? GRAY_TEXT : '#FFFFFF') : BLUE);
 
   return (
-    <Pressable
-      style={containerStyle}
-      disabled={isDisabled}
-      android_ripple={{ color: colors.primaryPressed }}
-      {...props}
-    >
-      <View style={styles.content}>
+    <TouchableOpacity activeOpacity={0.85} disabled={isInactive} style={style} {...props}>
+      <View
+        style={[
+          styles.inner,
+          variant === 'primary' && { backgroundColor: fill },
+          variant === 'outline' && styles.outline,
+          variant === 'ghost' && styles.ghost,
+        ]}
+      >
         {isLoading ? (
-          <>
-            <ActivityIndicator color={loadingIndicatorColor ?? textColor} size="small" />
-            {loadingLabel && (
-              <Typography variant="body1" color={textColor} style={styles.label}>
+          <View style={styles.content}>
+            <ActivityIndicator color={loadingIndicatorColor ?? labelColor} size="small" />
+            {loadingLabel ? (
+              <Typography variant="body1" color={labelColor} style={styles.label}>
                 {loadingLabel}
               </Typography>
-            )}
-          </>
+            ) : null}
+          </View>
         ) : (
-          <>
-            {leftIcon && <View style={styles.iconContainer}>{leftIcon}</View>}
+          <View style={styles.content}>
+            {leftIcon ? <View style={styles.iconContainer}>{leftIcon}</View> : null}
             <Typography
               variant="body1"
-              color={textColor}
-              style={[styles.label, variant === 'outline' && { fontWeight: '500' }, textStyle]}
+              color={labelColor}
+              style={[styles.label, variant === 'outline' && styles.outlineLabel, textStyle]}
             >
               {label}
             </Typography>
-          </>
+          </View>
         )}
       </View>
-    </Pressable>
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  base: {
+  inner: {
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    minHeight: 45,
+  },
+  outline: {
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: '#D0D0D0',
+  },
+  ghost: {
+    backgroundColor: 'transparent',
   },
   content: {
     flexDirection: 'row',
@@ -114,5 +120,8 @@ const styles = StyleSheet.create({
   },
   label: {
     fontWeight: '600',
+  },
+  outlineLabel: {
+    fontWeight: '500',
   },
 });
