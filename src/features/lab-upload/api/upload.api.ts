@@ -29,7 +29,7 @@ async function uploadLabResult(request: UploadRequest): Promise<UploadResponse> 
   const { data } = await client.post<ApiSuccessResponse<UploadResponse>>(
     '/api/v1/upload',
     formData,
-    { headers },
+    { headers: { ...headers, 'Content-Type': 'multipart/form-data' } },
   );
 
   if (!data.data) {
