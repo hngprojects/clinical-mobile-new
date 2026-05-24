@@ -1,9 +1,10 @@
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ChangePasswordForm } from '@/features/auth/components/ChangePasswordForm';
+import { PasswordSuccessModal } from '@/features/auth/components/PasswordSuccessModal';
 import { useChangePassword } from '@/features/auth/hooks/useChangePassword';
 import { Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
@@ -16,11 +17,15 @@ export function ChangePasswordScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const changePasswordMutation = useChangePassword();
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const handleSuccess = () => {
-    Alert.alert('Password updated', 'Your password has been changed successfully.', [
-      { text: 'OK', onPress: () => router.back() },
-    ]);
+    setShowSuccessModal(true);
+  };
+
+  const handleBackToProfile = () => {
+    setShowSuccessModal(false);
+    router.back();
   };
 
   const handleError = (message: string) => {
@@ -61,6 +66,8 @@ export function ChangePasswordScreen() {
           />
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <PasswordSuccessModal visible={showSuccessModal} onConfirm={handleBackToProfile} />
     </SafeAreaView>
   );
 }

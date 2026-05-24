@@ -14,6 +14,7 @@ export type {
   UserProfile,
 } from './api/auth.types';
 export { ChangePasswordForm } from './components/ChangePasswordForm';
+export { PasswordSuccessModal } from './components/PasswordSuccessModal';
 export { CompletePasswordResetForm } from './components/CompletePasswordResetForm';
 export { LoginForm } from './components/LoginForm';
 export { PasswordField } from './components/PasswordField';
