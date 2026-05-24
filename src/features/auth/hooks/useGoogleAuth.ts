@@ -1,4 +1,5 @@
 import * as Linking from 'expo-linking';
+import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
 
@@ -88,6 +89,7 @@ export function useGoogleAuth() {
           try {
             const userProfile = await authApi.getMe();
             useAuthStore.getState().setSession(tokens, userProfile);
+            router.replace('/(main)');
             return { success: true };
           } catch (profileError) {
             useAuthStore.getState().clearSession();

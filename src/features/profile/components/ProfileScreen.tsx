@@ -32,6 +32,7 @@ export function ProfileScreen() {
   const handleConfirmLogout = () => {
     setLogoutModalVisible(false);
     clearSession();
+    router.replace('/(auth)/login');
   };
 
   const handleConfirmDeleteAccount = () => {
