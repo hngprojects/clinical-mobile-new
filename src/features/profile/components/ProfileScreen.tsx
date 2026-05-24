@@ -76,7 +76,11 @@ export function ProfileScreen() {
         </ProfileMenuSection>
 
         <ProfileMenuSection title="Support and Legal">
-          <ProfileMenuRow icon="shield-outline" label="Privacy Policy" onPress={() => {}} />
+          <ProfileMenuRow
+            icon="shield-outline"
+            label="Privacy Policy"
+            onPress={() => router.push('/(legal)/privacy-policy')}
+          />
           <ProfileMenuRow
             icon="document-text-outline"
             label="Terms"
