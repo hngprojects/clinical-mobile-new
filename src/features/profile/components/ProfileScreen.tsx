@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useState } from 'react';
 import { Alert, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -8,6 +8,7 @@ import { useTheme } from '@/shared/theme';
 
 import { PROFILE_HORIZONTAL_PADDING } from '../constants';
 
+import { DeleteAccountConfirmModal } from './DeleteAccountConfirmModal';
 import { ProfileDangerZone } from './ProfileDangerZone';
 import { ProfileMenuRow } from './ProfileMenuRow';
 import { ProfileMenuSection } from './ProfileMenuSection';
@@ -31,15 +32,11 @@ export function ProfileScreen() {
     ]);
   };
 
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      'Delete Account',
-      'This action is permanent and cannot be undone. All your data will be deleted.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: () => {} },
-      ],
-    );
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+
+  const handleConfirmDeleteAccount = () => {
+    setDeleteModalVisible(false);
+    // TODO: wire delete-account API when available
   };
 
   return (
@@ -93,8 +90,14 @@ export function ProfileScreen() {
           />
         </ProfileMenuSection>
 
-        <ProfileDangerZone onDeleteAccount={handleDeleteAccount} />
+        <ProfileDangerZone onDeleteAccount={() => setDeleteModalVisible(true)} />
       </ScrollView>
+
+      <DeleteAccountConfirmModal
+        visible={deleteModalVisible}
+        onClose={() => setDeleteModalVisible(false)}
+        onConfirm={handleConfirmDeleteAccount}
+      />
     </SafeAreaView>
   );
 }
