@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAuthStore } from '@/features/auth/store/auth.store';
@@ -9,6 +9,7 @@ import { useTheme } from '@/shared/theme';
 import { PROFILE_HORIZONTAL_PADDING } from '../constants';
 
 import { DeleteAccountConfirmModal } from './DeleteAccountConfirmModal';
+import { LogoutConfirmModal } from './LogoutConfirmModal';
 import { ProfileDangerZone } from './ProfileDangerZone';
 import { ProfileMenuRow } from './ProfileMenuRow';
 import { ProfileMenuSection } from './ProfileMenuSection';
@@ -25,14 +26,13 @@ export function ProfileScreen() {
   const email = user?.email ?? '';
   const initials = user ? `${user.firstName[0] ?? ''}${user.lastName[0] ?? ''}`.toUpperCase() : 'G';
 
-  const handleLogout = () => {
-    Alert.alert('Logout', 'Are you sure you want to log out?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Logout', style: 'destructive', onPress: () => clearSession() },
-    ]);
-  };
-
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+
+  const handleConfirmLogout = () => {
+    setLogoutModalVisible(false);
+    clearSession();
+  };
 
   const handleConfirmDeleteAccount = () => {
     setDeleteModalVisible(false);
@@ -69,7 +69,7 @@ export function ProfileScreen() {
           <ProfileMenuRow
             icon="log-out-outline"
             label="Logout"
-            onPress={handleLogout}
+            onPress={() => setLogoutModalVisible(true)}
             isLast
             danger
           />
@@ -92,6 +92,12 @@ export function ProfileScreen() {
 
         <ProfileDangerZone onDeleteAccount={() => setDeleteModalVisible(true)} />
       </ScrollView>
+
+      <LogoutConfirmModal
+        visible={logoutModalVisible}
+        onClose={() => setLogoutModalVisible(false)}
+        onConfirm={handleConfirmLogout}
+      />
 
       <DeleteAccountConfirmModal
         visible={deleteModalVisible}
