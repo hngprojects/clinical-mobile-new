@@ -59,7 +59,11 @@ export function ProfileScreen() {
             label="Edit Profile"
             onPress={() => router.push('/(main)/edit-profile')}
           />
-          <ProfileMenuRow icon="lock-closed-outline" label="Change Password" onPress={() => {}} />
+          <ProfileMenuRow
+            icon="lock-closed-outline"
+            label="Change Password"
+            onPress={() => router.push('/(main)/change-password')}
+          />
           <ProfileMenuRow
             icon="notifications-outline"
             label="Notifications"
