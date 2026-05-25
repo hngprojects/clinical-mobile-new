@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 
 import type { InsightListItem } from '../api/types';
 import { DUMMY_INSIGHT_LIST } from '../data/dummyInsights';
@@ -10,7 +10,7 @@ export function useInsightList(initialItems: InsightListItem[] = DUMMY_INSIGHT_L
   const [items, setItems] = useState<InsightListItem[]>(() => [...initialItems]);
   const [isSearching, setIsSearching] = useState(false);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     setItems([...initialItems]);
   }, [initialItems]);
 
