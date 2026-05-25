@@ -27,7 +27,7 @@ export function CompletePasswordResetForm({
   email,
   resetToken,
 }: CompletePasswordResetFormProps) {
-  const { colors, spacing } = useTheme();
+  const { spacing } = useTheme();
   const { mutate: completeReset, isPending } = mutation;
   const [showPassword, setShowPassword] = useState(false);
   const confirmPasswordRef = useRef<any>(null);
@@ -97,12 +97,11 @@ export function CompletePasswordResetForm({
       <Button
         label="Reset password"
         loadingLabel="Resetting password"
-        loadingIndicatorColor={colors.primary}
+        loadingIndicatorColor="#1565C0"
         onPress={handleSubmit(onSubmit)}
         isLoading={isPending}
         disabled={isDisabled}
-        style={[styles.submitButton, { backgroundColor: isDisabled ? '#F5F5F5' : colors.primary }]}
-        textColor={isDisabled ? '#767676' : '#FFFFFF'}
+        style={styles.submitButton}
       />
     </View>
   );
@@ -138,7 +137,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   submitButton: {
-    height: 45,
     borderRadius: 12,
     marginTop: 16,
   },

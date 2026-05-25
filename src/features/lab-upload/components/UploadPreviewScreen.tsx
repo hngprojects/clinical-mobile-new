@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, StyleSheet, View } from 'react-native';
 
@@ -171,6 +171,32 @@ export function UploadPreviewScreen() {
     );
   }
 
+  const isUploadLimitError = uploadMutation.isError && uploadMutation.error?.status === 403;
+
+  if (isUploadLimitError && !isUploadProcessing) {
+    return (
+      <FlowErrorScreen
+        title="Upload limit reached"
+        message="You've used your free guest upload. Sign up for a free account to upload more lab results and keep your history."
+        onClose={handleBack}
+        onRetry={handleBack}
+        footer={
+          <Button
+            label="Sign Up — It's Free"
+            onPress={() => router.replace('/(auth)/register')}
+            style={{
+              backgroundColor: '#1565C0',
+              borderRadius: 8,
+              paddingVertical: 12,
+              paddingHorizontal: 24,
+            }}
+            textColor="#FFFFFF"
+          />
+        }
+      />
+    );
+  }
+
   if (uploadMutation.isError && !isUploadProcessing) {
     return (
       <>
@@ -237,7 +263,7 @@ export function UploadPreviewScreen() {
               )}
               {isUploadProcessing ? (
                 <View style={styles.uploadOverlay}>
-                  <ActivityIndicator color="#FFFFFF" size="large" />
+                  <ActivityIndicator color={colors.primary} size="large" />
                 </View>
               ) : null}
             </View>
@@ -248,14 +274,7 @@ export function UploadPreviewScreen() {
               label="Get AI Review"
               disabled={isUploadProcessing || !canRequestAiReview}
               onPress={handleGetAiReview}
-              style={[
-                styles.actionButton,
-                {
-                  backgroundColor:
-                    isUploadProcessing || !canRequestAiReview ? '#F5F5F5' : colors.primary,
-                },
-              ]}
-              textColor={isUploadProcessing || !canRequestAiReview ? '#767676' : '#FFFFFF'}
+              style={styles.actionButton}
             />
 
             {!isUploadProcessing ? (
@@ -567,7 +586,6 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   actionButton: {
-    height: 45,
     borderRadius: 12,
   },
   outlineButton: {

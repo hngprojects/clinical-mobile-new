@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
 import React, { useState, useRef } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { StyleSheet, View, Pressable, Image } from 'react-native';
 
 import { Button, FormField, Typography } from '@/shared/components';
@@ -27,7 +27,7 @@ export function RegisterForm({ onContinueAsGuest }: RegisterFormProps) {
   const passwordRef = useRef<any>(null);
   const confirmPasswordRef = useRef<any>(null);
 
-  const { control, handleSubmit, watch } = useForm<RegisterFormData>({
+  const { control, handleSubmit } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       firstName: '',
@@ -39,7 +39,7 @@ export function RegisterForm({ onContinueAsGuest }: RegisterFormProps) {
     mode: 'onChange',
   });
 
-  const passwordValue = watch('password');
+  const passwordValue = useWatch({ control, name: 'password', defaultValue: '' }) ?? '';
   const onSubmit = (data: RegisterFormData) => register(data);
 
   const handleSocialPress = async (provider: string) => {
@@ -50,10 +50,11 @@ export function RegisterForm({ onContinueAsGuest }: RegisterFormProps) {
     }
   };
 
-  // Password validation logic
   const has8Chars = passwordValue.length >= 8;
   const hasUpper = /[A-Z]/.test(passwordValue);
+  const hasLower = /[a-z]/.test(passwordValue);
   const hasNumber = /[0-9]/.test(passwordValue);
+  const hasSpecial = /[^A-Za-z0-9]/.test(passwordValue);
 
   return (
     <View style={[styles.container, { gap: spacing.md }]}>
@@ -110,16 +111,25 @@ export function RegisterForm({ onContinueAsGuest }: RegisterFormProps) {
         }
       />
 
-      {passwordValue.length > 0 && !(has8Chars && hasUpper && hasNumber) && (
-        <View style={styles.validationList}>
-          <ValidationItem label="Password must have at least 8 characters" isValid={has8Chars} />
-          <ValidationItem
-            label="Password must have at least one uppercase letter"
-            isValid={hasUpper}
-          />
-          <ValidationItem label="Password must have at least one number" isValid={hasNumber} />
-        </View>
-      )}
+      {passwordValue.length > 0 &&
+        !(has8Chars && hasUpper && hasLower && hasNumber && hasSpecial) && (
+          <View style={styles.validationList}>
+            <ValidationItem label="Password must have at least 8 characters" isValid={has8Chars} />
+            <ValidationItem
+              label="Password must have at least one uppercase letter"
+              isValid={hasUpper}
+            />
+            <ValidationItem
+              label="Password must have at least one lowercase letter"
+              isValid={hasLower}
+            />
+            <ValidationItem label="Password must have at least one number" isValid={hasNumber} />
+            <ValidationItem
+              label="Password must have at least one special character"
+              isValid={hasSpecial}
+            />
+          </View>
+        )}
 
       <FormField
         ref={confirmPasswordRef}
@@ -143,13 +153,8 @@ export function RegisterForm({ onContinueAsGuest }: RegisterFormProps) {
         label="Continue"
         onPress={handleSubmit(onSubmit)}
         isLoading={isPending}
-        style={{
-          marginTop: spacing.xs,
-          height: 48,
-          borderRadius: 12,
-          backgroundColor: isPending || passwordValue.length === 0 ? '#F5F5F5' : colors.primary,
-        }}
-        textColor={isPending || passwordValue.length === 0 ? '#767676' : '#FFFFFF'}
+        disabled={isPending || passwordValue.length === 0}
+        style={{ marginTop: spacing.xs }}
       />
 
       <View style={styles.separatorContainer}>
@@ -229,7 +234,8 @@ const styles = StyleSheet.create({
     height: 1,
   },
   socialIconButton: {
-    height: 52,
+    paddingVertical: 15,
+    paddingHorizontal: 24,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#D0D0D0',

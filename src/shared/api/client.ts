@@ -14,6 +14,7 @@ export const client = create({
 type AuthStateAccessor = () => {
   accessToken: string | null;
   refreshToken: string | null;
+  isGuest: boolean;
 
   setTokens: (tokens: { accessToken: string; refreshToken: string | null }) => void;
   clearSession: () => void;
@@ -41,7 +42,10 @@ client.interceptors.response.use(
       const { refreshToken, clearSession } = getAuthState();
 
       if (!refreshToken) {
-        clearSession();
+        // Guest users authenticate via x-guest-session-id, not tokens — don't wipe their session
+        if (!getAuthState().isGuest) {
+          clearSession();
+        }
         return Promise.reject(toApiError(error));
       }
 

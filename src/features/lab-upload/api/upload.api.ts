@@ -20,7 +20,9 @@ async function uploadLabResult(request: UploadRequest): Promise<UploadResponse> 
     type: request.file.mimeType ?? inferMimeType(request.file.name),
   } as unknown as Blob);
 
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    'Content-Type': 'multipart/form-data',
+  };
 
   if (request.guest_session_id) {
     headers['x-guest-session-id'] = request.guest_session_id;
@@ -29,7 +31,7 @@ async function uploadLabResult(request: UploadRequest): Promise<UploadResponse> 
   const { data } = await client.post<ApiSuccessResponse<UploadResponse>>(
     '/api/v1/upload',
     formData,
-    { headers },
+    { headers: { ...headers, 'Content-Type': 'multipart/form-data' } },
   );
 
   if (!data.data) {

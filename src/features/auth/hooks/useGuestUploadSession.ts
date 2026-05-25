@@ -23,6 +23,7 @@ export function useGuestUploadSession() {
     try {
       const deviceFingerprint = await getOrCreateGuestDeviceFingerprint();
       const guestSession = await authApi.createGuestSession(deviceFingerprint);
+      if (__DEV__) console.log('[Guest] session created:', guestSession.guestSessionId);
       const guestSessionId = startGuestSession(guestSession.guestSessionId);
       navigateAfterGuestSession({
         guestSessionId,
@@ -31,7 +32,8 @@ export function useGuestUploadSession() {
         uri: file.uri,
         mimeType: file.mimeType,
       });
-    } catch {
+    } catch (err) {
+      if (__DEV__) console.warn('[Guest] session creation failed, using local fallback:', err);
       const guestSessionId = startGuestSession();
       navigateAfterGuestSession({
         guestSessionId,

@@ -96,11 +96,16 @@ export default function MainLayout() {
         name="notifications"
         options={{
           href: null,
-          title: 'Notifications',
-          headerShown: true,
-          headerStyle: { backgroundColor: colors.surface },
-          headerTintColor: colors.text,
-          headerShadowVisible: false,
+          headerShown: false,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
+      <Tabs.Screen
+        name="notification-inbox"
+        options={{
+          href: null,
+          headerShown: false,
+          tabBarStyle: { display: 'none' },
         }}
       />
       <Tabs.Screen

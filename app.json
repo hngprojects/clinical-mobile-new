@@ -7,6 +7,12 @@
     "icon": "./assets/images/icon.png",
     "scheme": "clinsight",
     "userInterfaceStyle": "automatic",
+    "updates": {
+      "url": "https://u.expo.dev/fdbd24ae-4425-4853-b0fb-52b15d8a5574"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "ios": {
       "supportsTablet": true
     },
@@ -34,7 +40,7 @@
           "backgroundColor": "#FFFFFF",
           "android": {
             "image": "./assets/images/splash-icon.png",
-            "imageWidth": 200
+            "imageWidth": 150
           },
           "ios": {
             "image": "./assets/images/splash-icon.png",
@@ -52,8 +58,9 @@
       "EXPO_PUBLIC_API_BASE_URL": "https://api.staging.clinsight.hng14.com",
       "EXPO_PUBLIC_APP_ENV": "staging",
       "eas": {
-        "projectId": "4d95fa1c-259d-4031-b0fb-ff56c14c1f98"
-      }
+        "projectId": "fdbd24ae-4425-4853-b0fb-52b15d8a5574"
+      },
+      "router": {}
     }
   }
 }

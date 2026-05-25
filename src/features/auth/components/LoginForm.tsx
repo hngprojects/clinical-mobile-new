@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
 import React, { useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 
 import { Button, FormField, Typography } from '@/shared/components';
@@ -33,13 +33,13 @@ export function LoginForm({
 
   const { startGoogleAuth, isPending: isGooglePending } = useGoogleAuth();
 
-  const { control, handleSubmit, watch } = useForm<LoginFormData>({
+  const { control, handleSubmit } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' },
     mode: 'onChange',
   });
 
-  const passwordValue = watch('password');
+  const passwordValue = useWatch({ control, name: 'password', defaultValue: '' }) ?? '';
   const onSubmit = (data: LoginFormData) => login(data);
 
   const handleSocialPress = async (provider: string) => {
@@ -52,7 +52,9 @@ export function LoginForm({
 
   const has8Chars = passwordValue.length >= 8;
   const hasUpper = /[A-Z]/.test(passwordValue);
+  const hasLower = /[a-z]/.test(passwordValue);
   const hasNumber = /[0-9]/.test(passwordValue);
+  const hasSpecial = /[^A-Za-z0-9]/.test(passwordValue);
 
   return (
     <View style={styles.container}>
@@ -109,28 +111,35 @@ export function LoginForm({
           </Pressable>
         </View>
 
-        {passwordValue.length > 0 && !(has8Chars && hasUpper && hasNumber) && (
-          <View style={styles.validationList}>
-            <ValidationItem label="Password must have at least 8 characters" isValid={has8Chars} />
-            <ValidationItem
-              label="Password must have at least one uppercase letter"
-              isValid={hasUpper}
-            />
-            <ValidationItem label="Password must have at least one number" isValid={hasNumber} />
-          </View>
-        )}
+        {passwordValue.length > 0 &&
+          !(has8Chars && hasUpper && hasLower && hasNumber && hasSpecial) && (
+            <View style={styles.validationList}>
+              <ValidationItem
+                label="Password must have at least 8 characters"
+                isValid={has8Chars}
+              />
+              <ValidationItem
+                label="Password must have at least one uppercase letter"
+                isValid={hasUpper}
+              />
+              <ValidationItem
+                label="Password must have at least one lowercase letter"
+                isValid={hasLower}
+              />
+              <ValidationItem label="Password must have at least one number" isValid={hasNumber} />
+              <ValidationItem
+                label="Password must have at least one special character"
+                isValid={hasSpecial}
+              />
+            </View>
+          )}
 
         <Button
           label={isPending ? 'Logging in...' : 'Login'}
           onPress={handleSubmit(onSubmit)}
           isLoading={isPending}
-          style={{
-            marginTop: 32,
-            height: 45,
-            borderRadius: 12,
-            backgroundColor: isPending || passwordValue.length === 0 ? '#F5F5F5' : colors.primary,
-          }}
-          textColor={isPending || passwordValue.length === 0 ? '#767676' : '#FFFFFF'}
+          disabled={isPending || passwordValue.length === 0}
+          style={{ marginTop: 32 }}
         />
 
         <View style={styles.separatorContainer}>
@@ -224,7 +233,8 @@ const styles = StyleSheet.create({
     height: 1,
   },
   socialIconButton: {
-    height: 52,
+    paddingVertical: 15,
+    paddingHorizontal: 24,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#D0D0D0',

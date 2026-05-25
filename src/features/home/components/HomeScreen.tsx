@@ -10,7 +10,7 @@ import { HomeHeader } from './HomeHeader';
 import { Insight } from './InsightCard';
 import { RecentInsightsSection } from './RecentInsightsSection';
 import { UploadCard } from './UploadCard';
-import { Button, UploadBottomSheet, UploadedFile, UploadError } from '@/shared/components';
+import { UploadBottomSheet, UploadedFile, UploadError } from '@/shared/components';
 
 const MOCK_INSIGHTS: Insight[] = [
   { id: '1', title: 'Hormone Health Discussion', timestamp: '2 mins ago' },
@@ -44,19 +44,16 @@ export function HomeScreen() {
     });
   };
 
-  const handleOpenMockChat = () => {
-    router.push({
-      pathname: '/(main)/chat-review',
-      params: { mock: 'chat' },
-    });
-  };
-
   const handleRename = (id: string, newTitle: string) => {
     setInsights((prev) => prev.map((i) => (i.id === id ? { ...i, title: newTitle } : i)));
   };
 
   const handleDelete = (id: string) => {
     setInsights((prev) => prev.filter((i) => i.id !== id));
+  };
+
+  const handleViewInsight = (_id: string) => {
+    router.push('/(main)/chat-review?demo=true');
   };
 
   return (
@@ -69,18 +66,11 @@ export function HomeScreen() {
           showsVerticalScrollIndicator={false}
         >
           <UploadCard onUpload={() => setShowUploadSheet(true)} />
-          {typeof __DEV__ !== 'undefined' && __DEV__ ? (
-            <Button
-              label="Open Mock Chat"
-              onPress={handleOpenMockChat}
-              variant="outline"
-              style={styles.mockChatButton}
-            />
-          ) : null}
           <RecentInsightsSection
             insights={insights}
             onViewAll={() => router.push('/(main)/insights')}
             onRename={handleRename}
+            onView={handleViewInsight}
             onDelete={handleDelete}
           />
         </ScrollView>
@@ -98,7 +88,4 @@ export function HomeScreen() {
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  mockChatButton: {
-    marginHorizontal: 16,
-  },
 });
