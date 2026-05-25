@@ -37,13 +37,25 @@ function mapCasesToInsightItems(cases: CaseListItem[]): InsightListItem[] {
 
 function formatCaseSubtitle(item: CaseListItem) {
   const createdAt = new Date(item.created_at);
-  const createdLabel = Number.isNaN(createdAt.getTime())
-    ? 'Unknown date'
-    : createdAt.toLocaleDateString(undefined, {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-      });
+  if (Number.isNaN(createdAt.getTime())) {
+    return 'Unknown time';
+  }
 
-  return `${createdLabel} • ${item.status}`;
+  const now = new Date();
+  const diffMs = now.getTime() - createdAt.getTime();
+  const diffSecs = Math.floor(diffMs / 1000);
+  const diffMins = Math.floor(diffSecs / 60);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffSecs < 60) {
+    return 'Just now';
+  }
+  if (diffMins < 60) {
+    return `${diffMins} min${diffMins === 1 ? '' : 's'} ago`;
+  }
+  if (diffHours < 24) {
+    return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
+  }
+  return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
 }
