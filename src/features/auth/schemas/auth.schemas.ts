@@ -1,10 +1,12 @@
 import { z } from 'zod';
 
+export const PASSWORD_SPECIAL_CHAR_REGEX = /[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\;'`~/]/;
+
 export const passwordPolicySchema = z
   .string()
   .min(8, 'Minimum 8 characters')
   .regex(/[A-Z]/, 'Must contain an uppercase letter')
-  .regex(/[^A-Za-z0-9]/, 'Must contain a special character');
+  .regex(PASSWORD_SPECIAL_CHAR_REGEX, 'Must contain a special character');
 
 export const loginSchema = z.object({
   email: z.string().email('Enter a valid email'),

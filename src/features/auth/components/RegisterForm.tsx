@@ -9,7 +9,11 @@ import { useTheme } from '@/shared/theme';
 
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { useRegister } from '../hooks/useRegister';
-import { registerSchema, RegisterFormData } from '../schemas/auth.schemas';
+import {
+  PASSWORD_SPECIAL_CHAR_REGEX,
+  registerSchema,
+  RegisterFormData,
+} from '../schemas/auth.schemas';
 
 interface RegisterFormProps {
   onContinueAsGuest?: () => void;
@@ -89,7 +93,8 @@ export function RegisterForm({ onContinueAsGuest }: RegisterFormProps) {
 
   const has8Chars = passwordValue.length >= 8;
   const hasUpper = /[A-Z]/.test(passwordValue);
-  const hasSpecial = /[^A-Za-z0-9]/.test(passwordValue);
+  const hasSpecial = PASSWORD_SPECIAL_CHAR_REGEX.test(passwordValue);
+  const isPasswordValid = has8Chars && hasUpper && hasSpecial;
 
   return (
     <View style={[styles.container, { gap: spacing.md }]}>
@@ -180,9 +185,10 @@ export function RegisterForm({ onContinueAsGuest }: RegisterFormProps) {
 
       <Button
         label="Continue"
+        loadingLabel="Creating account"
         onPress={handleSubmit(onSubmit)}
         isLoading={isPending}
-        disabled={isPending || passwordValue.length === 0}
+        disabled={isPending || !isPasswordValid}
         style={{ marginTop: spacing.xs }}
       />
 
@@ -198,7 +204,8 @@ export function RegisterForm({ onContinueAsGuest }: RegisterFormProps) {
 
       <View style={{ gap: spacing.md }}>
         <Button
-          label={isGooglePending ? 'Connecting...' : 'Google'}
+          label="Google"
+          loadingLabel="Signing up with Google"
           variant="outline"
           onPress={() => handleSocialPress('Google')}
           isLoading={isGooglePending}

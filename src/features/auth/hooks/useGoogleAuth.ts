@@ -1,16 +1,19 @@
 import * as Linking from 'expo-linking';
+import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useCallback, useState } from 'react';
 
 import { env } from '@/shared/constants/env';
 
 import { authApi } from '../api/auth.api';
+import { useAuthFeedbackStore } from '../store/authFeedback.store';
 import { useAuthStore } from '../store/auth.store';
 
 const GOOGLE_AUTH_PATH = '/api/v1/auth/google';
 const GOOGLE_AUTH_REDIRECT_URL = 'clinsight://auth/google';
 const ACCESS_TOKEN_KEYS = ['access_token', 'token', 'accessToken'];
 const REFRESH_TOKEN_KEYS = ['refresh_token', 'refreshToken']; // cookie-based; may not be in URL
+const SUCCESS_REDIRECT_DELAY_MS = 1200;
 
 type UrlQueryParams = NonNullable<ReturnType<typeof Linking.parse>['queryParams']>;
 
@@ -67,6 +70,10 @@ function getAuthErrorFromUrl(url: string) {
   );
 }
 
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export function useGoogleAuth(flow: 'signin' | 'signup' = 'signin') {
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -106,7 +113,14 @@ export function useGoogleAuth(flow: 'signin' | 'signup' = 'signin') {
         useAuthStore.getState().setTokens(tokens);
         try {
           const userProfile = await authApi.getMe();
+          useAuthFeedbackStore
+            .getState()
+            .setSuccessMessage(
+              flow === 'signup' ? 'Google sign-up successful.' : 'Google login successful.',
+            );
+          await wait(SUCCESS_REDIRECT_DELAY_MS);
           useAuthStore.getState().setSession(tokens, userProfile);
+          router.replace('/(main)');
           return { success: true };
         } catch {
           useAuthStore.getState().clearSession();

@@ -10,6 +10,7 @@ import { useTheme } from '@/shared/theme';
 import { CompletePasswordResetRequest } from '../api/auth.types';
 import {
   CompletePasswordResetFormData,
+  PASSWORD_SPECIAL_CHAR_REGEX,
   completePasswordResetSchema,
 } from '../schemas/auth.schemas';
 
@@ -42,9 +43,10 @@ export function CompletePasswordResetForm({
   const confirmPasswordValue = watch('confirmPassword');
   const has8Chars = passwordValue.length >= 8;
   const hasUpper = /[A-Z]/.test(passwordValue);
-  const hasSpecial = /[^A-Za-z0-9]/.test(passwordValue);
+  const hasSpecial = PASSWORD_SPECIAL_CHAR_REGEX.test(passwordValue);
+  const isPasswordValid = has8Chars && hasUpper && hasSpecial;
   const passwordsMatch = confirmPasswordValue.length > 0 && passwordValue === confirmPasswordValue;
-  const isDisabled = isPending || passwordValue.length === 0 || !passwordsMatch;
+  const isDisabled = isPending || !isPasswordValid || !passwordsMatch;
 
   const onSubmit = (formData: CompletePasswordResetFormData) => {
     completeReset({ email, token: resetToken, newPassword: formData.password });

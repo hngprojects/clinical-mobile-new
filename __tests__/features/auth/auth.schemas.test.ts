@@ -69,6 +69,16 @@ describe('registerSchema', () => {
         .success,
     ).toBe(false);
   });
+
+  it('rejects non-ASCII special characters', () => {
+    expect(
+      registerSchema.safeParse({
+        ...valid,
+        password: 'Qwerty123¥',
+        confirmPassword: 'Qwerty123¥',
+      }).success,
+    ).toBe(false);
+  });
 });
 
 describe('resetPasswordSchema', () => {
@@ -138,6 +148,15 @@ describe('completePasswordResetSchema', () => {
       completePasswordResetSchema.safeParse({
         password: 'Password1',
         confirmPassword: 'Password1',
+      }).success,
+    ).toBe(false);
+  });
+
+  it('rejects non-ASCII special characters', () => {
+    expect(
+      completePasswordResetSchema.safeParse({
+        password: 'Qwerty123¥',
+        confirmPassword: 'Qwerty123¥',
       }).success,
     ).toBe(false);
   });

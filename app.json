@@ -48,7 +48,14 @@
           }
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Clinsight needs access to your photos so you can upload lab result images.",
+          "cameraPermission": "Clinsight needs access to your camera so you can take a photo of your lab result."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

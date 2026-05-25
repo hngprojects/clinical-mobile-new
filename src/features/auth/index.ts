@@ -11,6 +11,8 @@ export type {
   ResetPasswordResponse,
   UserProfile,
 } from './api/auth.types';
+export { AuthFeedbackToast } from './components/AuthFeedbackToast';
+export { AuthSuccessModal } from './components/AuthSuccessModal';
 export { CompletePasswordResetForm } from './components/CompletePasswordResetForm';
 export { LoginForm } from './components/LoginForm';
 export { RegisterForm } from './components/RegisterForm';
@@ -38,4 +40,5 @@ export type {
   RegisterFormData,
   ResetPasswordFormData,
 } from './schemas/auth.schemas';
+export { useAuthFeedbackStore } from './store/authFeedback.store';
 export { useAuthStore } from './store/auth.store';

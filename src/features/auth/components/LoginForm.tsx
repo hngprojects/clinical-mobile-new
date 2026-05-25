@@ -118,7 +118,8 @@ export function LoginForm({
         </View>
 
         <Button
-          label={isPending ? 'Logging in...' : 'Login'}
+          label="Sign in"
+          loadingLabel="Signing in"
           onPress={handleSubmit(onSubmit)}
           isLoading={isPending}
           disabled={isPending || passwordValue.length === 0}
@@ -146,7 +147,8 @@ export function LoginForm({
 
         <View style={{ gap: 16 }}>
           <Button
-            label={isGooglePending ? 'Connecting...' : 'Google'}
+            label="Google"
+            loadingLabel="Signing in with Google"
             variant="outline"
             onPress={() => handleSocialPress('Google')}
             isLoading={isGooglePending}
