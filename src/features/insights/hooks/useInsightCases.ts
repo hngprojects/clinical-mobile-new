@@ -6,12 +6,14 @@ import type { InsightListItem } from '../api/types';
 
 import { casesApi, type CaseListItem } from '../api/cases.api';
 
-const CASES_QUERY_KEY = ['insight-cases', 0, 50];
-
 export function useInsightCases(offset = 0, limit = 50) {
-  const query = useApiQuery(CASES_QUERY_KEY, () => casesApi.listCases(offset, limit), {
-    retry: false,
-  });
+  const query = useApiQuery(
+    ['insight-cases', offset, limit],
+    () => casesApi.listCases(offset, limit),
+    {
+      retry: false,
+    },
+  );
 
   const [updateTrigger, setUpdateTrigger] = useState(0);
 
