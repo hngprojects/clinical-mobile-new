@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useApiQuery } from '@/shared/api/hooks';
 
@@ -13,7 +13,21 @@ export function useInsightCases(offset = 0, limit = 50) {
     retry: false,
   });
 
-  const insightItems = useMemo(() => mapCasesToInsightItems(query.data?.data ?? []), [query.data]);
+  const [updateTrigger, setUpdateTrigger] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setUpdateTrigger((prev) => prev + 1);
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const insightItems = useMemo(
+    () => mapCasesToInsightItems(query.data?.data ?? []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [query.data, updateTrigger],
+  );
 
   useEffect(() => {
     if (query.data) {
