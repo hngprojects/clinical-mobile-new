@@ -26,7 +26,7 @@ export function useInsightCases(offset = 0, limit = 50) {
   const insightItems = useMemo(
     () => mapCasesToInsightItems(query.data?.data ?? []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [query.data, updateTrigger],
+    [query.data?.data, updateTrigger],
   );
 
   useEffect(() => {
