@@ -30,7 +30,7 @@ export function useInsightCases(offset = 0, limit = 50) {
   );
 
   useEffect(() => {
-    if (query.data) {
+    if (__DEV__ && query.data) {
       console.log('[Insights cases]', query.data);
     }
   }, [query.data]);
