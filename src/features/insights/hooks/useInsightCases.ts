@@ -24,6 +24,7 @@ export function useInsightCases(offset = 0, limit = 50) {
   return {
     ...query,
     insightItems,
+    refetch: query.refetch,
   };
 }
 

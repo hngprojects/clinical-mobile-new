@@ -14,7 +14,7 @@ import { InsightSearchBar } from './InsightSearchBar';
 
 export function InsightScreen() {
   const { spacing, colors } = useTheme();
-  const { insightItems, isLoading } = useInsightCases();
+  const { insightItems, isLoading, refetch } = useInsightCases();
   const {
     query,
     setQuery,
@@ -83,6 +83,8 @@ export function InsightScreen() {
             }
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
+            refreshing={isLoading}
+            onRefresh={refetch}
           />
         )}
       </View>
