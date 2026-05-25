@@ -59,7 +59,7 @@ function formatCaseSubtitle(item: CaseListItem) {
   }
 
   const now = new Date();
-  const diffMs = now.getTime() - createdAt.getTime();
+  const diffMs = Math.max(0, now.getTime() - createdAt.getTime());
   const diffSecs = Math.floor(diffMs / 1000);
   const diffMins = Math.floor(diffSecs / 60);
   const diffHours = Math.floor(diffMins / 60);
