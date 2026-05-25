@@ -40,12 +40,12 @@ export function CompletePasswordResetForm({
 
   const passwordValue = watch('password');
   const confirmPasswordValue = watch('confirmPassword');
-  const isDisabled = isPending || passwordValue.length === 0 || !passwordsMatch;
   const has8Chars = passwordValue.length >= 8;
   const hasUpper = /[A-Z]/.test(passwordValue);
   const hasNumber = /[0-9]/.test(passwordValue);
   const passwordsMatch =
     confirmPasswordValue.length > 0 && passwordValue === confirmPasswordValue;
+  const isDisabled = isPending || passwordValue.length === 0 || !passwordsMatch;
 
   const onSubmit = (formData: CompletePasswordResetFormData) => {
     completeReset({ email, token: resetToken, newPassword: formData.password });
