@@ -21,7 +21,12 @@ export function RegisterForm({ onContinueAsGuest }: RegisterFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [registerToastVisible, setRegisterToastVisible] = useState(false);
 
-  const { startGoogleAuth, isPending: isGooglePending, error: googleError, clearError: clearGoogleError } = useGoogleAuth('signup');
+  const {
+    startGoogleAuth,
+    isPending: isGooglePending,
+    error: googleError,
+    clearError: clearGoogleError,
+  } = useGoogleAuth('signup');
 
   useEffect(() => {
     if (error) {
@@ -57,7 +62,10 @@ export function RegisterForm({ onContinueAsGuest }: RegisterFormProps) {
   });
 
   const passwordValue = useWatch({ control, name: 'password', defaultValue: '' }) ?? '';
-  const onSubmit = (data: RegisterFormData) => { resetError(); register(data); };
+  const onSubmit = (data: RegisterFormData) => {
+    resetError();
+    register(data);
+  };
 
   function getRegisterErrorMessage(err: { message?: string; status?: number } | null): string {
     if (!err) return '';
@@ -172,7 +180,11 @@ export function RegisterForm({ onContinueAsGuest }: RegisterFormProps) {
         onSubmitEditing={handleSubmit(onSubmit)}
       />
 
-      <Toast visible={registerToastVisible} message={getRegisterErrorMessage(error)} variant="error" />
+      <Toast
+        visible={registerToastVisible}
+        message={getRegisterErrorMessage(error)}
+        variant="error"
+      />
 
       <Button
         label="Continue"

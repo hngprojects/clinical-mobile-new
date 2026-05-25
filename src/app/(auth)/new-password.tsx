@@ -27,9 +27,7 @@ export default function NewPasswordScreen() {
 
   useEffect(() => {
     if (completeResetMutation.error) {
-      setToastMessage(
-        'We could not reset your password. Please request a new code and try again.',
-      );
+      setToastMessage('We could not reset your password. Please request a new code and try again.');
       setToastVariant('error');
       setToastVisible(true);
       const t = setTimeout(() => setToastVisible(false), 5000);
@@ -57,9 +55,18 @@ export default function NewPasswordScreen() {
 
       <Toast visible={toastVisible} message={toastMessage} variant={toastVariant} />
 
-      <Screen scrollable padding backgroundColor="#FFFFFF" style={{ backgroundColor: '#FFFFFF' }} keyboardAvoiding>
+      <Screen
+        scrollable
+        padding
+        backgroundColor="#FFFFFF"
+        style={{ backgroundColor: '#FFFFFF' }}
+        keyboardAvoiding
+      >
         <View style={styles.headerContainer}>
-          <Pressable onPress={() => router.replace('/(auth)/reset-password')} style={styles.backButton}>
+          <Pressable
+            onPress={() => router.replace('/(auth)/reset-password')}
+            style={styles.backButton}
+          >
             <Ionicons name="chevron-back" size={24} color="#1B1B1B" />
           </Pressable>
           <Typography style={styles.headerTitle}>Create New Password</Typography>

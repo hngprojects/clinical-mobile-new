@@ -49,6 +49,7 @@ export function VerifyOtp({
   type?: 'signup' | 'reset-password';
 }) {
   const verifyOtpMutation = useVerifyOtp();
+  const { reset: resetVerifyOtp } = verifyOtpMutation;
   const resendOtpMutation = useResendOtp();
   const resetPasswordMutation = useResetPassword();
 
@@ -96,12 +97,12 @@ export function VerifyOtp({
         setHasOtpError(false);
         const t = setTimeout(() => {
           setHasNetworkError(false);
-          verifyOtpMutation.reset();
+          resetVerifyOtp();
         }, 5000);
         return () => clearTimeout(t);
       }
     }
-  }, [verifyOtpMutation.isError, verifyOtpMutation.error]);
+  }, [verifyOtpMutation.isError, verifyOtpMutation.error, resetVerifyOtp]);
 
   useEffect(() => {
     if (verifyOtpMutation.isSuccess) {
@@ -148,7 +149,7 @@ export function VerifyOtp({
     setHasNetworkError(false);
     setExpiredToastVisible(false);
     setCode('');
-    verifyOtpMutation.reset();
+    resetVerifyOtp();
     if (type === 'reset-password') {
       resetPasswordMutation.mutate({ email: email || '' });
     } else {
@@ -163,7 +164,7 @@ export function VerifyOtp({
     if (hasOtpError || hasNetworkError) {
       setHasOtpError(false);
       setHasNetworkError(false);
-      verifyOtpMutation.reset();
+      resetVerifyOtp();
     }
   };
 
@@ -191,13 +192,23 @@ export function VerifyOtp({
         message="We couldn’t verify you right now. Please check your connection and try again."
         variant="error"
       />
-      <Toast visible={resendToastVisible} message={resendToastMessage} variant={resendToastVariant} />
-      <Toast visible={expiredToastVisible} message="Your code has expired. Please request a new one." variant="error" />
+      <Toast
+        visible={resendToastVisible}
+        message={resendToastMessage}
+        variant={resendToastVariant}
+      />
+      <Toast
+        visible={expiredToastVisible}
+        message="Your code has expired. Please request a new one."
+        variant="error"
+      />
 
       {/* Customized Header */}
       <View style={styles.headerContainer}>
         <Pressable
-          onPress={() => type === 'reset-password' ? router.replace('/(auth)/reset-password') : router.back()}
+          onPress={() =>
+            type === 'reset-password' ? router.replace('/(auth)/reset-password') : router.back()
+          }
           style={styles.backButton}
         >
           <Ionicons name="chevron-back" size={24} color="#1B1B1B" />
@@ -211,7 +222,9 @@ export function VerifyOtp({
         <Typography style={styles.mainTitle}>Verify Your Email</Typography>
         <Typography style={styles.description}>
           Enter the 6 digit code we sent to{' '}
-          <Typography style={styles.boldEmail}>{email ? maskEmail(email) : 'your email'}</Typography>
+          <Typography style={styles.boldEmail}>
+            {email ? maskEmail(email) : 'your email'}
+          </Typography>
         </Typography>
       </View>
 
@@ -265,9 +278,12 @@ export function VerifyOtp({
         style={({ pressed }) => [
           styles.verifyBtn,
           {
-            backgroundColor: isLoading ? '#F5F5F7' : isCodeComplete && !isExpired ? '#1565C0' : '#F5F5F7',
+            backgroundColor: isLoading
+              ? '#F5F5F7'
+              : isCodeComplete && !isExpired
+                ? '#1565C0'
+                : '#F5F5F7',
             opacity: pressed && isCodeComplete && !isLoading && !isExpired ? 0.85 : 1,
-
           },
         ]}
       >
@@ -279,7 +295,12 @@ export function VerifyOtp({
             </Typography>
           </View>
         ) : (
-          <Typography style={[styles.btnText, { color: isCodeComplete && !isExpired ? '#FFFFFF' : '#BDBDBD' }]}>
+          <Typography
+            style={[
+              styles.btnText,
+              { color: isCodeComplete && !isExpired ? '#FFFFFF' : '#BDBDBD' },
+            ]}
+          >
             {type === 'reset-password' ? 'Continue' : 'Verify Email'}
           </Typography>
         )}

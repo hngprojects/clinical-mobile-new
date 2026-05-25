@@ -1,6 +1,6 @@
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { env } from '@/shared/constants/env';
 
@@ -110,7 +110,9 @@ export function useGoogleAuth(flow: 'signin' | 'signup' = 'signin') {
           return { success: true };
         } catch {
           useAuthStore.getState().clearSession();
-          setError(`${flow === 'signup' ? 'Signed up' : 'Logged in'} but couldn't load your profile. Please try again.`);
+          setError(
+            `${flow === 'signup' ? 'Signed up' : 'Logged in'} but couldn't load your profile. Please try again.`,
+          );
           return { success: false };
         }
       }
@@ -123,5 +125,7 @@ export function useGoogleAuth(flow: 'signin' | 'signup' = 'signin') {
     return { success: false };
   };
 
-  return { startGoogleAuth, isPending, error, clearError: () => setError(null) };
+  const clearError = useCallback(() => setError(null), []);
+
+  return { startGoogleAuth, isPending, error, clearError };
 }

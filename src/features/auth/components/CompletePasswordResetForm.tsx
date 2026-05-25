@@ -43,8 +43,7 @@ export function CompletePasswordResetForm({
   const has8Chars = passwordValue.length >= 8;
   const hasUpper = /[A-Z]/.test(passwordValue);
   const hasNumber = /[0-9]/.test(passwordValue);
-  const passwordsMatch =
-    confirmPasswordValue.length > 0 && passwordValue === confirmPasswordValue;
+  const passwordsMatch = confirmPasswordValue.length > 0 && passwordValue === confirmPasswordValue;
   const isDisabled = isPending || passwordValue.length === 0 || !passwordsMatch;
 
   const onSubmit = (formData: CompletePasswordResetFormData) => {

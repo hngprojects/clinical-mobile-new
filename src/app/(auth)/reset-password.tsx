@@ -52,7 +52,13 @@ export default function ResetPasswordScreen() {
 
       <Toast visible={toastVisible} message={toastMessage} variant={toastVariant} />
 
-      <Screen scrollable padding backgroundColor="#FFFFFF" style={{ backgroundColor: '#FFFFFF' }} keyboardAvoiding>
+      <Screen
+        scrollable
+        padding
+        backgroundColor="#FFFFFF"
+        style={{ backgroundColor: '#FFFFFF' }}
+        keyboardAvoiding
+      >
         <View style={styles.headerContainer}>
           <Pressable onPress={() => router.back()} style={styles.backButton}>
             <Ionicons name="chevron-back" size={24} color="#1B1B1B" />

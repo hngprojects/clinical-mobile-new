@@ -31,7 +31,12 @@ export function LoginForm({
   const [showPassword, setShowPassword] = useState(false);
   const passwordRef = useRef<any>(null);
 
-  const { startGoogleAuth, isPending: isGooglePending, error: googleError, clearError: clearGoogleError } = useGoogleAuth('signin');
+  const {
+    startGoogleAuth,
+    isPending: isGooglePending,
+    error: googleError,
+    clearError: clearGoogleError,
+  } = useGoogleAuth('signin');
 
   useEffect(() => {
     if (googleError) {

@@ -1,7 +1,6 @@
 import { Href, router, Stack } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { Pressable } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { LoginForm, useGuestUploadSession } from '@/features/auth';
 import { useLogin } from '@/features/auth/hooks/useLogin';
@@ -50,7 +49,13 @@ export default function LoginScreen() {
 
       <Toast visible={toastVisible} message={errorMessage} variant="error" />
 
-      <Screen scrollable padding backgroundColor="#FFFFFF" style={{ backgroundColor: '#FFFFFF' }} keyboardAvoiding>
+      <Screen
+        scrollable
+        padding
+        backgroundColor="#FFFFFF"
+        style={{ backgroundColor: '#FFFFFF' }}
+        keyboardAvoiding
+      >
         <View style={{ marginTop: spacing.lg, marginBottom: spacing.xl }}>
           <Typography variant="h1" style={{ fontWeight: '700' }}>
             Welcome Back
@@ -64,7 +69,10 @@ export default function LoginScreen() {
           mutation={loginMutation}
           onContinueAsGuest={handleContinueAsGuest}
           onForgotPassword={() => router.push(RESET_PASSWORD_ROUTE)}
-          onInteract={() => { loginMutation.reset(); setToastVisible(false); }}
+          onInteract={() => {
+            loginMutation.reset();
+            setToastVisible(false);
+          }}
         />
 
         <View style={styles.footer}>
