@@ -62,12 +62,6 @@ export function LoginForm({
     }
   };
 
-  const has8Chars = passwordValue.length >= 8;
-  const hasUpper = /[A-Z]/.test(passwordValue);
-  const hasLower = /[a-z]/.test(passwordValue);
-  const hasNumber = /[0-9]/.test(passwordValue);
-  const hasSpecial = /[^A-Za-z0-9]/.test(passwordValue);
-
   return (
     <View style={styles.container}>
       <View style={{ gap: spacing.md }}>
@@ -122,29 +116,6 @@ export function LoginForm({
             </Typography>
           </Pressable>
         </View>
-
-        {passwordValue.length > 0 &&
-          !(has8Chars && hasUpper && hasLower && hasNumber && hasSpecial) && (
-            <View style={styles.validationList}>
-              <ValidationItem
-                label="Password must have at least 8 characters"
-                isValid={has8Chars}
-              />
-              <ValidationItem
-                label="Password must have at least one uppercase letter"
-                isValid={hasUpper}
-              />
-              <ValidationItem
-                label="Password must have at least one lowercase letter"
-                isValid={hasLower}
-              />
-              <ValidationItem label="Password must have at least one number" isValid={hasNumber} />
-              <ValidationItem
-                label="Password must have at least one special character"
-                isValid={hasSpecial}
-              />
-            </View>
-          )}
 
         <Button
           label={isPending ? 'Logging in...' : 'Login'}
@@ -204,7 +175,7 @@ export function LoginForm({
   );
 }
 
-function ValidationItem({ label, isValid }: { label: string; isValid: boolean }) {
+export function ValidationItem({ label, isValid }: { label: string; isValid: boolean }) {
   return (
     <View style={styles.validationItem}>
       <Typography
