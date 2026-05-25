@@ -1,20 +1,23 @@
+import { Ionicons } from '@expo/vector-icons';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { CompletePasswordResetForm } from '@/features/auth';
 import { useCompletePasswordReset } from '@/features/auth/hooks/useCompletePasswordReset';
-import { Screen, Typography } from '@/shared/components';
+import { Screen, Toast, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 export default function NewPasswordScreen() {
   const { colors, spacing } = useTheme();
   const { email, token } = useLocalSearchParams<{ email?: string; token?: string | string[] }>();
   const completeResetMutation = useCompletePasswordReset();
-  const bannerY = useSharedValue(-100);
   const resetToken = (Array.isArray(token) ? (token[0] ?? '') : (token ?? '')).trim();
   const resetEmail = (Array.isArray(email) ? (email[0] ?? '') : (email ?? '')).trim();
+
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastVariant, setToastVariant] = useState<'success' | 'error'>('error');
 
   useEffect(() => {
     if (!resetToken || !resetEmail) {
@@ -23,28 +26,28 @@ export default function NewPasswordScreen() {
   }, [resetToken, resetEmail]);
 
   useEffect(() => {
-    if (completeResetMutation.error || completeResetMutation.isSuccess) {
-      bannerY.value = withTiming(0, { duration: 300 });
-      const timeout = setTimeout(() => {
-        bannerY.value = withTiming(-100, { duration: 300 });
-        if (completeResetMutation.isSuccess) {
-          router.replace('/(auth)/login');
-        }
-      }, 2500);
-      return () => clearTimeout(timeout);
+    if (completeResetMutation.error) {
+      setToastMessage(
+        'We could not reset your password. Please request a new code and try again.',
+      );
+      setToastVariant('error');
+      setToastVisible(true);
+      const t = setTimeout(() => setToastVisible(false), 5000);
+      return () => clearTimeout(t);
     }
-
-    bannerY.value = withTiming(-100, { duration: 300 });
-  }, [completeResetMutation.error, completeResetMutation.isSuccess, bannerY]);
-
-  const animatedBannerStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: bannerY.value }],
-    opacity: withTiming(bannerY.value === 0 ? 1 : 0),
-  }));
-
-  const notificationMessage = completeResetMutation.error
-    ? 'We could not reset your password. Please request a new code and try again.'
-    : completeResetMutation.data?.message || 'Password reset successfully. You can now log in.';
+    if (completeResetMutation.isSuccess) {
+      setToastMessage(
+        completeResetMutation.data?.message || 'Password reset successfully. You can now log in.',
+      );
+      setToastVariant('success');
+      setToastVisible(true);
+      const t = setTimeout(() => {
+        setToastVisible(false);
+        router.replace('/(auth)/login');
+      }, 2500);
+      return () => clearTimeout(t);
+    }
+  }, [completeResetMutation.error, completeResetMutation.isSuccess, completeResetMutation.data]);
 
   if (!resetToken || !resetEmail) return null;
 
@@ -52,24 +55,18 @@ export default function NewPasswordScreen() {
     <>
       <Stack.Screen options={{ title: 'New Password', headerShown: false }} />
 
-      <View style={styles.bannerContainer}>
-        <Animated.View style={[styles.notificationBanner, animatedBannerStyle]}>
-          <Typography
-            style={{
-              color: '#494949',
-              fontFamily: 'Inter_400Regular',
-              fontSize: 12,
-              lineHeight: 18,
-              textAlign: 'center',
-            }}
-          >
-            {notificationMessage}
-          </Typography>
-        </Animated.View>
-      </View>
+      <Toast visible={toastVisible} message={toastMessage} variant={toastVariant} />
 
-      <Screen scrollable padding style={{ backgroundColor: '#FFFFFF' }} keyboardAvoiding>
-        <View style={{ marginTop: spacing.xxl, marginBottom: spacing.xl }}>
+      <Screen scrollable padding backgroundColor="#FFFFFF" style={{ backgroundColor: '#FFFFFF' }} keyboardAvoiding>
+        <View style={styles.headerContainer}>
+          <Pressable onPress={() => router.replace('/(auth)/reset-password')} style={styles.backButton}>
+            <Ionicons name="chevron-back" size={24} color="#1B1B1B" />
+          </Pressable>
+          <Typography style={styles.headerTitle}>Create New Password</Typography>
+          <View style={{ width: 24 }} />
+        </View>
+
+        <View style={{ marginTop: 28, marginBottom: spacing.xl }}>
           <Typography variant="h1" style={{ fontWeight: '700', marginBottom: 4 }}>
             Create New Password
           </Typography>
@@ -117,24 +114,22 @@ export default function NewPasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  bannerContainer: {
-    position: 'absolute',
-    top: 54,
-    left: 0,
-    right: 0,
-    zIndex: 1000,
-  },
-  notificationBanner: {
-    height: 56,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    backgroundColor: '#F5F5F5',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+  headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
+    justifyContent: 'space-between',
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  backButton: {
+    padding: 4,
+    marginLeft: -8,
+  },
+  headerTitle: {
+    fontFamily: 'Inter_500Medium',
+    fontSize: 17,
+    color: '#000000',
+    textAlign: 'center',
   },
   footer: {
     flexDirection: 'row',

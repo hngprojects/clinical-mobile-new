@@ -1,79 +1,72 @@
+import { Ionicons } from '@expo/vector-icons';
 import { router, Stack } from 'expo-router';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { ResetPasswordForm } from '@/features/auth';
 import { useResetPassword } from '@/features/auth/hooks/useResetPassword';
-import { Screen, Typography } from '@/shared/components';
+import { Screen, Toast, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 export default function ResetPasswordScreen() {
   const { colors, spacing } = useTheme();
   const resetPasswordMutation = useResetPassword();
-  const bannerY = useSharedValue(-100);
+
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastVariant, setToastVariant] = useState<'success' | 'error' | 'neutral'>('neutral');
 
   useEffect(() => {
-    if (resetPasswordMutation.error || resetPasswordMutation.isSuccess) {
-      bannerY.value = withTiming(0, { duration: 300 });
-      const timeout = setTimeout(() => {
-        bannerY.value = withTiming(-100, { duration: 300 });
-      }, 5000);
-      return () => clearTimeout(timeout);
+    if (resetPasswordMutation.error) {
+      setToastMessage('We could not send an OTP. Please try again.');
+      setToastVariant('error');
+      setToastVisible(true);
+      const t = setTimeout(() => setToastVisible(false), 5000);
+      return () => clearTimeout(t);
     }
-
-    bannerY.value = withTiming(-100, { duration: 300 });
-  }, [resetPasswordMutation.error, resetPasswordMutation.isSuccess, bannerY]);
-
-  useEffect(() => {
     if (resetPasswordMutation.isSuccess) {
-      const enteredEmail = resetPasswordMutation.variables?.email || '';
-      const timeout = setTimeout(() => {
-        router.push({
+      setToastMessage('If an account exists for this email, an OTP has been sent.');
+      setToastVariant('success');
+      setToastVisible(true);
+      const t = setTimeout(() => {
+        setToastVisible(false);
+        router.replace({
           pathname: '/(auth)/verify-otp',
-          params: { email: enteredEmail, type: 'reset-password' },
+          params: {
+            email: resetPasswordMutation.variables?.email || '',
+            type: 'reset-password',
+          },
         });
       }, 1500);
-      return () => clearTimeout(timeout);
+      return () => clearTimeout(t);
     }
-  }, [resetPasswordMutation.isSuccess, resetPasswordMutation.variables]);
-
-  const animatedBannerStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: bannerY.value }],
-    opacity: withTiming(bannerY.value === 0 ? 1 : 0),
-  }));
-
-  const notificationMessage = resetPasswordMutation.error
-    ? 'We could not send a reset code. Please try again.'
-    : 'If an account exists for this email, a reset code has been sent.';
+  }, [
+    resetPasswordMutation.error,
+    resetPasswordMutation.isSuccess,
+    resetPasswordMutation.variables,
+  ]);
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Reset Password', headerShown: false }} />
+      <Stack.Screen options={{ title: 'Forgot Password', headerShown: false }} />
 
-      <View style={styles.bannerContainer}>
-        <Animated.View style={[styles.notificationBanner, animatedBannerStyle]}>
-          <Typography
-            style={{
-              color: '#494949',
-              fontFamily: 'Inter_400Regular',
-              fontSize: 12,
-              lineHeight: 18,
-              textAlign: 'center',
-            }}
-          >
-            {notificationMessage}
-          </Typography>
-        </Animated.View>
-      </View>
+      <Toast visible={toastVisible} message={toastMessage} variant={toastVariant} />
 
-      <Screen scrollable padding style={{ backgroundColor: '#FFFFFF' }} keyboardAvoiding>
-        <View style={{ marginTop: spacing.xxl, marginBottom: spacing.xl }}>
+      <Screen scrollable padding backgroundColor="#FFFFFF" style={{ backgroundColor: '#FFFFFF' }} keyboardAvoiding>
+        <View style={styles.headerContainer}>
+          <Pressable onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="chevron-back" size={24} color="#1B1B1B" />
+          </Pressable>
+          <Typography style={styles.headerTitle}>Forgot Password</Typography>
+          <View style={{ width: 24 }} />
+        </View>
+
+        <View style={{ marginTop: 28, marginBottom: spacing.xl }}>
           <Typography variant="h1" style={{ fontWeight: '700', marginBottom: 4 }}>
-            Reset Password
+            Forgot Password
           </Typography>
           <Typography variant="body1" style={{ color: colors.textSecondary }}>
-            Enter your email and we will send a password reset code.
+            Enter your email and we will send you an OTP.
           </Typography>
         </View>
 
@@ -112,24 +105,22 @@ export default function ResetPasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  bannerContainer: {
-    position: 'absolute',
-    top: 54,
-    left: 0,
-    right: 0,
-    zIndex: 1000,
-  },
-  notificationBanner: {
-    height: 56,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    backgroundColor: '#F5F5F5',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+  headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
+    justifyContent: 'space-between',
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  backButton: {
+    padding: 4,
+    marginLeft: -8,
+  },
+  headerTitle: {
+    fontFamily: 'Inter_500Medium',
+    fontSize: 17,
+    color: '#000000',
+    textAlign: 'center',
   },
   footer: {
     flexDirection: 'row',

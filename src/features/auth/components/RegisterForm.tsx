@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { StyleSheet, View, Pressable, Image } from 'react-native';
 
-import { Button, FormField, Typography } from '@/shared/components';
+import { Button, FormField, Toast, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
@@ -17,10 +17,27 @@ interface RegisterFormProps {
 
 export function RegisterForm({ onContinueAsGuest }: RegisterFormProps) {
   const { spacing, colors } = useTheme();
-  const { mutate: register, isPending, error } = useRegister();
+  const { mutate: register, isPending, error, reset: resetError } = useRegister();
   const [showPassword, setShowPassword] = useState(false);
+  const [registerToastVisible, setRegisterToastVisible] = useState(false);
 
-  const { startGoogleAuth, isPending: isGooglePending } = useGoogleAuth();
+  const { startGoogleAuth, isPending: isGooglePending, error: googleError, clearError: clearGoogleError } = useGoogleAuth('signup');
+
+  useEffect(() => {
+    if (error) {
+      setRegisterToastVisible(true);
+      const t = setTimeout(() => setRegisterToastVisible(false), 5000);
+      return () => clearTimeout(t);
+    }
+    setRegisterToastVisible(false);
+  }, [error]);
+
+  useEffect(() => {
+    if (googleError) {
+      const t = setTimeout(clearGoogleError, 5000);
+      return () => clearTimeout(t);
+    }
+  }, [googleError, clearGoogleError]);
 
   const lastNameRef = useRef<any>(null);
   const emailRef = useRef<any>(null);
@@ -40,7 +57,19 @@ export function RegisterForm({ onContinueAsGuest }: RegisterFormProps) {
   });
 
   const passwordValue = useWatch({ control, name: 'password', defaultValue: '' }) ?? '';
-  const onSubmit = (data: RegisterFormData) => register(data);
+  const onSubmit = (data: RegisterFormData) => { resetError(); register(data); };
+
+  function getRegisterErrorMessage(err: { message?: string; status?: number } | null): string {
+    if (!err) return '';
+    const msg = err.message?.toLowerCase() ?? '';
+    if (err.status === 0 || msg.includes('timeout') || msg.includes('network')) {
+      return 'Connection failed. Please check your network and try again.';
+    }
+    if (msg.includes('exist') || msg.includes('already') || msg.includes('taken')) {
+      return 'An account with this email already exists.';
+    }
+    return err.message || 'Something went wrong. Please try again.';
+  }
 
   const handleSocialPress = async (provider: string) => {
     if (provider === 'Google') {
@@ -65,7 +94,7 @@ export function RegisterForm({ onContinueAsGuest }: RegisterFormProps) {
         placeholder="Enter your name"
         returnKeyType="next"
         onSubmitEditing={() => lastNameRef.current?.focus()}
-        blurOnSubmit={false}
+        submitBehavior="submit"
       />
       <FormField
         ref={lastNameRef}
@@ -75,7 +104,7 @@ export function RegisterForm({ onContinueAsGuest }: RegisterFormProps) {
         placeholder="Enter your name"
         returnKeyType="next"
         onSubmitEditing={() => emailRef.current?.focus()}
-        blurOnSubmit={false}
+        submitBehavior="submit"
       />
       <FormField
         ref={emailRef}
@@ -87,7 +116,7 @@ export function RegisterForm({ onContinueAsGuest }: RegisterFormProps) {
         placeholder="Enter your email"
         returnKeyType="next"
         onSubmitEditing={() => passwordRef.current?.focus()}
-        blurOnSubmit={false}
+        submitBehavior="submit"
       />
       <FormField
         ref={passwordRef}
@@ -99,7 +128,7 @@ export function RegisterForm({ onContinueAsGuest }: RegisterFormProps) {
         placeholder="Enter your password"
         returnKeyType="next"
         onSubmitEditing={() => confirmPasswordRef.current?.focus()}
-        blurOnSubmit={false}
+        submitBehavior="submit"
         rightIcon={
           <Pressable onPress={() => setShowPassword(!showPassword)}>
             <Ionicons
@@ -143,11 +172,7 @@ export function RegisterForm({ onContinueAsGuest }: RegisterFormProps) {
         onSubmitEditing={handleSubmit(onSubmit)}
       />
 
-      {error && (
-        <Typography variant="body2" color="#EF4444" align="center" style={{ fontWeight: '500' }}>
-          {error.message}
-        </Typography>
-      )}
+      <Toast visible={registerToastVisible} message={getRegisterErrorMessage(error)} variant="error" />
 
       <Button
         label="Continue"
@@ -164,6 +189,8 @@ export function RegisterForm({ onContinueAsGuest }: RegisterFormProps) {
         </Typography>
         <View style={[styles.line, { backgroundColor: '#F0F0F0' }]} />
       </View>
+
+      <Toast visible={!!googleError} message={googleError ?? ''} variant="error" />
 
       <View style={{ gap: spacing.md }}>
         <Button

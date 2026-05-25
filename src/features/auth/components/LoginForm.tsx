@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 
-import { Button, FormField, Typography } from '@/shared/components';
+import { Button, FormField, Toast, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
@@ -31,7 +31,14 @@ export function LoginForm({
   const [showPassword, setShowPassword] = useState(false);
   const passwordRef = useRef<any>(null);
 
-  const { startGoogleAuth, isPending: isGooglePending } = useGoogleAuth();
+  const { startGoogleAuth, isPending: isGooglePending, error: googleError, clearError: clearGoogleError } = useGoogleAuth('signin');
+
+  useEffect(() => {
+    if (googleError) {
+      const t = setTimeout(clearGoogleError, 5000);
+      return () => clearTimeout(t);
+    }
+  }, [googleError, clearGoogleError]);
 
   const { control, handleSubmit } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -69,7 +76,7 @@ export function LoginForm({
           onFocus={onInteract}
           returnKeyType="next"
           onSubmitEditing={() => passwordRef.current?.focus()}
-          blurOnSubmit={false}
+          submitBehavior="submit"
         />
 
         <View>
@@ -158,6 +165,8 @@ export function LoginForm({
           </Typography>
           <View style={[styles.line, { backgroundColor: '#F0F0F0' }]} />
         </View>
+
+        <Toast visible={!!googleError} message={googleError ?? ''} variant="error" />
 
         <View style={{ gap: 16 }}>
           <Button

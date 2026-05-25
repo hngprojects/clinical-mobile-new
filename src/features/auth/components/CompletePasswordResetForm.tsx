@@ -39,10 +39,13 @@ export function CompletePasswordResetForm({
   });
 
   const passwordValue = watch('password');
-  const isDisabled = isPending || passwordValue.length === 0;
+  const confirmPasswordValue = watch('confirmPassword');
+  const isDisabled = isPending || passwordValue.length === 0 || !passwordsMatch;
   const has8Chars = passwordValue.length >= 8;
   const hasUpper = /[A-Z]/.test(passwordValue);
   const hasNumber = /[0-9]/.test(passwordValue);
+  const passwordsMatch =
+    confirmPasswordValue.length > 0 && passwordValue === confirmPasswordValue;
 
   const onSubmit = (formData: CompletePasswordResetFormData) => {
     completeReset({ email, token: resetToken, newPassword: formData.password });
@@ -59,7 +62,7 @@ export function CompletePasswordResetForm({
         placeholder="Enter your new password"
         returnKeyType="next"
         onSubmitEditing={() => confirmPasswordRef.current?.focus()}
-        blurOnSubmit={false}
+        submitBehavior="submit"
         rightIcon={
           <Pressable onPress={() => setShowPassword(!showPassword)}>
             <Ionicons
@@ -93,6 +96,12 @@ export function CompletePasswordResetForm({
         returnKeyType="done"
         onSubmitEditing={handleSubmit(onSubmit)}
       />
+
+      {confirmPasswordValue.length > 0 && (
+        <View style={styles.validationList}>
+          <ValidationItem label="Passwords must match" isValid={passwordsMatch} />
+        </View>
+      )}
 
       <Button
         label="Reset password"
