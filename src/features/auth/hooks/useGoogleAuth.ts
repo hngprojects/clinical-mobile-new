@@ -12,7 +12,7 @@ import { useAuthStore } from '../store/auth.store';
 const GOOGLE_AUTH_PATH = '/api/v1/auth/google';
 const GOOGLE_AUTH_REDIRECT_URL = 'clinsight://auth/google';
 const ACCESS_TOKEN_KEYS = ['access_token', 'token', 'accessToken'];
-const REFRESH_TOKEN_KEYS = ['refresh_token', 'refreshToken']; // cookie-based; may not be in URL
+const REFRESH_TOKEN_KEYS = ['refresh_token', 'refreshToken'];
 const SUCCESS_REDIRECT_DELAY_MS = 1200;
 
 type UrlQueryParams = NonNullable<ReturnType<typeof Linking.parse>['queryParams']>;

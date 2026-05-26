@@ -3,6 +3,8 @@ import { client } from '@/shared/api/client';
 import type {
   AuthResponse,
   AuthTokens,
+  ChangePasswordRequest,
+  ChangePasswordResponse,
   CompletePasswordResetRequest,
   CompletePasswordResetResponse,
   GuestSessionResponse,
@@ -207,6 +209,16 @@ async function updateProfile(data: UpdateProfileRequest): Promise<UpdateProfileR
   return { user: mapUser(response.data.data) };
 }
 
+async function changePassword(data: ChangePasswordRequest): Promise<ChangePasswordResponse> {
+  const response = await client.post<SuccessResponse<unknown>>('/api/v1/auth/change-password', {
+    current_password: data.currentPassword,
+    new_password: data.newPassword,
+  });
+  return {
+    message: response.data.message,
+  };
+}
+
 export const authApi = {
   login,
   register,
@@ -219,4 +231,5 @@ export const authApi = {
   getMe,
   logout,
   updateProfile,
+  changePassword,
 };

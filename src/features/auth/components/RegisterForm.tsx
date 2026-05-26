@@ -1,30 +1,28 @@
-import { Ionicons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
-import { StyleSheet, View, Pressable, Image } from 'react-native';
+import { Image, StyleSheet, TextInput as RNTextInput, View } from 'react-native';
 
 import { Button, FormField, Toast, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
-import { useRegister } from '../hooks/useRegister';
-import {
-  PASSWORD_SPECIAL_CHAR_REGEX,
-  registerSchema,
-  RegisterFormData,
-} from '../schemas/auth.schemas';
+import { RegisterFormData, registerSchema } from '../schemas/auth.schemas';
+
+import { PasswordField } from './PasswordField';
+import { PasswordValidationList } from './PasswordValidationList';
 
 interface RegisterFormProps {
+  mutation: {
+    mutate: (data: RegisterFormData) => void;
+    isPending: boolean;
+  };
   onContinueAsGuest?: () => void;
 }
 
-export function RegisterForm({ onContinueAsGuest }: RegisterFormProps) {
+export function RegisterForm({ mutation, onContinueAsGuest }: RegisterFormProps) {
   const { spacing, colors } = useTheme();
-  const { mutate: register, isPending, error, reset: resetError } = useRegister();
-  const [showPassword, setShowPassword] = useState(false);
-  const [registerToastVisible, setRegisterToastVisible] = useState(false);
-
+  const { mutate: register, isPending } = mutation;
   const {
     startGoogleAuth,
     isPending: isGooglePending,
@@ -33,27 +31,18 @@ export function RegisterForm({ onContinueAsGuest }: RegisterFormProps) {
   } = useGoogleAuth('signup');
 
   useEffect(() => {
-    if (error) {
-      setRegisterToastVisible(true);
-      const t = setTimeout(() => setRegisterToastVisible(false), 5000);
-      return () => clearTimeout(t);
-    }
-    setRegisterToastVisible(false);
-  }, [error]);
+    if (!googleError) return undefined;
 
-  useEffect(() => {
-    if (googleError) {
-      const t = setTimeout(clearGoogleError, 5000);
-      return () => clearTimeout(t);
-    }
+    const timer = setTimeout(clearGoogleError, 5000);
+    return () => clearTimeout(timer);
   }, [googleError, clearGoogleError]);
 
-  const lastNameRef = useRef<any>(null);
-  const emailRef = useRef<any>(null);
-  const passwordRef = useRef<any>(null);
-  const confirmPasswordRef = useRef<any>(null);
+  const lastNameRef = useRef<RNTextInput>(null);
+  const emailRef = useRef<RNTextInput>(null);
+  const passwordRef = useRef<RNTextInput>(null);
+  const confirmPasswordRef = useRef<RNTextInput>(null);
 
-  const { control, handleSubmit } = useForm<RegisterFormData>({
+  const { control, handleSubmit, formState } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       firstName: '',
@@ -67,21 +56,8 @@ export function RegisterForm({ onContinueAsGuest }: RegisterFormProps) {
 
   const passwordValue = useWatch({ control, name: 'password', defaultValue: '' }) ?? '';
   const onSubmit = (data: RegisterFormData) => {
-    resetError();
     register(data);
   };
-
-  function getRegisterErrorMessage(err: { message?: string; status?: number } | null): string {
-    if (!err) return '';
-    const msg = err.message?.toLowerCase() ?? '';
-    if (err.status === 0 || msg.includes('timeout') || msg.includes('network')) {
-      return 'Connection failed. Please check your network and try again.';
-    }
-    if (msg.includes('exist') || msg.includes('already') || msg.includes('taken')) {
-      return 'An account with this email already exists.';
-    }
-    return err.message || 'Something went wrong. Please try again.';
-  }
 
   const handleSocialPress = async (provider: string) => {
     if (provider === 'Google') {
@@ -91,181 +67,137 @@ export function RegisterForm({ onContinueAsGuest }: RegisterFormProps) {
     }
   };
 
-  const has8Chars = passwordValue.length >= 8;
-  const hasUpper = /[A-Z]/.test(passwordValue);
-  const hasSpecial = PASSWORD_SPECIAL_CHAR_REGEX.test(passwordValue);
-  const isPasswordValid = has8Chars && hasUpper && hasSpecial;
+  const isDisabled = isPending || !formState.isValid;
 
   return (
-    <View style={[styles.container, { gap: spacing.md }]}>
-      <FormField
-        control={control}
-        name="firstName"
-        label="First name"
-        placeholder="Enter your name"
-        returnKeyType="next"
-        onSubmitEditing={() => lastNameRef.current?.focus()}
-        submitBehavior="submit"
-      />
-      <FormField
-        ref={lastNameRef}
-        control={control}
-        name="lastName"
-        label="Last name"
-        placeholder="Enter your name"
-        returnKeyType="next"
-        onSubmitEditing={() => emailRef.current?.focus()}
-        submitBehavior="submit"
-      />
-      <FormField
-        ref={emailRef}
-        control={control}
-        name="email"
-        label="Email"
-        keyboardType="email-address"
-        textContentType="emailAddress"
-        placeholder="Enter your email"
-        returnKeyType="next"
-        onSubmitEditing={() => passwordRef.current?.focus()}
-        submitBehavior="submit"
-      />
-      <FormField
-        ref={passwordRef}
-        control={control}
-        name="password"
-        label="Password"
-        secureTextEntry={!showPassword}
-        textContentType="newPassword"
-        placeholder="Enter your password"
-        returnKeyType="next"
-        onSubmitEditing={() => confirmPasswordRef.current?.focus()}
-        submitBehavior="submit"
-        rightIcon={
-          <Pressable onPress={() => setShowPassword(!showPassword)}>
-            <Ionicons
-              name={showPassword ? 'eye-outline' : 'eye-off-outline'}
-              size={20}
-              color="#1B1B1B"
-            />
-          </Pressable>
-        }
-      />
+    <View style={styles.container}>
+      <View style={{ gap: spacing.md }}>
+        <FormField
+          control={control}
+          name="firstName"
+          label="First Name"
+          placeholder="Enter your name"
+          returnKeyType="next"
+          onSubmitEditing={() => lastNameRef.current?.focus()}
+          blurOnSubmit={false}
+        />
+        <FormField
+          ref={lastNameRef}
+          control={control}
+          name="lastName"
+          label="Last Name"
+          placeholder="Enter your name"
+          returnKeyType="next"
+          onSubmitEditing={() => emailRef.current?.focus()}
+          blurOnSubmit={false}
+        />
+        <FormField
+          ref={emailRef}
+          control={control}
+          name="email"
+          label="Email"
+          keyboardType="email-address"
+          textContentType="emailAddress"
+          placeholder="Enter your email"
+          returnKeyType="next"
+          onSubmitEditing={() => passwordRef.current?.focus()}
+          blurOnSubmit={false}
+        />
 
-      {passwordValue.length > 0 && !(has8Chars && hasUpper && hasSpecial) && (
-        <View style={styles.validationList}>
-          <ValidationItem label="Password must have at least 8 characters" isValid={has8Chars} />
-          <ValidationItem
-            label="Password must have at least one uppercase letter"
-            isValid={hasUpper}
+        <View>
+          <PasswordField
+            ref={passwordRef}
+            control={control}
+            name="password"
+            label="Password"
+            textContentType="newPassword"
+            placeholder="Enter your password"
+            returnKeyType="next"
+            onSubmitEditing={() => confirmPasswordRef.current?.focus()}
+            blurOnSubmit={false}
           />
-          <ValidationItem
-            label="Password must have at least one special character"
-            isValid={hasSpecial}
+          <PasswordValidationList password={passwordValue} variant="full" />
+        </View>
+
+        <PasswordField
+          ref={confirmPasswordRef}
+          control={control}
+          name="confirmPassword"
+          label="Confirm Password"
+          textContentType="newPassword"
+          placeholder="Retype your password"
+          returnKeyType="done"
+          onSubmitEditing={handleSubmit(onSubmit)}
+        />
+
+        <Button
+          label="Continue"
+          loadingLabel="Continuing..."
+          loadingIndicatorColor="#1565C0"
+          onPress={handleSubmit(onSubmit)}
+          isLoading={isPending}
+          disabled={isDisabled}
+          style={{ marginTop: 32 }}
+        />
+
+        <View style={styles.separatorContainer}>
+          <View style={[styles.line, { backgroundColor: '#F0F0F0' }]} />
+          <Typography
+            style={{
+              paddingHorizontal: 16,
+              color: '#767676',
+              fontFamily: 'Inter_500Medium',
+              fontSize: 14,
+              lineHeight: 21,
+              letterSpacing: -0.14,
+            }}
+          >
+            or
+          </Typography>
+          <View style={[styles.line, { backgroundColor: '#F0F0F0' }]} />
+        </View>
+
+        <Toast visible={!!googleError} message={googleError ?? ''} variant="error" />
+
+        <View style={{ gap: 16 }}>
+          <Button
+            label="Google"
+            loadingLabel="Signing up with Google"
+            variant="outline"
+            onPress={() => handleSocialPress('Google')}
+            isLoading={isGooglePending}
+            style={styles.socialIconButton}
+            leftIcon={
+              !isGooglePending && (
+                <Image
+                  source={require('../../../../assets/images/auth/Google.png')}
+                  style={{ width: 24, height: 24 }}
+                />
+              )
+            }
+            textColor={colors.textSecondary}
+          />
+
+          <Button
+            label="Continue as guest"
+            variant="outline"
+            onPress={onContinueAsGuest}
+            style={styles.socialIconButton}
+            textColor={colors.textSecondary}
           />
         </View>
-      )}
-
-      <FormField
-        ref={confirmPasswordRef}
-        control={control}
-        name="confirmPassword"
-        label="Confirm password"
-        secureTextEntry={!showPassword}
-        textContentType="newPassword"
-        placeholder="Retype your password"
-        returnKeyType="done"
-        onSubmitEditing={handleSubmit(onSubmit)}
-      />
-
-      <Toast
-        visible={registerToastVisible}
-        message={getRegisterErrorMessage(error)}
-        variant="error"
-      />
-
-      <Button
-        label="Continue"
-        loadingLabel="Creating account"
-        onPress={handleSubmit(onSubmit)}
-        isLoading={isPending}
-        disabled={isPending || !isPasswordValid}
-        style={{ marginTop: spacing.xs }}
-      />
-
-      <View style={styles.separatorContainer}>
-        <View style={[styles.line, { backgroundColor: '#F0F0F0' }]} />
-        <Typography variant="body2" color="textSecondary" style={{ paddingHorizontal: 16 }}>
-          or
-        </Typography>
-        <View style={[styles.line, { backgroundColor: '#F0F0F0' }]} />
       </View>
-
-      <Toast visible={!!googleError} message={googleError ?? ''} variant="error" />
-
-      <View style={{ gap: spacing.md }}>
-        <Button
-          label="Google"
-          loadingLabel="Signing up with Google"
-          variant="outline"
-          onPress={() => handleSocialPress('Google')}
-          isLoading={isGooglePending}
-          style={styles.socialIconButton}
-          leftIcon={
-            !isGooglePending && (
-              <Image
-                source={require('../../../../assets/images/auth/Google.png')}
-                style={{ width: 24, height: 24 }}
-              />
-            )
-          }
-          textColor={colors.textSecondary}
-        />
-
-        <Button
-          label="Continue as guest"
-          variant="outline"
-          onPress={onContinueAsGuest}
-          style={styles.socialIconButton}
-          textColor={colors.textSecondary}
-        />
-      </View>
-    </View>
-  );
-}
-
-function ValidationItem({ label, isValid }: { label: string; isValid: boolean }) {
-  return (
-    <View style={styles.validationItem}>
-      <Typography
-        style={{
-          color: isValid ? '#10B981' : '#767676',
-          fontFamily: 'Inter_400Regular',
-          fontSize: 13,
-          lineHeight: 19.5,
-          letterSpacing: -0.13,
-        }}
-      >
-        {isValid ? '✓' : '✕'} {label}
-      </Typography>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { width: '100%' },
-  validationList: {
-    gap: 4,
-    marginTop: -8,
-    marginBottom: 8,
-  },
-  validationItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   separatorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 24,
+    marginTop: 16,
+    marginBottom: 16,
   },
   line: {
     flex: 1,

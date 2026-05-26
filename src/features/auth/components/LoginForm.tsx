@@ -1,6 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 
@@ -9,6 +8,8 @@ import { useTheme } from '@/shared/theme';
 
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { LoginFormData, loginSchema } from '../schemas/auth.schemas';
+
+import { PasswordField } from './PasswordField';
 
 interface LoginFormProps {
   mutation: {
@@ -28,7 +29,6 @@ export function LoginForm({
 }: LoginFormProps) {
   const { colors, spacing } = useTheme();
   const { mutate: login, isPending } = mutation;
-  const [showPassword, setShowPassword] = useState(false);
   const passwordRef = useRef<any>(null);
 
   const {
@@ -39,10 +39,10 @@ export function LoginForm({
   } = useGoogleAuth('signin');
 
   useEffect(() => {
-    if (googleError) {
-      const t = setTimeout(clearGoogleError, 5000);
-      return () => clearTimeout(t);
-    }
+    if (!googleError) return undefined;
+
+    const timer = setTimeout(clearGoogleError, 5000);
+    return () => clearTimeout(timer);
   }, [googleError, clearGoogleError]);
 
   const { control, handleSubmit } = useForm<LoginFormData>({
@@ -79,26 +79,15 @@ export function LoginForm({
         />
 
         <View>
-          <FormField
+          <PasswordField
             ref={passwordRef}
             control={control}
             name="password"
             label="Password"
-            secureTextEntry={!showPassword}
-            textContentType="password"
             placeholder="Enter your password"
             onFocus={onInteract}
             returnKeyType="done"
             onSubmitEditing={handleSubmit(onSubmit)}
-            rightIcon={
-              <Pressable onPress={() => setShowPassword(!showPassword)}>
-                <Ionicons
-                  name={showPassword ? 'eye-outline' : 'eye-off-outline'}
-                  size={20}
-                  color="#1B1B1B"
-                />
-              </Pressable>
-            }
           />
           <Pressable style={styles.forgotPassword} onPress={onForgotPassword}>
             <Typography
@@ -177,37 +166,10 @@ export function LoginForm({
   );
 }
 
-export function ValidationItem({ label, isValid }: { label: string; isValid: boolean }) {
-  return (
-    <View style={styles.validationItem}>
-      <Typography
-        style={{
-          color: isValid ? '#10B981' : '#767676',
-          fontFamily: 'Inter_400Regular',
-          fontSize: 13,
-          lineHeight: 19.5,
-          letterSpacing: -0.13,
-        }}
-      >
-        {isValid ? '✓' : '✕'} {label}
-      </Typography>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   container: { width: '100%' },
   forgotPassword: {
     alignSelf: 'flex-end',
-  },
-  validationList: {
-    gap: 4,
-    marginTop: 8,
-    marginBottom: 0,
-  },
-  validationItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   separatorContainer: {
     flexDirection: 'row',
