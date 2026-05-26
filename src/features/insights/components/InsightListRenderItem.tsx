@@ -1,5 +1,7 @@
 import { useRouter } from 'expo-router';
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+
+import { Toast } from '@/shared/components';
 
 import type { InsightListItem } from '../api/types';
 
@@ -13,22 +15,42 @@ interface InsightListRenderItemProps {
 
 export function InsightListRenderItem({ item, onRename, onDelete }: InsightListRenderItemProps) {
   const router = useRouter();
+  const [toastVisible, setToastVisible] = useState(false);
+
+  useEffect(() => {
+    if (!toastVisible) return undefined;
+
+    const timer = setTimeout(() => setToastVisible(false), 3500);
+    return () => clearTimeout(timer);
+  }, [toastVisible]);
 
   const openChatReview = useCallback(() => {
-    router.push('/(main)/chat-review?demo=true');
-  }, [router]);
+    if (!item.caseId) {
+      setToastVisible(true);
+      return;
+    }
+
+    router.push({ pathname: '/(main)/chat-review', params: { caseId: item.caseId } });
+  }, [item.caseId, router]);
 
   return (
-    <InsightItemCard
-      insight={{
-        id: item.id,
-        title: item.title,
-        timestamp: item.subtitle,
-      }}
-      onPress={openChatReview}
-      onView={() => openChatReview()}
-      onRename={onRename}
-      onDelete={onDelete}
-    />
+    <>
+      <InsightItemCard
+        insight={{
+          id: item.id,
+          title: item.title,
+          timestamp: item.subtitle,
+        }}
+        onPress={openChatReview}
+        onView={() => openChatReview()}
+        onRename={onRename}
+        onDelete={onDelete}
+      />
+      <Toast
+        visible={toastVisible}
+        message="Chat is not available for this insight."
+        variant="neutral"
+      />
+    </>
   );
 }

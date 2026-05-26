@@ -3,6 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -15,12 +16,19 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Screen, Typography } from '@/shared/components';
+import { useAuthStore } from '@/features/auth/store/auth.store';
+import {
+  Screen,
+  Typography,
+  UploadBottomSheet,
+  UploadedFile,
+  UploadError,
+} from '@/shared/components';
 
 import type { AiReviewResult, ValueBreakdown } from '../api/ai-review.types';
 import type { ChatMessage } from '../api/chat.types';
 import { useAiReview } from '../hooks/useAiReview';
-import { useCaseChat, useSendChatMessage } from '../hooks/useCaseChat';
+import { useCaseChat, useCaseChatSocket, useSendChatMessage } from '../hooks/useCaseChat';
 
 type TimelineItem =
   | {
@@ -48,6 +56,7 @@ export function ChatReviewScreen() {
   const router = useRouter();
   const scrollRef = useRef<ScrollView | null>(null);
   const insets = useSafeAreaInsets();
+  const storedGuestSessionId = useAuthStore((state) => state.guestSessionId);
   const { caseId, guestSessionId, mock, demo } = useLocalSearchParams<{
     caseId?: string;
     guestSessionId?: string;
@@ -57,18 +66,37 @@ export function ChatReviewScreen() {
   const [draft, setDraft] = useState('');
   const [inputHeight, setInputHeight] = useState(COMPOSER_INPUT_MIN_HEIGHT);
   const [mockMessages, setMockMessages] = useState<ChatMessage[]>(MOCK_CHAT_MESSAGES);
+  const [localMessages, setLocalMessages] = useState<ChatMessage[]>([]);
+  const [pendingAttachment, setPendingAttachment] = useState<UploadedFile | null>(null);
+  const [showUploadSheet, setShowUploadSheet] = useState(false);
+  const [uploadErrorMessage, setUploadErrorMessage] = useState<string | null>(null);
+  const hasConnectedRef = useRef(false);
   const isMockChat = typeof __DEV__ !== 'undefined' && __DEV__ && mock === 'chat';
   const isDemoMode = demo === 'true';
-  const reviewQuery = useAiReview(caseId || '', guestSessionId);
-  const chatQuery = useCaseChat(caseId || '', guestSessionId);
-  const sendMessage = useSendChatMessage(caseId || '', guestSessionId);
+  const effectiveGuestSessionId =
+    typeof guestSessionId === 'string' ? guestSessionId : storedGuestSessionId;
+  const reviewQuery = useAiReview(caseId || '', effectiveGuestSessionId);
+  const chatQuery = useCaseChat(caseId || '', effectiveGuestSessionId);
+  const sendMessage = useSendChatMessage(caseId || '', effectiveGuestSessionId);
+  const chatSocket = useCaseChatSocket(
+    caseId || '',
+    effectiveGuestSessionId,
+    !isMockChat && !isDemoMode,
+  );
   const review = isMockChat ? MOCK_REVIEW : reviewQuery.data;
   const messages = useMemo(
-    () => (isMockChat ? mockMessages : (chatQuery.data ?? [])),
-    [chatQuery.data, isMockChat, mockMessages],
+    () => (isMockChat ? mockMessages : [...(chatQuery.data ?? []), ...localMessages]),
+    [chatQuery.data, isMockChat, localMessages, mockMessages],
   );
   const trimmedDraft = draft.trim();
-  const canSend = Boolean((caseId || isMockChat) && trimmedDraft && !sendMessage.isPending);
+  const { status: socketStatus } = chatSocket;
+  if (socketStatus === 'connected') hasConnectedRef.current = true;
+  const showReconnecting = hasConnectedRef.current && socketStatus === 'connecting';
+  const showConnectionLost = hasConnectedRef.current && socketStatus === 'disconnected';
+  const isSendingMessage = sendMessage.isPending || chatSocket.isSending;
+  const canSend = Boolean(
+    (caseId || isMockChat) && (trimmedDraft || pendingAttachment) && !isSendingMessage,
+  );
   const hasInterpretation = Boolean(
     review?.status === 'complete' &&
     (review.summary || review.valueBreakdown?.length || review.suggestedQuestions?.length),
@@ -107,8 +135,25 @@ export function ChatReviewScreen() {
     if (!canSend) return;
 
     const message = trimmedDraft;
+    const attachment = pendingAttachment;
     setDraft('');
+    setPendingAttachment(null);
     setInputHeight(COMPOSER_INPUT_MIN_HEIGHT);
+
+    if (attachment) {
+      const localMessage = createLocalAttachmentMessage({
+        caseId: caseId || 'mock-case',
+        file: attachment,
+        text: message,
+      });
+
+      if (isMockChat) {
+        setMockMessages((current) => [...current, localMessage]);
+      } else {
+        setLocalMessages((current) => [...current, localMessage]);
+      }
+      return;
+    }
 
     if (isMockChat) {
       setMockMessages((current) => [
@@ -128,179 +173,247 @@ export function ChatReviewScreen() {
     }
 
     try {
+      if (chatSocket.isConnected && (await chatSocket.sendLiveMessage(message))) {
+        return;
+      }
+
       await sendMessage.mutateAsync(message);
     } catch {
       setDraft(message);
+      setPendingAttachment(attachment);
     }
   };
 
+  const handleUploadFromChat = (file: UploadedFile) => {
+    setUploadErrorMessage(null);
+    setPendingAttachment(file);
+  };
+
+  const handleUploadPickerError = (error: UploadError) => {
+    if (error.type === 'file-size') {
+      setUploadErrorMessage('File size limit exceeded. Please upload a smaller file.');
+      return;
+    }
+
+    if (error.type === 'file-type') {
+      setUploadErrorMessage('Please upload a PDF, JPG, JPEG, or PNG file.');
+      return;
+    }
+
+    setUploadErrorMessage('Upload failed. Please select a different file or try again.');
+  };
+
   return (
-    <Screen edges={['top']} backgroundColor="#FFFFFF" style={styles.screen}>
-      <View style={styles.header}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-          onPress={() => router.back()}
-          hitSlop={12}
-          style={styles.backButton}
-        >
-          <Ionicons name="chevron-back" size={24} color="#111827" />
-        </Pressable>
-        <Typography style={styles.headerTitle}>
-          Chat with <Typography style={styles.floHeaderWord}>Flo</Typography>
-        </Typography>
-        <View style={styles.headerSpacer} />
-      </View>
+    <>
+      <Screen edges={['top']} backgroundColor="#FFFFFF" style={styles.screen}>
+        <View style={styles.header}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            onPress={() => router.back()}
+            hitSlop={12}
+            style={styles.backButton}
+          >
+            <Ionicons name="chevron-back" size={24} color="#111827" />
+          </Pressable>
+          <Typography style={styles.headerTitle}>
+            Chat with <Typography style={styles.floHeaderWord}>Flo</Typography>
+          </Typography>
+          <View style={styles.headerSpacer} />
+        </View>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={0}
-        style={styles.body}
-      >
-        <ScrollView
-          ref={scrollRef}
-          contentContainerStyle={styles.content}
-          keyboardShouldPersistTaps="handled"
-          onTouchStart={Keyboard.dismiss}
-          showsVerticalScrollIndicator={false}
-          style={styles.scroll}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={0}
+          style={styles.body}
         >
-          {isDemoMode ? (
-            <View style={styles.demoState}>
-              <View style={styles.demoIconWrap}>
-                <Ionicons name="chatbubbles-outline" size={52} color="#1565C0" />
+          <ScrollView
+            ref={scrollRef}
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
+            onTouchStart={Keyboard.dismiss}
+            showsVerticalScrollIndicator={false}
+            style={styles.scroll}
+          >
+            {isDemoMode ? (
+              <View style={styles.demoState}>
+                <View style={styles.demoIconWrap}>
+                  <Ionicons name="chatbubbles-outline" size={52} color="#1565C0" />
+                </View>
+                <Typography style={styles.demoTitle}>Coming Soon</Typography>
+                <Typography style={styles.demoSubtitle}>
+                  This is still a demo. Full chat review with Flo is on its way — stay tuned!
+                </Typography>
               </View>
-              <Typography style={styles.demoTitle}>Coming Soon</Typography>
-              <Typography style={styles.demoSubtitle}>
-                This is still a demo. Full chat review with Flo is on its way — stay tuned!
-              </Typography>
-            </View>
-          ) : !caseId && !isMockChat ? (
-            <StateMessage message="We could not find the case for this chat." />
-          ) : isInitialLoading ? (
-            <View style={styles.loadingState}>
-              <ActivityIndicator color="#1565C0" size="small" />
-              <Typography style={styles.stateText}>Loading chat...</Typography>
-            </View>
-          ) : isInitialError ? (
-            <StateMessage
-              message="We could not load your chat. Please check your connection and try again."
-              actionLabel="Retry"
-              onAction={() => {
-                chatQuery.refetch();
-              }}
-            />
-          ) : timelineItems.length === 0 ? (
-            <StateMessage
-              message={
-                <>
-                  Ask a question about your <Typography style={styles.floInline}>Flo</Typography>{' '}
-                  review to start the chat.
-                </>
-              }
-            />
-          ) : (
-            <>
-              {timelineItems.map((item) =>
-                item.type === 'interpretation' ? (
-                  <InterpretationCard
-                    key={item.id}
-                    review={item.review}
-                    onQuestionPress={setDraft}
-                  />
-                ) : (
-                  <ChatBubble key={item.id} message={item.message} />
-                ),
-              )}
-            </>
-          )}
-        </ScrollView>
+            ) : !caseId && !isMockChat ? (
+              <StateMessage message="We could not find the case for this chat." />
+            ) : isInitialLoading ? (
+              <View style={styles.loadingState}>
+                <ActivityIndicator color="#1565C0" size="small" />
+                <Typography style={styles.stateText}>Loading chat...</Typography>
+              </View>
+            ) : isInitialError ? (
+              <StateMessage
+                message="We could not load your chat. Please check your connection and try again."
+                actionLabel="Retry"
+                onAction={() => {
+                  chatQuery.refetch();
+                }}
+              />
+            ) : timelineItems.length === 0 ? (
+              <StateMessage
+                message={
+                  <>
+                    Ask a question about your <Typography style={styles.floInline}>Flo</Typography>{' '}
+                    review to start the chat.
+                  </>
+                }
+              />
+            ) : (
+              <>
+                {timelineItems.map((item) =>
+                  item.type === 'interpretation' ? (
+                    <InterpretationCard
+                      key={item.id}
+                      review={item.review}
+                      onQuestionPress={setDraft}
+                    />
+                  ) : (
+                    <ChatBubble key={item.id} message={item.message} />
+                  ),
+                )}
+              </>
+            )}
+          </ScrollView>
 
-        {!isDemoMode && (
-          <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-            {sendMessage.isError ? (
-              <Typography style={styles.sendError}>Message failed. Please try again.</Typography>
-            ) : null}
-            <View style={styles.composerRow}>
-              <View
-                style={[
-                  styles.inputPill,
-                  {
-                    height: composerHeight,
-                  },
-                ]}
-              >
+          {!isDemoMode && (
+            <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+              {showReconnecting ? (
+                <Typography style={styles.socketStatus}>Reconnecting…</Typography>
+              ) : showConnectionLost ? (
+                <Typography style={styles.socketStatus}>
+                  Connection lost. Messages may not send in real time.
+                </Typography>
+              ) : null}
+              {sendMessage.isError ? (
+                <Typography style={styles.sendError}>Message failed. Please try again.</Typography>
+              ) : null}
+              {uploadErrorMessage ? (
+                <Typography style={styles.sendError}>{uploadErrorMessage}</Typography>
+              ) : null}
+              {pendingAttachment ? (
+                <View style={styles.pendingAttachment}>
+                  <AttachmentPreviewThumb file={pendingAttachment} />
+                  <View style={styles.pendingAttachmentCopy}>
+                    <Typography numberOfLines={1} style={styles.pendingAttachmentName}>
+                      {pendingAttachment.name}
+                    </Typography>
+                    <Typography style={styles.pendingAttachmentMeta}>
+                      {pendingAttachment.size}
+                    </Typography>
+                  </View>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Remove attachment"
+                    hitSlop={8}
+                    onPress={() => setPendingAttachment(null)}
+                    style={styles.pendingAttachmentRemove}
+                  >
+                    <Ionicons name="close" size={18} color="#767676" />
+                  </Pressable>
+                </View>
+              ) : null}
+              <View style={styles.composerRow}>
+                <View
+                  style={[
+                    styles.inputPill,
+                    {
+                      height: composerHeight,
+                    },
+                  ]}
+                >
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Upload lab result"
+                    onPress={() => {
+                      setUploadErrorMessage(null);
+                      setShowUploadSheet(true);
+                    }}
+                    style={styles.attachButton}
+                  >
+                    <Ionicons name="arrow-up-circle-outline" size={24} color="#767676" />
+                  </Pressable>
+                  <View style={[styles.inputWrap, { height: inputHeight }]}>
+                    <Text
+                      aria-hidden
+                      onLayout={(event) => {
+                        updateInputHeight(event.nativeEvent.layout.height);
+                      }}
+                      pointerEvents="none"
+                      style={styles.inputMeasure}
+                    >
+                      {draft || COMPOSER_MEASURE_TEXT}
+                    </Text>
+                    <TextInput
+                      multiline
+                      blurOnSubmit={false}
+                      onContentSizeChange={(event) => {
+                        updateInputHeight(event.nativeEvent.contentSize.height);
+                      }}
+                      onChangeText={handleDraftChange}
+                      placeholder="Ask about results"
+                      placeholderTextColor="#767676"
+                      returnKeyType="default"
+                      scrollEnabled={inputHeight >= COMPOSER_INPUT_MAX_HEIGHT}
+                      style={[styles.input, { height: inputHeight }]}
+                      value={draft}
+                    />
+                  </View>
+                </View>
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel="Attach image"
-                  onPress={() => {}}
-                  style={styles.attachButton}
+                  accessibilityLabel="Record voice"
+                  disabled
+                  style={[styles.iconButton, styles.disabledButton]}
                 >
-                  <Ionicons name="arrow-up-circle-outline" size={24} color="#767676" />
+                  <Ionicons name="mic-outline" size={28} color="#767676" />
                 </Pressable>
-                <View style={[styles.inputWrap, { height: inputHeight }]}>
-                  <Text
-                    aria-hidden
-                    onLayout={(event) => {
-                      updateInputHeight(event.nativeEvent.layout.height);
-                    }}
-                    pointerEvents="none"
-                    style={styles.inputMeasure}
-                  >
-                    {draft || COMPOSER_MEASURE_TEXT}
-                  </Text>
-                  <TextInput
-                    multiline
-                    blurOnSubmit={false}
-                    onContentSizeChange={(event) => {
-                      updateInputHeight(event.nativeEvent.contentSize.height);
-                    }}
-                    onChangeText={handleDraftChange}
-                    placeholder="Ask about results"
-                    placeholderTextColor="#767676"
-                    returnKeyType="default"
-                    scrollEnabled={inputHeight >= COMPOSER_INPUT_MAX_HEIGHT}
-                    style={[styles.input, { height: inputHeight }]}
-                    value={draft}
-                  />
-                </View>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Send message"
+                  disabled={!canSend}
+                  onPress={handleSend}
+                  style={[
+                    styles.sendButton,
+                    (canSend || isSendingMessage) && styles.sendButtonActive,
+                  ]}
+                >
+                  {isSendingMessage ? (
+                    <ActivityIndicator color="#FFFFFF" size="small" />
+                  ) : (
+                    <Ionicons
+                      name="paper-plane-outline"
+                      size={26}
+                      color={canSend ? '#FFFFFF' : '#767676'}
+                    />
+                  )}
+                </Pressable>
               </View>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Record voice"
-                disabled
-                style={[styles.iconButton, styles.disabledButton]}
-              >
-                <Ionicons name="mic-outline" size={28} color="#767676" />
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Send message"
-                disabled={!canSend}
-                onPress={handleSend}
-                style={[
-                  styles.sendButton,
-                  (canSend || sendMessage.isPending) && styles.sendButtonActive,
-                ]}
-              >
-                {sendMessage.isPending ? (
-                  <ActivityIndicator color="#FFFFFF" size="small" />
-                ) : (
-                  <Ionicons
-                    name="paper-plane-outline"
-                    size={26}
-                    color={canSend ? '#FFFFFF' : '#767676'}
-                  />
-                )}
-              </Pressable>
+              <Typography style={styles.disclaimer}>
+                Flo provides AI-powered explanations, not medical diagnoses.
+              </Typography>
             </View>
-            <Typography style={styles.disclaimer}>
-              Flo provides AI-powered explanations, not medical diagnoses.
-            </Typography>
-          </View>
-        )}
-      </KeyboardAvoidingView>
-    </Screen>
+          )}
+        </KeyboardAvoidingView>
+      </Screen>
+
+      <UploadBottomSheet
+        visible={showUploadSheet}
+        onClose={() => setShowUploadSheet(false)}
+        onUpload={handleUploadFromChat}
+        onUploadError={handleUploadPickerError}
+      />
+    </>
   );
 }
 
@@ -349,6 +462,33 @@ function createMockMessage({
     text,
     medicalCaseId: 'mock-case',
     userId: senderType === 'patient' ? 'mock-user' : null,
+    sentAt: new Date().toISOString(),
+  };
+}
+
+function createLocalAttachmentMessage({
+  caseId,
+  file,
+  text,
+}: {
+  caseId: string;
+  file: UploadedFile;
+  text: string;
+}): ChatMessage {
+  return {
+    id: `local-attachment-${Date.now()}`,
+    senderType: 'patient',
+    content: {
+      attachmentMimeType: file.mimeType,
+      attachmentName: file.name,
+      attachmentSize: file.size,
+      attachmentText: text,
+      attachmentUri: file.uri,
+      message: text || file.name,
+    },
+    text: text || file.name,
+    medicalCaseId: caseId,
+    userId: useAuthStore.getState().user?.id ?? null,
     sentAt: new Date().toISOString(),
   };
 }
@@ -421,6 +561,7 @@ function StateMessage({
 
 function ChatBubble({ message }: { message: ChatMessage }) {
   const isPatient = message.senderType === 'patient';
+  const attachment = getMessageAttachment(message);
 
   if (!isPatient) {
     return (
@@ -434,9 +575,91 @@ function ChatBubble({ message }: { message: ChatMessage }) {
 
   return (
     <View style={[styles.bubble, styles.patientBubble]}>
-      <Typography style={[styles.bubbleText, styles.patientBubbleText]}>{message.text}</Typography>
+      {attachment ? (
+        <>
+          {attachment.text ? (
+            <Typography style={[styles.bubbleText, styles.patientBubbleText]}>
+              {attachment.text}
+            </Typography>
+          ) : null}
+          <AttachmentBubbleCard attachment={attachment} />
+        </>
+      ) : (
+        <Typography style={[styles.bubbleText, styles.patientBubbleText]}>
+          {message.text}
+        </Typography>
+      )}
     </View>
   );
+}
+
+function getMessageAttachment(message: ChatMessage) {
+  const { content } = message;
+  const uri = typeof content.attachmentUri === 'string' ? content.attachmentUri : '';
+  const name = typeof content.attachmentName === 'string' ? content.attachmentName : '';
+
+  if (!uri || !name) return null;
+
+  const size = typeof content.attachmentSize === 'string' ? content.attachmentSize : '';
+  const mimeType = typeof content.attachmentMimeType === 'string' ? content.attachmentMimeType : '';
+  const text = typeof content.attachmentText === 'string' ? content.attachmentText : '';
+
+  return {
+    isImage: isImageAttachment(name, mimeType),
+    mimeType,
+    name,
+    size,
+    text,
+    uri,
+  };
+}
+
+function AttachmentBubbleCard({
+  attachment,
+}: {
+  attachment: NonNullable<ReturnType<typeof getMessageAttachment>>;
+}) {
+  if (attachment.isImage) {
+    return (
+      <View style={styles.attachmentImageCard}>
+        <Image source={{ uri: attachment.uri }} resizeMode="cover" style={styles.attachmentImage} />
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.attachmentFileCard}>
+      <View style={styles.attachmentFileIcon}>
+        <Ionicons name="document-text-outline" size={22} color="#1565C0" />
+      </View>
+      <View style={styles.attachmentFileCopy}>
+        <Typography numberOfLines={1} style={styles.attachmentFileName}>
+          {attachment.name}
+        </Typography>
+        {attachment.size ? (
+          <Typography style={styles.attachmentFileMeta}>{attachment.size}</Typography>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
+function AttachmentPreviewThumb({ file }: { file: UploadedFile }) {
+  const isImage = isImageAttachment(file.name, file.mimeType);
+
+  if (isImage) {
+    return <Image source={{ uri: file.uri }} resizeMode="cover" style={styles.pendingImageThumb} />;
+  }
+
+  return (
+    <View style={styles.pendingAttachmentIcon}>
+      <Ionicons name="document-attach-outline" size={18} color="#1565C0" />
+    </View>
+  );
+}
+
+function isImageAttachment(name: string, mimeType?: string) {
+  return Boolean(mimeType?.startsWith('image/') || /\.(jpe?g|png|webp|heic)$/i.test(name));
 }
 
 function InterpretationCard({
@@ -625,6 +848,7 @@ const styles = StyleSheet.create({
   patientBubble: {
     alignSelf: 'flex-end',
     backgroundColor: '#1565C0',
+    gap: 8,
   },
   bubbleText: {
     color: '#494949',
@@ -636,6 +860,51 @@ const styles = StyleSheet.create({
   },
   patientBubbleText: {
     color: '#FFFFFF',
+  },
+  attachmentImageCard: {
+    borderRadius: 10,
+    height: 72,
+    overflow: 'hidden',
+    width: 160,
+  },
+  attachmentImage: {
+    backgroundColor: '#0F4C92',
+    height: '100%',
+    width: '100%',
+  },
+  attachmentFileCard: {
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    flexDirection: 'row',
+    gap: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    width: 160,
+  },
+  attachmentFileIcon: {
+    alignItems: 'center',
+    backgroundColor: '#EAF4FF',
+    borderRadius: 18,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
+  },
+  attachmentFileCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  attachmentFileName: {
+    color: '#1B1B1B',
+    fontFamily: 'Inter_500Medium',
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  attachmentFileMeta: {
+    color: '#767676',
+    fontFamily: 'Inter_400Regular',
+    fontSize: 12,
+    lineHeight: 16,
   },
   interpretationCard: {
     alignSelf: 'stretch',
@@ -779,6 +1048,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 14,
   },
+  socketStatus: {
+    color: '#767676',
+    fontFamily: 'Inter_400Regular',
+    fontSize: 12,
+    lineHeight: 18,
+    marginBottom: 6,
+    textAlign: 'center',
+  },
   sendError: {
     color: '#EF4444',
     fontFamily: 'Inter_400Regular',
@@ -786,6 +1063,54 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginBottom: 8,
     textAlign: 'center',
+  },
+  pendingAttachment: {
+    alignItems: 'center',
+    backgroundColor: '#F8FBFF',
+    borderColor: '#D7E8FA',
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  pendingAttachmentIcon: {
+    alignItems: 'center',
+    backgroundColor: '#EAF4FF',
+    borderRadius: 16,
+    height: 32,
+    justifyContent: 'center',
+    width: 32,
+  },
+  pendingImageThumb: {
+    backgroundColor: '#EAF4FF',
+    borderRadius: 8,
+    height: 40,
+    width: 40,
+  },
+  pendingAttachmentCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  pendingAttachmentName: {
+    color: '#1B1B1B',
+    fontFamily: 'Inter_500Medium',
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  pendingAttachmentMeta: {
+    color: '#767676',
+    fontFamily: 'Inter_400Regular',
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  pendingAttachmentRemove: {
+    alignItems: 'center',
+    height: 28,
+    justifyContent: 'center',
+    width: 28,
   },
   composerRow: {
     alignItems: 'flex-end',

@@ -15,9 +15,7 @@ export function HomeHeader({ name = 'User' }: HomeHeaderProps) {
   const router = useRouter();
 
   return (
-    <View
-      style={[styles.container, { paddingHorizontal: spacing.md, paddingVertical: spacing.md }]}
-    >
+    <View style={[styles.container, { paddingHorizontal: spacing.md, paddingTop: spacing.md }]}>
       <View style={styles.textGroup}>
         <Typography variant="h2">Hello, {name}</Typography>
         <Typography variant="body2" color={colors.textSecondary}>
@@ -26,7 +24,10 @@ export function HomeHeader({ name = 'User' }: HomeHeaderProps) {
       </View>
       <Pressable
         onPress={() => router.push('/(main)/notification-inbox')}
-        style={[styles.bellButton, { backgroundColor: colors.cardBackground }]}
+        style={[
+          styles.bellButton,
+          { backgroundColor: colors.surfaceMuted, borderColor: colors.borderSubtle },
+        ]}
       >
         <Ionicons name="notifications-outline" size={22} color={colors.text} />
       </Pressable>
@@ -39,6 +40,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingBottom: 28,
   },
   textGroup: {
     flex: 1,
@@ -48,6 +50,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },

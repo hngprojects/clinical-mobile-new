@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { UploadBottomSheet, UploadedFile, UploadError } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 import { useHome } from '../hooks/useHome';
@@ -10,7 +11,6 @@ import { HomeHeader } from './HomeHeader';
 import { Insight } from './InsightCard';
 import { RecentInsightsSection } from './RecentInsightsSection';
 import { UploadCard } from './UploadCard';
-import { UploadBottomSheet, UploadedFile, UploadError } from '@/shared/components';
 
 const MOCK_INSIGHTS: Insight[] = [
   { id: '1', title: 'Hormone Health Discussion', timestamp: '2 mins ago' },
@@ -52,8 +52,13 @@ export function HomeScreen() {
     setInsights((prev) => prev.filter((i) => i.id !== id));
   };
 
-  const handleViewInsight = (_id: string) => {
-    router.push('/(main)/chat-review?demo=true');
+  const handleViewInsight = (id: string) => {
+    const insight = insights.find((i) => i.id === id);
+    if (insight?.caseId) {
+      router.push({ pathname: '/(main)/chat-review', params: { caseId: insight.caseId } });
+    } else {
+      router.push('/(main)/chat-review?demo=true');
+    }
   };
 
   return (

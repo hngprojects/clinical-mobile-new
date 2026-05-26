@@ -382,7 +382,7 @@ export function UploadBottomSheet({
                   <Typography style={styles.sheetTitle}>Upload Your Lab Result</Typography>
 
                   <Typography style={styles.sheetSubtitle}>
-                    Upload your first lab report to get started
+                    Upload a lab report to get started
                   </Typography>
 
                   <Typography style={styles.sheetFormat}>
