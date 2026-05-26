@@ -15,7 +15,7 @@ export function getChatText(content: ChatResponse['content']) {
   return JSON.stringify(content);
 }
 
-function mapChatMessage(message: ChatResponse): ChatMessage {
+export function mapChatMessage(message: ChatResponse): ChatMessage {
   return {
     id: message.id,
     senderType: message.sender_type,
