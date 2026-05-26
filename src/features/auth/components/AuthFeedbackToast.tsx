@@ -4,6 +4,8 @@ import { Toast } from '@/shared/components';
 
 import { useAuthFeedbackStore } from '../store/authFeedback.store';
 
+const TOAST_EXIT_ANIMATION_MS = 250;
+
 export function AuthFeedbackToast() {
   const successMessage = useAuthFeedbackStore((state) => state.successMessage);
   const clearSuccessMessage = useAuthFeedbackStore((state) => state.clearSuccessMessage);
@@ -15,21 +17,25 @@ export function AuthFeedbackToast() {
   useEffect(() => {
     if (!successMessage) return undefined;
     setSuccessVisible(true);
-    const timer = setTimeout(() => {
-      setSuccessVisible(false);
-      clearSuccessMessage();
-    }, 3500);
-    return () => clearTimeout(timer);
+    const hideTimer = setTimeout(() => setSuccessVisible(false), 3500);
+    const clearTimer = setTimeout(clearSuccessMessage, 3500 + TOAST_EXIT_ANIMATION_MS);
+
+    return () => {
+      clearTimeout(hideTimer);
+      clearTimeout(clearTimer);
+    };
   }, [clearSuccessMessage, successMessage]);
 
   useEffect(() => {
     if (!errorMessage) return undefined;
     setErrorVisible(true);
-    const timer = setTimeout(() => {
-      setErrorVisible(false);
-      clearErrorMessage();
-    }, 4000);
-    return () => clearTimeout(timer);
+    const hideTimer = setTimeout(() => setErrorVisible(false), 4000);
+    const clearTimer = setTimeout(clearErrorMessage, 4000 + TOAST_EXIT_ANIMATION_MS);
+
+    return () => {
+      clearTimeout(hideTimer);
+      clearTimeout(clearTimer);
+    };
   }, [clearErrorMessage, errorMessage]);
 
   return (

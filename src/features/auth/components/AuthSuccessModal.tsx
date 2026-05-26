@@ -2,6 +2,7 @@ import React from 'react';
 import { Image, Modal, Pressable, StyleSheet, View } from 'react-native';
 
 import { Typography } from '@/shared/components';
+import { useTheme } from '@/shared/theme';
 
 interface AuthSuccessModalProps {
   visible: boolean;
@@ -18,21 +19,34 @@ export function AuthSuccessModal({
   actionLabel,
   onAction,
 }: AuthSuccessModalProps) {
+  const { colors } = useTheme();
+
   return (
-    <Modal visible={visible} transparent animationType="fade" statusBarTranslucent>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      statusBarTranslucent
+      onRequestClose={onAction}
+    >
       <View style={styles.modalOverlay}>
-        <View style={styles.modalCard}>
+        <View style={[styles.modalCard, { backgroundColor: colors.surface }]}>
           <Image
             source={require('../../../../assets/images/auth/Checked.png')}
             style={styles.successCheckImage}
           />
 
-          <Typography style={styles.modalTitle}>{title}</Typography>
-          <Typography style={styles.modalSubtitle}>{message}</Typography>
+          <Typography style={[styles.modalTitle, { color: colors.text }]}>{title}</Typography>
+          <Typography style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
+            {message}
+          </Typography>
 
           <Pressable
             onPress={onAction}
-            style={({ pressed }) => [styles.modalBtn, { opacity: pressed ? 0.85 : 1 }]}
+            style={({ pressed }) => [
+              styles.modalBtn,
+              { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
+            ]}
           >
             <Typography style={styles.modalBtnText}>{actionLabel}</Typography>
           </Pressable>
@@ -51,7 +65,6 @@ const styles = StyleSheet.create({
   },
   modalCard: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     borderRadius: 24,
     paddingHorizontal: 24,
     paddingVertical: 36,
@@ -62,14 +75,12 @@ const styles = StyleSheet.create({
     width: 96,
   },
   modalTitle: {
-    color: '#1B1B1B',
     fontFamily: 'Inter_700Bold',
     fontSize: 22,
     marginTop: 24,
     textAlign: 'center',
   },
   modalSubtitle: {
-    color: '#494949',
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
     lineHeight: 21,
@@ -78,7 +89,6 @@ const styles = StyleSheet.create({
   },
   modalBtn: {
     alignItems: 'center',
-    backgroundColor: '#1565C0',
     borderRadius: 12,
     justifyContent: 'center',
     marginTop: 28,
