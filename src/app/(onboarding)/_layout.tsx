@@ -5,7 +5,7 @@ import { useOnboardingStore } from '@/features/onboarding/store/onboarding.store
 export default function OnboardingLayout() {
   const hasCompleted = useOnboardingStore((s) => s.hasCompleted);
 
-  if (hasCompleted) return <Redirect href="/(auth)/register" />;
+  if (hasCompleted) return <Redirect href="/(auth)/login" />;
 
   return (
     <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>

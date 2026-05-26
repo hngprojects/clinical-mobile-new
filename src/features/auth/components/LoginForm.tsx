@@ -1,6 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 
@@ -9,6 +8,9 @@ import { useTheme } from '@/shared/theme';
 
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { LoginFormData, loginSchema } from '../schemas/auth.schemas';
+
+import { PasswordField } from './PasswordField';
+import { PasswordValidationList } from './PasswordValidationList';
 
 interface LoginFormProps {
   mutation: {
@@ -28,7 +30,6 @@ export function LoginForm({
 }: LoginFormProps) {
   const { colors, spacing } = useTheme();
   const { mutate: login, isPending } = mutation;
-  const [showPassword, setShowPassword] = useState(false);
   const passwordRef = useRef<any>(null);
 
   const { startGoogleAuth, isPending: isGooglePending } = useGoogleAuth();
@@ -50,12 +51,6 @@ export function LoginForm({
     }
   };
 
-  const has8Chars = passwordValue.length >= 8;
-  const hasUpper = /[A-Z]/.test(passwordValue);
-  const hasLower = /[a-z]/.test(passwordValue);
-  const hasNumber = /[0-9]/.test(passwordValue);
-  const hasSpecial = /[^A-Za-z0-9]/.test(passwordValue);
-
   return (
     <View style={styles.container}>
       <View style={{ gap: spacing.md }}>
@@ -73,26 +68,15 @@ export function LoginForm({
         />
 
         <View>
-          <FormField
+          <PasswordField
             ref={passwordRef}
             control={control}
             name="password"
             label="Password"
-            secureTextEntry={!showPassword}
-            textContentType="password"
             placeholder="Enter your password"
             onFocus={onInteract}
             returnKeyType="done"
             onSubmitEditing={handleSubmit(onSubmit)}
-            rightIcon={
-              <Pressable onPress={() => setShowPassword(!showPassword)}>
-                <Ionicons
-                  name={showPassword ? 'eye-outline' : 'eye-off-outline'}
-                  size={20}
-                  color="#1B1B1B"
-                />
-              </Pressable>
-            }
           />
           <Pressable style={styles.forgotPassword} onPress={onForgotPassword}>
             <Typography
@@ -111,28 +95,7 @@ export function LoginForm({
           </Pressable>
         </View>
 
-        {passwordValue.length > 0 &&
-          !(has8Chars && hasUpper && hasLower && hasNumber && hasSpecial) && (
-            <View style={styles.validationList}>
-              <ValidationItem
-                label="Password must have at least 8 characters"
-                isValid={has8Chars}
-              />
-              <ValidationItem
-                label="Password must have at least one uppercase letter"
-                isValid={hasUpper}
-              />
-              <ValidationItem
-                label="Password must have at least one lowercase letter"
-                isValid={hasLower}
-              />
-              <ValidationItem label="Password must have at least one number" isValid={hasNumber} />
-              <ValidationItem
-                label="Password must have at least one special character"
-                isValid={hasSpecial}
-              />
-            </View>
-          )}
+        <PasswordValidationList password={passwordValue} variant="full" />
 
         <Button
           label={isPending ? 'Logging in...' : 'Login'}
@@ -190,37 +153,10 @@ export function LoginForm({
   );
 }
 
-function ValidationItem({ label, isValid }: { label: string; isValid: boolean }) {
-  return (
-    <View style={styles.validationItem}>
-      <Typography
-        style={{
-          color: isValid ? '#10B981' : '#767676',
-          fontFamily: 'Inter_400Regular',
-          fontSize: 13,
-          lineHeight: 19.5,
-          letterSpacing: -0.13,
-        }}
-      >
-        {isValid ? '✓' : '✕'} {label}
-      </Typography>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   container: { width: '100%' },
   forgotPassword: {
     alignSelf: 'flex-end',
-  },
-  validationList: {
-    gap: 4,
-    marginTop: 8,
-    marginBottom: 0,
-  },
-  validationItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   separatorContainer: {
     flexDirection: 'row',
