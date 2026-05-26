@@ -15,8 +15,11 @@ export function InsightListRenderItem({ item, onRename, onDelete }: InsightListR
   const router = useRouter();
 
   const openChatReview = useCallback(() => {
-    router.push('/(main)/chat-review?demo=true');
-  }, [router]);
+    router.push({
+      pathname: '/(main)/chat-review',
+      params: { caseId: item.id },
+    });
+  }, [item.id, router]);
 
   return (
     <InsightItemCard

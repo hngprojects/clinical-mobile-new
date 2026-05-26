@@ -1,18 +1,20 @@
 import React, { useCallback, useMemo } from 'react';
-import { FlatList, ListRenderItem, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, FlatList, ListRenderItem, StyleSheet, View } from 'react-native';
 
 import { Screen, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 import type { InsightListItem } from '../api/types';
 import { useInsightList } from '../hooks/useInsightList';
+import { useInsightCases } from '@/features/insights/hooks/useInsightCases';
 
 import { InsightListEmpty } from './InsightListEmpty';
 import { InsightListRenderItem } from './InsightListRenderItem';
 import { InsightSearchBar } from './InsightSearchBar';
 
 export function InsightScreen() {
-  const { spacing } = useTheme();
+  const { spacing, colors } = useTheme();
+  const { insightItems, isLoading, refetch } = useInsightCases();
   const {
     query,
     setQuery,
@@ -22,7 +24,7 @@ export function InsightScreen() {
     addDemoInsight,
     renameInsight,
     deleteInsight,
-  } = useInsightList();
+  } = useInsightList(insightItems);
 
   const hasActiveQuery = query.trim().length > 0;
   const isSearchActive = hasActiveQuery && items.length > 0;
@@ -52,6 +54,7 @@ export function InsightScreen() {
   );
 
   const listEmptyVisible = listData.length === 0;
+  const isInitialLoading = isLoading && items.length === 0;
 
   return (
     <Screen scrollable={false} padding>
@@ -62,19 +65,28 @@ export function InsightScreen() {
         <View style={{ marginBottom: spacing.md }}>
           <InsightSearchBar value={query} onChangeText={setQuery} />
         </View>
-        <FlatList
-          style={styles.list}
-          data={listData}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          ListEmptyComponent={listEmptyVisible ? listEmpty : undefined}
-          ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
-          contentContainerStyle={
-            listEmptyVisible ? styles.emptyContent : { paddingBottom: spacing.lg }
-          }
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        />
+        {isInitialLoading ? (
+          <View style={styles.loadingState}>
+            <ActivityIndicator color={colors.primary} size="small" />
+            <Typography style={styles.loadingText}>Loading insights...</Typography>
+          </View>
+        ) : (
+          <FlatList
+            style={styles.list}
+            data={listData}
+            keyExtractor={(item) => item.id}
+            renderItem={renderItem}
+            ListEmptyComponent={listEmptyVisible ? listEmpty : undefined}
+            ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
+            contentContainerStyle={
+              listEmptyVisible ? styles.emptyContent : { paddingBottom: spacing.lg }
+            }
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            refreshing={isLoading}
+            onRefresh={refetch}
+          />
+        )}
       </View>
     </Screen>
   );
@@ -89,5 +101,17 @@ const styles = StyleSheet.create({
   },
   emptyContent: {
     flexGrow: 1,
+  },
+  loadingState: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+    gap: 10,
+  },
+  loadingText: {
+    color: '#767676',
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+    lineHeight: 21,
   },
 });
