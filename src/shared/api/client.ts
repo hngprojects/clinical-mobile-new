@@ -39,13 +39,16 @@ client.interceptors.response.use(
 
     if (error.response?.status === 401 && !original._retry && getAuthState) {
       original._retry = true;
-      const { refreshToken, clearSession } = getAuthState();
+      const { accessToken, isGuest, clearSession } = getAuthState();
 
-      if (!refreshToken) {
-        // Guest users authenticate via x-guest-session-id, not tokens — don't wipe their session
-        if (!getAuthState().isGuest) {
-          clearSession();
-        }
+      // Guest sessions use x-guest-session-id — a 401 is a guest auth issue, not a token issue
+      if (isGuest) {
+        return Promise.reject(toApiError(error));
+      }
+
+      // No access token means we're already logged out
+      if (!accessToken) {
+        clearSession();
         return Promise.reject(toApiError(error));
       }
 
@@ -56,6 +59,10 @@ client.interceptors.response.use(
         original.headers.Authorization = `Bearer ${newTokens.accessToken}`;
         return client(original);
       } catch {
+        const { useAuthFeedbackStore } = await import('@/features/auth/store/authFeedback.store');
+        useAuthFeedbackStore
+          .getState()
+          .setErrorMessage('Your session has expired. Please sign in again.');
         getAuthState().clearSession();
         return Promise.reject(toApiError(error));
       }

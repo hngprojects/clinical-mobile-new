@@ -154,7 +154,12 @@ async function createGuestSession(
 }
 
 async function refreshTokens(): Promise<AuthTokens> {
-  const response = await client.post<SuccessResponse<BackendTokenResponse>>('/api/v1/auth/refresh');
+  // _retry: true prevents the 401 interceptor from re-entering on this request
+  const response = await client.post<SuccessResponse<BackendTokenResponse>>(
+    '/api/v1/auth/refresh',
+    undefined,
+    { _retry: true } as object,
+  );
   return {
     accessToken: response.data.data.access_token,
     refreshToken: null,
