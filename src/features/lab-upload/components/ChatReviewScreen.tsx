@@ -51,6 +51,11 @@ const COMPOSER_INPUT_MAX_HEIGHT = 112;
 const COMPOSER_VERTICAL_PADDING = 20;
 const COMPOSER_MIN_HEIGHT = 48;
 const COMPOSER_MEASURE_TEXT = ' ';
+const FLO_PENDING_MESSAGES = [
+  'Flo is thinking...',
+  'Flo is reviewing...',
+  'Flo is preparing your reply...',
+];
 
 export function ChatReviewScreen() {
   const router = useRouter();
@@ -566,8 +571,18 @@ function ChatBubble({ message }: { message: ChatMessage }) {
   if (!isPatient) {
     return (
       <View style={styles.aiMessageGroup}>
-        <View style={[styles.bubble, styles.aiBubble]}>
-          <Typography style={styles.bubbleText}>{message.text}</Typography>
+        <View
+          style={[
+            styles.bubble,
+            styles.aiBubble,
+            isPendingResponseMessage(message) && styles.aiPendingBubble,
+          ]}
+        >
+          {isPendingResponseMessage(message) ? (
+            <FloPendingIndicator />
+          ) : (
+            <FormattedAiMessage text={message.text} />
+          )}
         </View>
       </View>
     );
@@ -591,6 +606,130 @@ function ChatBubble({ message }: { message: ChatMessage }) {
       )}
     </View>
   );
+}
+
+function isPendingResponseMessage(message: ChatMessage) {
+  return message.content.isPendingResponse === true;
+}
+
+function FloPendingIndicator() {
+  const [messageIndex, setMessageIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setMessageIndex((current) => (current + 1) % FLO_PENDING_MESSAGES.length);
+    }, 1200);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <View style={styles.aiLoadingRow}>
+      <ActivityIndicator color="#1565C0" size="small" />
+      <Typography style={styles.aiLoadingText}>{FLO_PENDING_MESSAGES[messageIndex]}</Typography>
+    </View>
+  );
+}
+
+function FormattedAiMessage({ text }: { text: string }) {
+  const blocks = formatAiMessage(text);
+
+  return (
+    <View style={styles.formattedMessage}>
+      {blocks.map((block, index) => {
+        if (block.type === 'heading') {
+          return (
+            <Typography key={`${block.text}-${index}`} style={styles.formattedHeading}>
+              {block.text}
+            </Typography>
+          );
+        }
+
+        if (block.type === 'bullet') {
+          return (
+            <View key={`${block.text}-${index}`} style={styles.formattedListItem}>
+              <Typography style={styles.formattedBullet}>•</Typography>
+              <Typography style={[styles.bubbleText, styles.formattedListText]}>
+                {block.text}
+              </Typography>
+            </View>
+          );
+        }
+
+        if (block.type === 'numbered') {
+          return (
+            <View key={`${block.marker}-${block.text}-${index}`} style={styles.formattedListItem}>
+              <Typography style={styles.formattedNumber}>{block.marker}</Typography>
+              <Typography style={[styles.bubbleText, styles.formattedListText]}>
+                {block.text}
+              </Typography>
+            </View>
+          );
+        }
+
+        return (
+          <Typography key={`${block.text}-${index}`} style={styles.bubbleText}>
+            {block.text}
+          </Typography>
+        );
+      })}
+    </View>
+  );
+}
+
+type FormattedBlock =
+  | { type: 'paragraph'; text: string }
+  | { type: 'heading'; text: string }
+  | { type: 'bullet'; text: string }
+  | { type: 'numbered'; marker: string; text: string };
+
+function formatAiMessage(text: string): FormattedBlock[] {
+  return text
+    .replace(/\r\n/g, '\n')
+    .split(/\n{2,}/)
+    .flatMap((section): FormattedBlock[] => {
+      const lines = section
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+      if (lines.length === 0) return [];
+
+      const allListItems = lines.every((line) => /^([-*•]\s+|\d+[.)]\s+)/.test(line));
+      if (allListItems) {
+        return lines.map((line) => {
+          const numbered = line.match(/^(\d+[.)])\s+(.+)$/);
+          if (numbered) {
+            return {
+              marker: numbered[1],
+              text: cleanMarkdownText(numbered[2]),
+              type: 'numbered',
+            };
+          }
+
+          return {
+            text: cleanMarkdownText(line.replace(/^[-*•]\s+/, '')),
+            type: 'bullet',
+          };
+        });
+      }
+
+      const heading = lines[0].match(/^#{1,6}\s+(.+)$/);
+      if (heading && lines.length === 1) {
+        return [{ text: cleanMarkdownText(heading[1]), type: 'heading' }];
+      }
+
+      return [{ text: cleanMarkdownText(lines.join(' ')), type: 'paragraph' }];
+    });
+}
+
+function cleanMarkdownText(text: string) {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/__(.*?)__/g, '$1')
+    .replace(/\*(.*?)\*/g, '$1')
+    .replace(/`([^`]+)`/g, '$1')
+    .trim();
 }
 
 function getMessageAttachment(message: ChatMessage) {
@@ -842,8 +981,22 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     backgroundColor: '#FAFAFA',
   },
+  aiPendingBubble: {
+    minWidth: 244,
+  },
   aiMessageGroup: {
     alignSelf: 'flex-start',
+  },
+  aiLoadingRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+  },
+  aiLoadingText: {
+    color: '#494949',
+    fontFamily: 'Inter_400Regular',
+    fontSize: 15,
+    lineHeight: 22,
   },
   patientBubble: {
     alignSelf: 'flex-end',
@@ -860,6 +1013,37 @@ const styles = StyleSheet.create({
   },
   patientBubbleText: {
     color: '#FFFFFF',
+  },
+  formattedMessage: {
+    gap: 8,
+  },
+  formattedHeading: {
+    color: '#1B1B1B',
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  formattedListItem: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  formattedBullet: {
+    color: '#494949',
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 16,
+    lineHeight: 24,
+    width: 10,
+  },
+  formattedNumber: {
+    color: '#494949',
+    fontFamily: 'Inter_500Medium',
+    fontSize: 16,
+    lineHeight: 24,
+    minWidth: 22,
+  },
+  formattedListText: {
+    flex: 1,
   },
   attachmentImageCard: {
     borderRadius: 10,

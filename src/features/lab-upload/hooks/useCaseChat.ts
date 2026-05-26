@@ -56,6 +56,7 @@ export function useSendChatMessage(caseId: string, guestSessionId?: string | nul
 
 const RECONNECT_MAX_ATTEMPTS = 6;
 const RECONNECT_MAX_DELAY_MS = 30_000;
+const RESPONSE_SETTLE_DELAY_MS = 1500;
 
 export function useCaseChatSocket(caseId: string, guestSessionId?: string | null, enabled = true) {
   const accessToken = useAuthStore((state) => state.accessToken);
@@ -67,27 +68,47 @@ export function useCaseChatSocket(caseId: string, guestSessionId?: string | null
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const responseSettleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const streamingRef = useRef<{ id: string; text: string } | null>(null);
+  const pendingResponseIdRef = useRef<string | null>(null);
   const [status, setStatus] = useState<SocketStatus>('idle');
   const [isSending, setIsSending] = useState(false);
+  const [isAwaitingResponse, setIsAwaitingResponse] = useState(false);
   const canUseSocket = Boolean(enabled && caseId && accessToken && !guestSessionId);
 
   const upsertMessage = useCallback(
     (message: ChatMessage) => {
+      const pendingResponseId = pendingResponseIdRef.current;
+      const shouldClearPending = Boolean(message.senderType === 'ai' && pendingResponseId);
+
+      if (shouldClearPending) {
+        pendingResponseIdRef.current = null;
+        setIsAwaitingResponse(false);
+      }
+
       queryClient.setQueryData<ChatMessage[]>(queryKey, (current = []) => {
-        const optimisticIndex = current.findIndex(
+        const source = shouldClearPending
+          ? current.filter((item) => item.id !== pendingResponseId)
+          : current;
+        const optimisticIndex = source.findIndex(
           (item) =>
             item.id.startsWith('optimistic-') &&
             item.senderType === message.senderType &&
             item.text === message.text,
         );
-        const existingIndex = current.findIndex((item) => item.id === message.id);
-        const next = [...current];
+        const existingIndex = source.findIndex((item) => item.id === message.id);
+        const next = [...source];
 
         if (existingIndex >= 0) {
           next[existingIndex] = message;
         } else if (optimisticIndex >= 0) {
-          next[optimisticIndex] = message;
+          const nextOptimisticIndex = next.findIndex(
+            (item) =>
+              item.id.startsWith('optimistic-') &&
+              item.senderType === message.senderType &&
+              item.text === message.text,
+          );
+          if (nextOptimisticIndex >= 0) next[nextOptimisticIndex] = message;
         } else {
           next.push(message);
         }
@@ -96,6 +117,71 @@ export function useCaseChatSocket(caseId: string, guestSessionId?: string | null
       });
     },
     [queryClient, queryKey],
+  );
+
+  const addPendingResponse = useCallback(() => {
+    const previousPendingId = pendingResponseIdRef.current;
+    const id = `pending-ai-${Date.now()}`;
+    pendingResponseIdRef.current = id;
+    setIsAwaitingResponse(true);
+
+    queryClient.setQueryData<ChatMessage[]>(queryKey, (current = []) => {
+      const withoutPending = previousPendingId
+        ? current.filter((item) => item.id !== previousPendingId)
+        : current;
+
+      return [...withoutPending, createPendingResponseMessage(id, caseId)].sort(
+        (a, b) => Date.parse(a.sentAt) - Date.parse(b.sentAt),
+      );
+    });
+  }, [caseId, queryClient, queryKey]);
+
+  const removePendingResponse = useCallback(() => {
+    const id = pendingResponseIdRef.current;
+    pendingResponseIdRef.current = null;
+    setIsAwaitingResponse(false);
+
+    if (!id) return;
+
+    queryClient.setQueryData<ChatMessage[]>(queryKey, (current = []) =>
+      current.filter((item) => item.id !== id),
+    );
+  }, [queryClient, queryKey]);
+
+  const clearResponseSettleTimer = useCallback(() => {
+    if (responseSettleTimerRef.current !== null) {
+      clearTimeout(responseSettleTimerRef.current);
+      responseSettleTimerRef.current = null;
+    }
+  }, []);
+
+  const flushBufferedResponse = useCallback(() => {
+    clearResponseSettleTimer();
+
+    const streamed = streamingRef.current;
+    streamingRef.current = null;
+
+    if (streamed?.text.trim()) {
+      upsertMessage(createStreamingMessage(streamed.id, streamed.text.trim(), caseId));
+    } else {
+      removePendingResponse();
+    }
+  }, [caseId, clearResponseSettleTimer, removePendingResponse, upsertMessage]);
+
+  const bufferAiResponse = useCallback(
+    (text: string) => {
+      if (!text) return;
+
+      if (!streamingRef.current) {
+        streamingRef.current = { id: `streaming-ai-${Date.now()}`, text };
+      } else {
+        streamingRef.current.text = mergeResponseText(streamingRef.current.text, text);
+      }
+
+      clearResponseSettleTimer();
+      responseSettleTimerRef.current = setTimeout(flushBufferedResponse, RESPONSE_SETTLE_DELAY_MS);
+    },
+    [clearResponseSettleTimer, flushBufferedResponse],
   );
 
   const connectRef = useRef<(() => void) | null>(null);
@@ -137,29 +223,39 @@ export function useCaseChatSocket(caseId: string, guestSessionId?: string | null
             const text = getSocketText(p);
             if (!text) continue;
 
-            if (!streamingRef.current) {
-              const id = `streaming-ai-${Date.now()}`;
-              streamingRef.current = { id, text };
-              upsertMessage(createStreamingMessage(id, text, caseId));
-            } else {
-              streamingRef.current.text += text;
-              upsertMessage(
-                createStreamingMessage(streamingRef.current.id, streamingRef.current.text, caseId),
-              );
-            }
+            bufferAiResponse(text);
             continue;
           }
 
           if (type === 'stream_end' || type === 'message_complete') {
-            streamingRef.current = null;
+            const text = getSocketText(p);
+            if (text) bufferAiResponse(text);
+            flushBufferedResponse();
             continue;
           }
 
-          streamingRef.current = null;
+          if (type === 'error') {
+            clearResponseSettleTimer();
+            streamingRef.current = null;
+            removePendingResponse();
+            continue;
+          }
+
           const messages = normalizeSocketPayload(p, caseId);
           if (messages.length > 0) {
-            messages.forEach(upsertMessage);
-            queryClient.invalidateQueries({ queryKey });
+            const bufferedAnyMessage = messages.some((message) => {
+              if (pendingResponseIdRef.current && message.senderType === 'ai') {
+                bufferAiResponse(message.text);
+                return true;
+              }
+
+              upsertMessage(message);
+              return false;
+            });
+
+            if (!bufferedAnyMessage) {
+              queryClient.invalidateQueries({ queryKey });
+            }
           }
         }
       };
@@ -167,7 +263,9 @@ export function useCaseChatSocket(caseId: string, guestSessionId?: string | null
       function scheduleReconnect() {
         if (socketRef.current !== socket) return;
         socketRef.current = null;
+        clearResponseSettleTimer();
         streamingRef.current = null;
+        removePendingResponse();
 
         const attempts = reconnectAttemptsRef.current;
         if (attempts < RECONNECT_MAX_ATTEMPTS && canUseSocket) {
@@ -202,10 +300,23 @@ export function useCaseChatSocket(caseId: string, guestSessionId?: string | null
       }
       const s = socketRef.current;
       socketRef.current = null;
+      clearResponseSettleTimer();
       streamingRef.current = null;
+      removePendingResponse();
       if (s) s.close();
     };
-  }, [accessToken, canUseSocket, caseId, queryClient, queryKey, upsertMessage]);
+  }, [
+    accessToken,
+    canUseSocket,
+    caseId,
+    bufferAiResponse,
+    clearResponseSettleTimer,
+    flushBufferedResponse,
+    queryClient,
+    queryKey,
+    removePendingResponse,
+    upsertMessage,
+  ]);
 
   const sendLiveMessage = useCallback(
     async (message: string) => {
@@ -218,6 +329,7 @@ export function useCaseChatSocket(caseId: string, guestSessionId?: string | null
       try {
         const optimisticMessage = createLocalChatMessage(caseId, message);
         upsertMessage(optimisticMessage);
+        addPendingResponse();
         socketRef.current.send(
           JSON.stringify({
             type: 'message',
@@ -228,17 +340,18 @@ export function useCaseChatSocket(caseId: string, guestSessionId?: string | null
         );
         return true;
       } catch {
+        removePendingResponse();
         return false;
       } finally {
         setIsSending(false);
       }
     },
-    [accessToken, caseId, upsertMessage],
+    [accessToken, addPendingResponse, caseId, removePendingResponse, upsertMessage],
   );
 
   return {
     isConnected: status === 'connected',
-    isSending,
+    isSending: isSending || isAwaitingResponse,
     reconnectAttempts: reconnectAttemptsRef.current,
     sendLiveMessage,
     status,
@@ -262,6 +375,27 @@ function createStreamingMessage(id: string, text: string, caseId: string): ChatM
     userId: null,
     sentAt: new Date().toISOString(),
   };
+}
+
+function createPendingResponseMessage(id: string, caseId: string): ChatMessage {
+  return {
+    id,
+    senderType: 'ai',
+    content: { isPendingResponse: true, message: 'Flo is thinking...' },
+    text: 'Flo is thinking...',
+    medicalCaseId: caseId,
+    userId: null,
+    sentAt: new Date().toISOString(),
+  };
+}
+
+function mergeResponseText(current: string, incoming: string) {
+  if (!current) return incoming;
+  if (!incoming) return current;
+  if (incoming.startsWith(current)) return incoming;
+  if (current.endsWith(incoming)) return current;
+
+  return `${current}${incoming}`;
 }
 
 export function parseSocketPayload(data: unknown) {
