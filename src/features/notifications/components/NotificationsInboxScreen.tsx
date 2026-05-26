@@ -1,43 +1,48 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, FlatList, Image, Pressable, StyleSheet, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Animated,
+  FlatList,
+  Image,
+  Pressable,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
-interface AppNotification {
-  id: string;
-  title: string;
-  description: string;
-  time: string;
-  read: boolean;
+import { notificationsApi } from '../api/notifications.api';
+import type { Notification } from '../api/notifications.types';
+import {
+  NOTIFICATIONS_KEY,
+  UNREAD_COUNT_KEY,
+  useMarkRead,
+  useNotifications,
+} from '../hooks/useNotifications';
+
+function relativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
 }
 
-const MOCK_NOTIFICATIONS: AppNotification[] = [
-  {
-    id: '1',
-    title: 'AI Analysis Complete',
-    description: 'Your lab results have been simplified and are ready to view.',
-    time: '12m ago',
-    read: false,
-  },
-  {
-    id: '2',
-    title: 'Processing Your Report',
-    description: 'AI is currently analyzing your lab results.',
-    time: '12m ago',
-    read: false,
-  },
-  {
-    id: '3',
-    title: 'Report Uploaded',
-    description: 'Your lab report has been uploaded successfully.',
-    time: '12m ago',
-    read: false,
-  },
-];
+function notificationDescription(n: Notification): string {
+  if (n.message && typeof n.message.text === 'string') return n.message.text;
+  if (n.type === 'interpretation_ready')
+    return 'Your lab results have been simplified and are ready to view.';
+  if (n.type === 'interpretation_failed')
+    return 'We were unable to process your lab results. Please try again.';
+  return '';
+}
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
 
@@ -96,20 +101,29 @@ function EmptyState() {
 
 // ─── Notification item ────────────────────────────────────────────────────────
 
-function NotificationItem({ item }: { item: AppNotification }) {
+function NotificationItem({ item }: { item: Notification }) {
   const { colors } = useTheme();
+  const { mutate: markRead } = useMarkRead();
+
+  const handlePress = () => {
+    if (!item.isRead) markRead(item.id);
+  };
+
   return (
-    <View style={styles.item}>
-      <Typography variant="body1" style={styles.itemTitle}>
-        {item.title}
-      </Typography>
-      <Typography variant="body2" color={colors.textSecondary}>
-        {item.description}
-      </Typography>
-      <Typography variant="body2" color={colors.textSecondary} style={styles.itemTime}>
-        {item.time}
-      </Typography>
-    </View>
+    <Pressable onPress={handlePress} style={styles.item}>
+      {!item.isRead && <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />}
+      <View style={styles.itemContent}>
+        <Typography variant="body1" style={styles.itemTitle}>
+          {item.title}
+        </Typography>
+        <Typography variant="body2" color={colors.textSecondary}>
+          {notificationDescription(item)}
+        </Typography>
+        <Typography variant="body2" color={colors.textSecondary} style={styles.itemTime}>
+          {relativeTime(item.createdAt)}
+        </Typography>
+      </View>
+    </Pressable>
   );
 }
 
@@ -118,18 +132,30 @@ function NotificationItem({ item }: { item: AppNotification }) {
 export function NotificationsInboxScreen() {
   const { colors } = useTheme();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
-  const [notifications, setNotifications] = useState<AppNotification[]>(MOCK_NOTIFICATIONS);
+  const { data: notifications = [], isLoading } = useNotifications();
   const [showToast, setShowToast] = useState(false);
+  const [markingAll, setMarkingAll] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const hasUnread = notifications.some((n) => !n.read);
+  const hasUnread = notifications.some((n) => !n.isRead);
 
-  const handleMarkAllRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    setShowToast(true);
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setShowToast(false), 3000);
+  const handleMarkAllRead = async () => {
+    const unread = notifications.filter((n) => !n.isRead);
+    if (!unread.length) return;
+
+    setMarkingAll(true);
+    try {
+      await Promise.all(unread.map((n) => notificationsApi.markRead(n.id)));
+      queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_KEY });
+      queryClient.invalidateQueries({ queryKey: UNREAD_COUNT_KEY });
+      setShowToast(true);
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+      toastTimer.current = setTimeout(() => setShowToast(false), 3000);
+    } finally {
+      setMarkingAll(false);
+    }
   };
 
   useEffect(() => {
@@ -138,7 +164,7 @@ export function NotificationsInboxScreen() {
     };
   }, []);
 
-  const isEmpty = notifications.length === 0;
+  const isEmpty = !isLoading && notifications.length === 0;
 
   return (
     <SafeAreaView style={[styles.fill, { backgroundColor: colors.surface }]} edges={['top']}>
@@ -153,7 +179,11 @@ export function NotificationsInboxScreen() {
         <View style={styles.headerSpacer} />
       </View>
 
-      {isEmpty ? (
+      {isLoading ? (
+        <View style={styles.loader}>
+          <ActivityIndicator color={colors.primary} />
+        </View>
+      ) : isEmpty ? (
         <EmptyState />
       ) : (
         <>
@@ -169,9 +199,9 @@ export function NotificationsInboxScreen() {
                   Today
                 </Typography>
                 {hasUnread && (
-                  <Pressable onPress={handleMarkAllRead} hitSlop={8}>
+                  <Pressable onPress={handleMarkAllRead} hitSlop={8} disabled={markingAll}>
                     <Typography variant="body2" color={colors.textSecondary}>
-                      Mark as read
+                      {markingAll ? 'Marking…' : 'Mark as read'}
                     </Typography>
                   </Pressable>
                 )}
@@ -199,6 +229,8 @@ const styles = StyleSheet.create({
   backButton: { width: 32, alignItems: 'flex-start', justifyContent: 'center' },
   headerTitle: { flex: 1, textAlign: 'center', fontWeight: '500' },
   headerSpacer: { width: 32 },
+
+  loader: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
   // Toast
   toast: {
@@ -235,9 +267,19 @@ const styles = StyleSheet.create({
   todayLabel: { fontWeight: '700' },
 
   item: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     paddingVertical: 18,
-    gap: 4,
+    gap: 10,
   },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginTop: 6,
+    flexShrink: 0,
+  },
+  itemContent: { flex: 1, gap: 4 },
   itemTitle: { fontWeight: '700' },
   itemTime: { marginTop: 2 },
 

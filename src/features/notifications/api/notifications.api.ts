@@ -1,0 +1,103 @@
+import { client } from '@/shared/api/client';
+
+import type {
+  ListNotificationsParams,
+  Notification,
+  NotificationPreferences,
+  UpdatePreferencesRequest,
+} from './notifications.types';
+
+interface ApiSuccessResponse<T> {
+  status: string;
+  message: string;
+  data: T | null;
+}
+
+interface BackendNotification {
+  id: string;
+  type: string;
+  title: string;
+  message: Record<string, unknown> | null;
+  data: Record<string, unknown> | null;
+  medical_case_id: string | null;
+  user_id: string;
+  is_read: boolean;
+  read_at: string | null;
+  delivered_at: string | null;
+  created_at: string;
+}
+
+interface BackendPreferences {
+  notify_on_complete: boolean;
+}
+
+function mapNotification(raw: BackendNotification): Notification {
+  return {
+    id: raw.id,
+    type: raw.type as Notification['type'],
+    title: raw.title,
+    message: raw.message,
+    data: raw.data,
+    medicalCaseId: raw.medical_case_id,
+    userId: raw.user_id,
+    isRead: raw.is_read,
+    readAt: raw.read_at,
+    deliveredAt: raw.delivered_at,
+    createdAt: raw.created_at,
+  };
+}
+
+function mapPreferences(raw: BackendPreferences): NotificationPreferences {
+  return { notifyOnComplete: raw.notify_on_complete };
+}
+
+async function list(params?: ListNotificationsParams): Promise<Notification[]> {
+  const { data } = await client.get<ApiSuccessResponse<BackendNotification[]>>(
+    '/api/v1/notifications',
+    {
+      params: {
+        unread_only: params?.unreadOnly,
+        offset: params?.offset,
+        limit: params?.limit,
+      },
+    },
+  );
+  return (data.data ?? []).map(mapNotification);
+}
+
+async function getUnreadCount(): Promise<number> {
+  const { data } = await client.get<ApiSuccessResponse<{ unread_count: number }>>(
+    '/api/v1/notifications/unread-count',
+  );
+  return data.data?.unread_count ?? 0;
+}
+
+async function markRead(notificationId: string): Promise<Notification> {
+  const { data } = await client.patch<ApiSuccessResponse<BackendNotification>>(
+    `/api/v1/notifications/${notificationId}/read`,
+  );
+  return mapNotification(data.data!);
+}
+
+async function getPreferences(): Promise<NotificationPreferences> {
+  const { data } = await client.get<ApiSuccessResponse<BackendPreferences>>(
+    '/api/v1/notifications/preferences',
+  );
+  return mapPreferences(data.data!);
+}
+
+async function updatePreferences(req: UpdatePreferencesRequest): Promise<NotificationPreferences> {
+  const { data } = await client.patch<ApiSuccessResponse<BackendPreferences>>(
+    '/api/v1/notifications/preferences',
+    { notify_on_complete: req.notifyOnComplete },
+  );
+  return mapPreferences(data.data!);
+}
+
+export const notificationsApi = {
+  list,
+  getUnreadCount,
+  markRead,
+  getPreferences,
+  updatePreferences,
+};

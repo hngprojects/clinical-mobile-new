@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Switch, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -8,15 +8,28 @@ import { Ionicons } from '@expo/vector-icons';
 import { Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
+import {
+  useNotificationPreferences,
+  useUpdateNotificationPreferences,
+} from '../hooks/useNotifications';
+
 interface ToggleRowProps {
   title: string;
   description?: string;
   value: boolean;
   onToggle: (v: boolean) => void;
+  disabled?: boolean;
   showDivider?: boolean;
 }
 
-function ToggleRow({ title, description, value, onToggle, showDivider = true }: ToggleRowProps) {
+function ToggleRow({
+  title,
+  description,
+  value,
+  onToggle,
+  disabled,
+  showDivider = true,
+}: ToggleRowProps) {
   const { colors } = useTheme();
 
   return (
@@ -35,6 +48,7 @@ function ToggleRow({ title, description, value, onToggle, showDivider = true }: 
         <Switch
           value={value}
           onValueChange={onToggle}
+          disabled={disabled}
           trackColor={{ false: colors.border, true: colors.primary }}
           thumbColor="#FFFFFF"
         />
@@ -48,9 +62,23 @@ export function NotificationsSettingsScreen() {
   const { colors } = useTheme();
   const router = useRouter();
 
+  const { data: preferences } = useNotificationPreferences();
+  const { mutate: updatePreferences, isPending } = useUpdateNotificationPreferences();
+
   const [aiInsights, setAiInsights] = useState(true);
   const [mobilePush, setMobilePush] = useState(true);
   const [emailNotifs, setEmailNotifs] = useState(true);
+
+  useEffect(() => {
+    if (preferences) {
+      setAiInsights(preferences.notifyOnComplete);
+    }
+  }, [preferences]);
+
+  const handleAiInsightsToggle = (value: boolean) => {
+    setAiInsights(value);
+    updatePreferences({ notifyOnComplete: value });
+  };
 
   return (
     <SafeAreaView style={[styles.fill, { backgroundColor: colors.surface }]} edges={['top']}>
@@ -83,7 +111,8 @@ export function NotificationsSettingsScreen() {
             title="AI Insights"
             description="Get notified when your analysis is ready."
             value={aiInsights}
-            onToggle={setAiInsights}
+            onToggle={handleAiInsightsToggle}
+            disabled={isPending}
           />
           <ToggleRow
             title="Mobile push notifications"
