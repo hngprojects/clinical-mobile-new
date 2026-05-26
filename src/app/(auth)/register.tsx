@@ -1,23 +1,53 @@
 import { router, Stack } from 'expo-router';
-import React, { useState } from 'react';
-import { View, Pressable } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { RegisterForm, useGuestUploadSession } from '@/features/auth';
+import { useRegister } from '@/features/auth/hooks/useRegister';
 import { Screen, Typography, UploadBottomSheet } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 export default function RegisterScreen() {
   const { spacing, colors } = useTheme();
+  const registerMutation = useRegister();
   const { handleUpload, handleUploadError } = useGuestUploadSession();
   const [showUploadSheet, setShowUploadSheet] = useState(false);
+  const bannerY = useSharedValue(-100);
 
   const handleContinueAsGuest = () => {
     setShowUploadSheet(true);
   };
 
+  useEffect(() => {
+    if (registerMutation.error) {
+      bannerY.value = withTiming(0, { duration: 300 });
+      const timeout = setTimeout(() => {
+        bannerY.value = withTiming(-100, { duration: 300 });
+      }, 5000);
+      return () => clearTimeout(timeout);
+    }
+
+    bannerY.value = withTiming(-100, { duration: 300 });
+  }, [registerMutation.error, bannerY]);
+
+  const animatedBannerStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: bannerY.value }],
+    opacity: withTiming(bannerY.value === 0 ? 1 : 0),
+  }));
+
   return (
     <>
       <Stack.Screen options={{ title: 'Create Account', headerShown: false }} />
+
+      <View style={styles.bannerContainer}>
+        <Animated.View style={[styles.errorBanner, animatedBannerStyle]}>
+          <Typography style={styles.errorBannerText}>
+            {registerMutation.error?.message ||
+              'Something went wrong. Please check your details and try again.'}
+          </Typography>
+        </Animated.View>
+      </View>
 
       <Screen
         scrollable
@@ -26,86 +56,37 @@ export default function RegisterScreen() {
         style={{ backgroundColor: '#FFFFFF' }}
         keyboardAvoiding
       >
-        <View style={{ marginTop: spacing.lg, marginBottom: spacing.xl }}>
-          <Typography variant="h1" style={{ fontWeight: '700', marginBottom: 4 }}>
+        <View style={{ marginTop: spacing.xxl, marginBottom: spacing.xl }}>
+          <Typography variant="h1" style={{ fontWeight: '700' }}>
             Create Account
           </Typography>
-          <Typography variant="body1" style={{ color: colors.textSecondary }}>
-            Join Clinsight and start managing your clinics
+          <Typography variant="body1" style={{ color: colors.textSecondary, marginTop: 4 }}>
+            Insert your details to create your account in minutes
           </Typography>
         </View>
 
-        <RegisterForm onContinueAsGuest={handleContinueAsGuest} />
+        <RegisterForm mutation={registerMutation} onContinueAsGuest={handleContinueAsGuest} />
 
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'center',
-            marginTop: 16,
-            marginBottom: 40,
-          }}
-        >
-          <Typography
-            style={{
-              color: colors.textSecondary,
-              fontFamily: 'Inter_400Regular',
-              fontSize: 14,
-              lineHeight: 21,
-              letterSpacing: -0.14,
-            }}
-          >
-            Already have an account?{' '}
-          </Typography>
+        <View style={styles.footer}>
+          <Typography style={styles.footerText}>Already have an account? </Typography>
           <Pressable onPress={() => router.push('/(auth)/login')}>
-            <Typography
-              style={{
-                color: colors.primary,
-                fontFamily: 'Inter_400Regular',
-                fontSize: 14,
-                lineHeight: 21,
-                letterSpacing: -0.14,
-                textDecorationLine: 'underline',
-              }}
-            >
-              Log In
+            <Typography style={[styles.footerText, { color: colors.primary }, styles.footerLink]}>
+              Login
             </Typography>
           </Pressable>
         </View>
 
-        <View
-          style={{
-            alignItems: 'center',
-            marginTop: 10,
-            marginBottom: 20,
-          }}
-        >
-          <Typography
-            style={{
-              fontFamily: 'Inter_400Regular',
-              fontSize: 14,
-              lineHeight: 21,
-              letterSpacing: -0.14,
-            }}
-          >
-            By continuing, you have read and agreed to ClinSight&apos;s.{' '}
-          </Typography>
-          <Pressable
-            onPress={() => router.push('/(legal)/terms-and-condition')}
-            accessibilityRole="link"
-          >
-            <Typography
-              style={{
-                color: colors.primary,
-                fontFamily: 'Inter_400Regular',
-                fontSize: 14,
-                lineHeight: 21,
-                letterSpacing: -0.14,
-                textDecorationLine: 'underline',
-              }}
+        <View style={styles.legalContainer}>
+          <Text style={styles.legalText}>
+            By continuing, you have read and agreed to ClinSight&apos;s{' '}
+            <Text
+              style={styles.legalLink}
+              onPress={() => router.push('/(legal)/terms-and-condition')}
+              accessibilityRole="link"
             >
-              Terms and Conditions
-            </Typography>
-          </Pressable>
+              Terms and Conditions.
+            </Text>
+          </Text>
         </View>
       </Screen>
 
@@ -118,3 +99,65 @@ export default function RegisterScreen() {
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  bannerContainer: {
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 54,
+    zIndex: 1000,
+  },
+  errorBanner: {
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    borderBottomColor: '#F0F0F0',
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    gap: 10,
+    height: 56,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  errorBannerText: {
+    color: '#494949',
+    fontFamily: 'Inter_400Regular',
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: 'center',
+  },
+  footer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 20,
+    marginTop: 40,
+  },
+  footerText: {
+    color: '#767676',
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+    letterSpacing: -0.14,
+    lineHeight: 21,
+  },
+  footerLink: {
+    textDecorationLine: 'underline',
+  },
+  legalContainer: {
+    marginBottom: 24,
+    paddingHorizontal: 8,
+  },
+  legalText: {
+    color: '#1B1B1B',
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+    letterSpacing: -0.14,
+    lineHeight: 21,
+    textAlign: 'center',
+  },
+  legalLink: {
+    color: '#1565C0',
+    textDecorationLine: 'underline',
+  },
+});

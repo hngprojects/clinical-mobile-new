@@ -25,13 +25,15 @@ export function InsightListRenderItem({ item, onRename, onDelete }: InsightListR
   }, [toastVisible]);
 
   const openChatReview = useCallback(() => {
-    if (!item.caseId) {
+    const caseId = item.caseId ?? item.id;
+
+    if (!caseId) {
       setToastVisible(true);
       return;
     }
 
-    router.push({ pathname: '/(main)/chat-review', params: { caseId: item.caseId } });
-  }, [item.caseId, router]);
+    router.push({ pathname: '/(main)/chat-review', params: { caseId } });
+  }, [item.caseId, item.id, router]);
 
   return (
     <>

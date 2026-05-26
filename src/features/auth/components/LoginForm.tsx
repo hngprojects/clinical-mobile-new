@@ -1,6 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 
@@ -9,6 +8,8 @@ import { useTheme } from '@/shared/theme';
 
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { LoginFormData, loginSchema } from '../schemas/auth.schemas';
+
+import { PasswordField } from './PasswordField';
 
 interface LoginFormProps {
   mutation: {
@@ -28,7 +29,6 @@ export function LoginForm({
 }: LoginFormProps) {
   const { colors, spacing } = useTheme();
   const { mutate: login, isPending } = mutation;
-  const [showPassword, setShowPassword] = useState(false);
   const passwordRef = useRef<any>(null);
 
   const {
@@ -43,6 +43,7 @@ export function LoginForm({
       const t = setTimeout(clearGoogleError, 5000);
       return () => clearTimeout(t);
     }
+    return undefined;
   }, [googleError, clearGoogleError]);
 
   const { control, handleSubmit } = useForm<LoginFormData>({
@@ -79,39 +80,18 @@ export function LoginForm({
         />
 
         <View>
-          <FormField
+          <PasswordField
             ref={passwordRef}
             control={control}
             name="password"
             label="Password"
-            secureTextEntry={!showPassword}
-            textContentType="password"
             placeholder="Enter your password"
             onFocus={onInteract}
             returnKeyType="done"
             onSubmitEditing={handleSubmit(onSubmit)}
-            rightIcon={
-              <Pressable onPress={() => setShowPassword(!showPassword)}>
-                <Ionicons
-                  name={showPassword ? 'eye-outline' : 'eye-off-outline'}
-                  size={20}
-                  color="#1B1B1B"
-                />
-              </Pressable>
-            }
           />
           <Pressable style={styles.forgotPassword} onPress={onForgotPassword}>
-            <Typography
-              variant="body2"
-              color={colors.primary}
-              style={{
-                fontWeight: '400',
-                textDecorationLine: 'underline',
-                lineHeight: 21,
-                letterSpacing: -0.14,
-                marginTop: 6,
-              }}
-            >
+            <Typography variant="body2" color={colors.primary} style={styles.forgotPasswordText}>
               Forgot Password?
             </Typography>
           </Pressable>
@@ -127,18 +107,7 @@ export function LoginForm({
 
         <View style={styles.separatorContainer}>
           <View style={[styles.line, { backgroundColor: '#F0F0F0' }]} />
-          <Typography
-            style={{
-              paddingHorizontal: 16,
-              color: '#767676',
-              fontFamily: 'Inter_500Medium',
-              fontSize: 14,
-              lineHeight: 21,
-              letterSpacing: -0.14,
-            }}
-          >
-            or
-          </Typography>
+          <Typography style={styles.separatorText}>or</Typography>
           <View style={[styles.line, { backgroundColor: '#F0F0F0' }]} />
         </View>
 
@@ -175,54 +144,42 @@ export function LoginForm({
   );
 }
 
-export function ValidationItem({ label, isValid }: { label: string; isValid: boolean }) {
-  return (
-    <View style={styles.validationItem}>
-      <Typography
-        style={{
-          color: isValid ? '#10B981' : '#767676',
-          fontFamily: 'Inter_400Regular',
-          fontSize: 13,
-          lineHeight: 19.5,
-          letterSpacing: -0.13,
-        }}
-      >
-        {isValid ? '✓' : '✕'} {label}
-      </Typography>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   container: { width: '100%' },
   forgotPassword: {
     alignSelf: 'flex-end',
   },
-  validationList: {
-    gap: 4,
-    marginTop: 8,
-    marginBottom: 0,
-  },
-  validationItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  separatorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 16,
+  forgotPasswordText: {
+    fontWeight: '400',
+    letterSpacing: -0.14,
+    lineHeight: 21,
+    marginTop: 6,
+    textDecorationLine: 'underline',
   },
   line: {
     flex: 1,
     height: 1,
   },
+  separatorContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginBottom: 16,
+    marginTop: 16,
+  },
+  separatorText: {
+    color: '#767676',
+    fontFamily: 'Inter_500Medium',
+    fontSize: 14,
+    letterSpacing: -0.14,
+    lineHeight: 21,
+    paddingHorizontal: 16,
+  },
   socialIconButton: {
-    paddingVertical: 15,
-    paddingHorizontal: 24,
+    backgroundColor: '#FFFFFF',
+    borderColor: '#D0D0D0',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#D0D0D0',
-    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 24,
+    paddingVertical: 15,
   },
 });

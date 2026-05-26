@@ -1,4 +1,5 @@
 import * as Linking from 'expo-linking';
+import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useCallback, useState } from 'react';
 
@@ -10,7 +11,7 @@ import { useAuthStore } from '../store/auth.store';
 const GOOGLE_AUTH_PATH = '/api/v1/auth/google';
 const GOOGLE_AUTH_REDIRECT_URL = 'clinsight://auth/google';
 const ACCESS_TOKEN_KEYS = ['access_token', 'token', 'accessToken'];
-const REFRESH_TOKEN_KEYS = ['refresh_token', 'refreshToken']; // cookie-based; may not be in URL
+const REFRESH_TOKEN_KEYS = ['refresh_token', 'refreshToken'];
 
 type UrlQueryParams = NonNullable<ReturnType<typeof Linking.parse>['queryParams']>;
 
@@ -104,9 +105,11 @@ export function useGoogleAuth(flow: 'signin' | 'signup' = 'signin') {
         }
 
         useAuthStore.getState().setTokens(tokens);
+
         try {
           const userProfile = await authApi.getMe();
           useAuthStore.getState().setSession(tokens, userProfile);
+          router.replace('/(main)');
           return { success: true };
         } catch {
           useAuthStore.getState().clearSession();

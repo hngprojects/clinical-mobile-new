@@ -38,7 +38,23 @@ export const registerSchema = z
     path: ['confirmPassword'],
   });
 
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'Current password is required'),
+    newPassword: passwordPolicySchema,
+    confirmNewPassword: z.string(),
+  })
+  .refine((d) => d.newPassword === d.confirmNewPassword, {
+    message: "Passwords don't match",
+    path: ['confirmNewPassword'],
+  })
+  .refine((d) => d.currentPassword !== d.newPassword, {
+    message: 'New password must be different from your current password',
+    path: ['newPassword'],
+  });
+
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 export type CompletePasswordResetFormData = z.infer<typeof completePasswordResetSchema>;
 export type RegisterFormData = z.infer<typeof registerSchema>;
+export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;

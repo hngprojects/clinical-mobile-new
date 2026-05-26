@@ -1,14 +1,18 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 
 import type { InsightListItem } from '../api/types';
 import { DUMMY_INSIGHT_LIST } from '../data/dummyInsights';
 
 const SEARCH_DEBOUNCE_MS = 420;
 
-export function useInsightList() {
+export function useInsightList(initialItems: InsightListItem[] = DUMMY_INSIGHT_LIST) {
   const [query, setQuery] = useState('');
-  const [items, setItems] = useState<InsightListItem[]>(() => [...DUMMY_INSIGHT_LIST]);
+  const [items, setItems] = useState<InsightListItem[]>(() => [...initialItems]);
   const [isSearching, setIsSearching] = useState(false);
+
+  useLayoutEffect(() => {
+    setItems([...initialItems]);
+  }, [initialItems]);
 
   useEffect(() => {
     const trimmed = query.trim();
