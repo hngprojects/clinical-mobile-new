@@ -150,9 +150,15 @@ function ToastCard({
   const { colors } = useTheme();
   const slideAnim = useRef(new Animated.Value(-160)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
+  const animationRunRef = useRef(0);
   const [renderVisible, setRenderVisible] = useState(visible);
 
   useEffect(() => {
+    animationRunRef.current += 1;
+    const animationRun = animationRunRef.current;
+    slideAnim.stopAnimation();
+    opacityAnim.stopAnimation();
+
     if (visible) {
       setRenderVisible(true);
       Animated.parallel([
@@ -169,6 +175,8 @@ function ToastCard({
         Animated.timing(slideAnim, { toValue: -160, duration: 250, useNativeDriver: true }),
         Animated.timing(opacityAnim, { toValue: 0, duration: 250, useNativeDriver: true }),
       ]).start(() => {
+        if (animationRunRef.current !== animationRun) return;
+
         setRenderVisible(false);
         if (id) onExitComplete?.(id);
       });
@@ -180,10 +188,10 @@ function ToastCard({
       ? colors.successSubtle
       : variant === 'error'
         ? colors.errorSubtle
-        : '#F5F5F5';
+        : colors.surfaceMuted;
 
   const iconBgColor =
-    variant === 'success' ? colors.success : variant === 'error' ? colors.error : '#767676';
+    variant === 'success' ? colors.success : variant === 'error' ? colors.error : colors.primary;
 
   if (!renderVisible) return null;
 

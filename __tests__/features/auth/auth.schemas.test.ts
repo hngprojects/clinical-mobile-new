@@ -12,6 +12,10 @@ describe('loginSchema', () => {
     ).toBe(true);
   });
 
+  it('accepts a short non-empty password', () => {
+    expect(loginSchema.safeParse({ email: 'test@example.com', password: 'a' }).success).toBe(true);
+  });
+
   it('rejects invalid email', () => {
     expect(loginSchema.safeParse({ email: 'not-an-email', password: 'Password1' }).success).toBe(
       false,

@@ -15,7 +15,11 @@ export function AuthFeedbackToast() {
   const [errorVisible, setErrorVisible] = useState(false);
 
   useEffect(() => {
-    if (!successMessage) return undefined;
+    if (!successMessage) {
+      setSuccessVisible(false);
+      return undefined;
+    }
+
     setSuccessVisible(true);
     const hideTimer = setTimeout(() => setSuccessVisible(false), 3500);
     const clearTimer = setTimeout(clearSuccessMessage, 3500 + TOAST_EXIT_ANIMATION_MS);
@@ -27,7 +31,11 @@ export function AuthFeedbackToast() {
   }, [clearSuccessMessage, successMessage]);
 
   useEffect(() => {
-    if (!errorMessage) return undefined;
+    if (!errorMessage) {
+      setErrorVisible(false);
+      return undefined;
+    }
+
     setErrorVisible(true);
     const hideTimer = setTimeout(() => setErrorVisible(false), 4000);
     const clearTimer = setTimeout(clearErrorMessage, 4000 + TOAST_EXIT_ANIMATION_MS);

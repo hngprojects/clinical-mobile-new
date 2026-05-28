@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Keyboard,
@@ -67,6 +67,7 @@ export function VerifyOtp({
   const [expiredToastVisible, setExpiredToastVisible] = useState(false);
 
   const inputRef = useRef<RNTextInput>(null);
+  const resendToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isFocused, setIsFocused] = useState(false);
 
   useEffect(() => {
@@ -110,24 +111,41 @@ export function VerifyOtp({
     }
   }, [verifyOtpMutation.isSuccess]);
 
-  const showResendToast = (message: string, variant: 'success' | 'error') => {
+  useEffect(
+    () => () => {
+      if (resendToastTimerRef.current !== null) {
+        clearTimeout(resendToastTimerRef.current);
+      }
+    },
+    [],
+  );
+
+  const showResendToast = useCallback((message: string, variant: 'success' | 'error') => {
     setResendToastMessage(message);
     setResendToastVariant(variant);
     setResendToastVisible(true);
-    setTimeout(() => setResendToastVisible(false), 4000);
-  };
+
+    if (resendToastTimerRef.current !== null) {
+      clearTimeout(resendToastTimerRef.current);
+    }
+
+    resendToastTimerRef.current = setTimeout(() => {
+      setResendToastVisible(false);
+      resendToastTimerRef.current = null;
+    }, 4000);
+  }, []);
 
   useEffect(() => {
     if (resendOtpMutation.isError || resetPasswordMutation.isError) {
       showResendToast("Couldn't resend the code. Please try again.", 'error');
     }
-  }, [resendOtpMutation.isError, resetPasswordMutation.isError]);
+  }, [resendOtpMutation.isError, resetPasswordMutation.isError, showResendToast]);
 
   useEffect(() => {
     if (resendOtpMutation.isSuccess || resetPasswordMutation.isSuccess) {
       showResendToast('A new code has been sent to your email.', 'success');
     }
-  }, [resendOtpMutation.isSuccess, resetPasswordMutation.isSuccess]);
+  }, [resendOtpMutation.isSuccess, resetPasswordMutation.isSuccess, showResendToast]);
 
   const handleVerify = () => {
     if (code.length !== CODE_LENGTH) return;
