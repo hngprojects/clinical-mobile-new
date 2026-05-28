@@ -26,6 +26,22 @@ export function registerAuthStore(store: AuthStateAccessor) {
   getAuthState = store;
 }
 
+async function refreshAccessToken() {
+  const { authApi } = await import('@/features/auth/api/auth.api');
+  return authApi.refreshTokens();
+}
+
+async function showSessionExpiredMessage() {
+  try {
+    const { useAuthFeedbackStore } = await import('@/features/auth/store/authFeedback.store');
+    useAuthFeedbackStore
+      .getState()
+      .setErrorMessage('Your session has expired. Please sign in again.');
+  } catch (feedbackError) {
+    if (__DEV__) console.warn('Could not show session expiry feedback:', feedbackError);
+  }
+}
+
 client.interceptors.request.use((config) => {
   const token = getAuthState?.().accessToken;
   if (token) config.headers.Authorization = `Bearer ${token}`;
@@ -53,16 +69,12 @@ client.interceptors.response.use(
       }
 
       try {
-        const { authApi } = await import('@/features/auth/api/auth.api');
-        const newTokens = await authApi.refreshTokens();
+        const newTokens = await refreshAccessToken();
         getAuthState().setTokens(newTokens);
         original.headers.Authorization = `Bearer ${newTokens.accessToken}`;
         return client(original);
       } catch {
-        const { useAuthFeedbackStore } = await import('@/features/auth/store/authFeedback.store');
-        useAuthFeedbackStore
-          .getState()
-          .setErrorMessage('Your session has expired. Please sign in again.');
+        await showSessionExpiredMessage();
         getAuthState().clearSession();
         return Promise.reject(toApiError(error));
       }

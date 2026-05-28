@@ -23,10 +23,13 @@ const CODE_LENGTH = 6;
 
 function maskEmail(email: string): string {
   const atIndex = email.indexOf('@');
-  if (atIndex <= 2) return email;
+  if (atIndex <= 0) return email;
+
   const local = email.slice(0, atIndex);
   const domain = email.slice(atIndex);
+  if (local.length === 1) return `*${domain}`;
   if (local.length <= 3) return `${local[0]}*${local[local.length - 1]}${domain}`;
+
   const stars = '*'.repeat(Math.min(local.length - 3, 3));
   return `${local.slice(0, 2)}${stars}${local[local.length - 1]}${domain}`;
 }

@@ -71,6 +71,8 @@ export function RegisterForm({ mutation, onContinueAsGuest }: RegisterFormProps)
 
   return (
     <View style={styles.container}>
+      <Toast visible={!!googleError} message={googleError ?? ''} variant="error" />
+
       <View style={{ gap: spacing.md }}>
         <FormField
           control={control}
@@ -156,8 +158,6 @@ export function RegisterForm({ mutation, onContinueAsGuest }: RegisterFormProps)
           </Typography>
           <View style={[styles.line, { backgroundColor: '#F0F0F0' }]} />
         </View>
-
-        <Toast visible={!!googleError} message={googleError ?? ''} variant="error" />
 
         <View style={{ gap: 16 }}>
           <Button

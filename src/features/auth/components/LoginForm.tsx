@@ -64,6 +64,8 @@ export function LoginForm({
 
   return (
     <View style={styles.container}>
+      <Toast visible={!!googleError} message={googleError ?? ''} variant="error" />
+
       <View style={{ gap: spacing.md }}>
         <FormField
           control={control}
@@ -131,8 +133,6 @@ export function LoginForm({
           </Typography>
           <View style={[styles.line, { backgroundColor: '#F0F0F0' }]} />
         </View>
-
-        <Toast visible={!!googleError} message={googleError ?? ''} variant="error" />
 
         <View style={{ gap: 16 }}>
           <Button

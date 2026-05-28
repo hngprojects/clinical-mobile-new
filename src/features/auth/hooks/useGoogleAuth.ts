@@ -4,6 +4,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { useCallback, useState } from 'react';
 
 import { env } from '@/shared/constants/env';
+import { wait } from '@/shared/utils/wait';
 
 import { authApi } from '../api/auth.api';
 import { useAuthFeedbackStore } from '../store/authFeedback.store';
@@ -70,10 +71,6 @@ function getAuthErrorFromUrl(url: string) {
   );
 }
 
-function wait(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 export function useGoogleAuth(flow: 'signin' | 'signup' = 'signin') {
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -92,7 +89,6 @@ export function useGoogleAuth(flow: 'signin' | 'signup' = 'signin') {
       const result = await WebBrowser.openAuthSessionAsync(googleAuthUrl, redirectUrl);
 
       if (result.type === 'cancel' || result.type === 'dismiss') {
-        setError(`Google ${action} was cancelled.`);
         return { success: false };
       }
 
@@ -113,13 +109,13 @@ export function useGoogleAuth(flow: 'signin' | 'signup' = 'signin') {
         useAuthStore.getState().setTokens(tokens);
         try {
           const userProfile = await authApi.getMe();
+          useAuthStore.getState().setSession(tokens, userProfile);
           useAuthFeedbackStore
             .getState()
             .setSuccessMessage(
               flow === 'signup' ? 'Google sign-up successful.' : 'Google login successful.',
             );
           await wait(SUCCESS_REDIRECT_DELAY_MS);
-          useAuthStore.getState().setSession(tokens, userProfile);
           router.replace('/(main)');
           return { success: true };
         } catch {
