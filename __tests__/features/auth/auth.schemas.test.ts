@@ -42,6 +42,20 @@ describe('registerSchema', () => {
     );
   });
 
+  it('does not apply password length policy to confirm password separately', () => {
+    const result = registerSchema.safeParse({ ...valid, confirmPassword: 'Short!' });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(
+        result.error.issues.some(
+          (issue) =>
+            issue.path.join('.') === 'confirmPassword' && issue.message === 'Minimum 8 characters',
+        ),
+      ).toBe(false);
+    }
+  });
+
   it('rejects password without uppercase', () => {
     expect(
       registerSchema.safeParse({ ...valid, password: 'password1!', confirmPassword: 'password1!' })

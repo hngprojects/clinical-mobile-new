@@ -107,7 +107,7 @@ function PasswordMatchHint({ isValid }: { isValid: boolean }) {
   return (
     <View style={styles.validationItem}>
       <Ionicons
-        name={isValid ? 'checkmark-circle' : 'close-circle'}
+        name={isValid ? 'checkmark' : 'close'}
         size={14}
         color={isValid ? '#10B981' : '#767676'}
       />
