@@ -106,8 +106,13 @@ export function CompletePasswordResetForm({
 function PasswordMatchHint({ isValid }: { isValid: boolean }) {
   return (
     <View style={styles.validationItem}>
+      <Ionicons
+        name={isValid ? 'checkmark-circle' : 'close-circle'}
+        size={14}
+        color={isValid ? '#10B981' : '#767676'}
+      />
       <Typography style={[styles.validationText, isValid && styles.validationTextValid]}>
-        {isValid ? 'Passed:' : 'Missing:'} Passwords must match
+        Passwords must match
       </Typography>
     </View>
   );
@@ -118,6 +123,7 @@ const styles = StyleSheet.create({
   validationItem: {
     alignItems: 'center',
     flexDirection: 'row',
+    gap: 6,
     marginTop: 8,
   },
   validationText: {

@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -15,8 +16,13 @@ interface PasswordValidationListProps {
 function ValidationItem({ label, isValid }: { label: string; isValid: boolean }) {
   return (
     <View style={styles.validationItem}>
+      <Ionicons
+        name={isValid ? 'checkmark-circle' : 'close-circle'}
+        size={14}
+        color={isValid ? '#10B981' : '#767676'}
+      />
       <Typography style={[styles.validationText, isValid && styles.validationTextValid]}>
-        {isValid ? 'Passed:' : 'Missing:'} {label}
+        {label}
       </Typography>
     </View>
   );
@@ -62,8 +68,9 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   validationItem: {
-    flexDirection: 'row',
     alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
   },
   validationText: {
     color: '#767676',
