@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const PASSWORD_SPECIAL_CHAR_REGEX = /[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\;'`~/]/;
+import { PASSWORD_SPECIAL_CHAR_REGEX } from '../utils/passwordPolicy';
 
 export const passwordPolicySchema = z
   .string()
