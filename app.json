@@ -7,11 +7,19 @@
     "icon": "./assets/images/icon.png",
     "scheme": "clinsight",
     "userInterfaceStyle": "automatic",
+    "updates": {
+      "url": "https://u.expo.dev/671a26cb-7214-46e6-99b5-0db3d2f3a5c1"
+    },
     "runtimeVersion": {
       "policy": "appVersion"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "buildNumber": "4",
+      "bundleIdentifier": "com.clinsight",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.clinsight",
