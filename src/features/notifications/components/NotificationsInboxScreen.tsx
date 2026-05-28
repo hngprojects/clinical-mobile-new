@@ -26,13 +26,24 @@ import {
 } from '../hooks/useNotifications';
 
 function relativeTime(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
+  const ms = new Date(iso).getTime();
+  if (Number.isNaN(ms)) return '';
+  const diff = Date.now() - ms;
   const mins = Math.floor(diff / 60_000);
   if (mins < 1) return 'just now';
   if (mins < 60) return `${mins}m ago`;
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h ago`;
   return `${Math.floor(hrs / 24)}d ago`;
+}
+
+function sectionLabel(iso: string): string {
+  const ms = new Date(iso).getTime();
+  if (Number.isNaN(ms)) return 'Recent';
+  const days = Math.floor((Date.now() - ms) / 86_400_000);
+  if (days === 0) return 'Today';
+  if (days === 1) return 'Yesterday';
+  return `${days} days ago`;
 }
 
 function notificationDescription(n: Notification): string {
@@ -72,7 +83,7 @@ function ReadToast({ visible }: { visible: boolean }) {
         <Ionicons name="checkmark" size={16} color="#FFFFFF" />
       </View>
       <Typography variant="body2" style={styles.toastText}>
-        Your notifications is now up to date. All previous alerts have been marked as read.
+        Your notifications are now up to date. All previous alerts have been marked as read.
       </Typography>
     </Animated.View>
   );
@@ -134,27 +145,30 @@ export function NotificationsInboxScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const { data: notifications = [], isLoading } = useNotifications();
+  const { data: notifications, isLoading, isError } = useNotifications();
   const [showToast, setShowToast] = useState(false);
   const [markingAll, setMarkingAll] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const hasUnread = notifications.some((n) => !n.isRead);
+  const list = notifications ?? [];
+  const hasUnread = list.some((n) => !n.isRead);
 
   const handleMarkAllRead = async () => {
-    const unread = notifications.filter((n) => !n.isRead);
+    const unread = list.filter((n) => !n.isRead);
     if (!unread.length) return;
 
     setMarkingAll(true);
-    try {
-      await Promise.all(unread.map((n) => notificationsApi.markRead(n.id)));
-      queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_KEY });
-      queryClient.invalidateQueries({ queryKey: UNREAD_COUNT_KEY });
+    const results = await Promise.allSettled(unread.map((n) => notificationsApi.markRead(n.id)));
+    setMarkingAll(false);
+
+    queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_KEY });
+    queryClient.invalidateQueries({ queryKey: UNREAD_COUNT_KEY });
+
+    const anySucceeded = results.some((r) => r.status === 'fulfilled');
+    if (anySucceeded) {
       setShowToast(true);
       if (toastTimer.current) clearTimeout(toastTimer.current);
       toastTimer.current = setTimeout(() => setShowToast(false), 3000);
-    } finally {
-      setMarkingAll(false);
     }
   };
 
@@ -164,7 +178,8 @@ export function NotificationsInboxScreen() {
     };
   }, []);
 
-  const isEmpty = !isLoading && notifications.length === 0;
+  const isEmpty = !isLoading && !isError && list.length === 0;
+  const headerLabel = list[0] ? sectionLabel(list[0].createdAt) : 'Recent';
 
   return (
     <SafeAreaView style={[styles.fill, { backgroundColor: colors.surface }]} edges={['top']}>
@@ -183,6 +198,12 @@ export function NotificationsInboxScreen() {
         <View style={styles.loader}>
           <ActivityIndicator color={colors.primary} />
         </View>
+      ) : isError ? (
+        <View style={styles.loader}>
+          <Typography variant="body2" color={colors.textSecondary}>
+            Failed to load notifications. Pull down to retry.
+          </Typography>
+        </View>
       ) : isEmpty ? (
         <EmptyState />
       ) : (
@@ -190,13 +211,13 @@ export function NotificationsInboxScreen() {
           <ReadToast visible={showToast} />
 
           <FlatList
-            data={notifications}
+            data={list}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContent}
             ListHeaderComponent={
               <View style={styles.listHeader}>
                 <Typography variant="body1" style={styles.todayLabel}>
-                  Today
+                  {headerLabel}
                 </Typography>
                 {hasUnread && (
                   <Pressable onPress={handleMarkAllRead} hitSlop={8} disabled={markingAll}>

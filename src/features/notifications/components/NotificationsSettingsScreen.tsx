@@ -77,7 +77,7 @@ export function NotificationsSettingsScreen() {
 
   const handleAiInsightsToggle = (value: boolean) => {
     setAiInsights(value);
-    updatePreferences({ notifyOnComplete: value });
+    updatePreferences({ notifyOnComplete: value }, { onError: () => setAiInsights(!value) });
   };
 
   return (

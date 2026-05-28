@@ -76,14 +76,16 @@ async function markRead(notificationId: string): Promise<Notification> {
   const { data } = await client.patch<ApiSuccessResponse<BackendNotification>>(
     `/api/v1/notifications/${notificationId}/read`,
   );
-  return mapNotification(data.data!);
+  if (!data.data) throw new Error(`Failed to mark notification ${notificationId} as read`);
+  return mapNotification(data.data);
 }
 
 async function getPreferences(): Promise<NotificationPreferences> {
   const { data } = await client.get<ApiSuccessResponse<BackendPreferences>>(
     '/api/v1/notifications/preferences',
   );
-  return mapPreferences(data.data!);
+  if (!data.data) throw new Error('Failed to fetch notification preferences');
+  return mapPreferences(data.data);
 }
 
 async function updatePreferences(req: UpdatePreferencesRequest): Promise<NotificationPreferences> {
@@ -91,7 +93,8 @@ async function updatePreferences(req: UpdatePreferencesRequest): Promise<Notific
     '/api/v1/notifications/preferences',
     { notify_on_complete: req.notifyOnComplete },
   );
-  return mapPreferences(data.data!);
+  if (!data.data) throw new Error('Failed to update notification preferences');
+  return mapPreferences(data.data);
 }
 
 export const notificationsApi = {
