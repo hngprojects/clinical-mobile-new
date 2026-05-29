@@ -12,6 +12,9 @@ import {
   CompletePasswordResetFormData,
   completePasswordResetSchema,
 } from '../schemas/auth.schemas';
+import { isPasswordPolicyMet } from '../utils/passwordPolicy';
+
+import { PasswordValidationList } from './PasswordValidationList';
 
 interface CompletePasswordResetFormProps {
   mutation: {
@@ -40,11 +43,9 @@ export function CompletePasswordResetForm({
 
   const passwordValue = watch('password');
   const confirmPasswordValue = watch('confirmPassword');
-  const has8Chars = passwordValue.length >= 8;
-  const hasUpper = /[A-Z]/.test(passwordValue);
-  const hasSpecial = /[^A-Za-z0-9]/.test(passwordValue);
+  const isPasswordValid = isPasswordPolicyMet(passwordValue);
   const passwordsMatch = confirmPasswordValue.length > 0 && passwordValue === confirmPasswordValue;
-  const isDisabled = isPending || passwordValue.length === 0 || !passwordsMatch;
+  const isDisabled = isPending || !isPasswordValid || !passwordsMatch;
 
   const onSubmit = (formData: CompletePasswordResetFormData) => {
     completeReset({ email, token: resetToken, newPassword: formData.password });
@@ -73,19 +74,7 @@ export function CompletePasswordResetForm({
         }
       />
 
-      {passwordValue.length > 0 && !(has8Chars && hasUpper && hasSpecial) && (
-        <View style={styles.validationList}>
-          <ValidationItem label="Password must have at least 8 characters" isValid={has8Chars} />
-          <ValidationItem
-            label="Password must have at least one uppercase letter"
-            isValid={hasUpper}
-          />
-          <ValidationItem
-            label="Password must have at least one special character"
-            isValid={hasSpecial}
-          />
-        </View>
-      )}
+      <PasswordValidationList password={passwordValue} variant="full" />
 
       <FormField
         ref={confirmPasswordRef}
@@ -99,11 +88,7 @@ export function CompletePasswordResetForm({
         onSubmitEditing={handleSubmit(onSubmit)}
       />
 
-      {confirmPasswordValue.length > 0 && (
-        <View style={styles.validationList}>
-          <ValidationItem label="Passwords must match" isValid={passwordsMatch} />
-        </View>
-      )}
+      {confirmPasswordValue.length > 0 && <PasswordMatchHint isValid={passwordsMatch} />}
 
       <Button
         label="Reset password"
@@ -118,19 +103,16 @@ export function CompletePasswordResetForm({
   );
 }
 
-function ValidationItem({ label, isValid }: { label: string; isValid: boolean }) {
+function PasswordMatchHint({ isValid }: { isValid: boolean }) {
   return (
     <View style={styles.validationItem}>
-      <Typography
-        style={{
-          color: isValid ? '#10B981' : '#767676',
-          fontFamily: 'Inter_400Regular',
-          fontSize: 13,
-          lineHeight: 19.5,
-          letterSpacing: -0.13,
-        }}
-      >
-        {isValid ? '✓' : '✕'} {label}
+      <Ionicons
+        name={isValid ? 'checkmark' : 'close'}
+        size={14}
+        color={isValid ? '#10B981' : '#767676'}
+      />
+      <Typography style={[styles.validationText, isValid && styles.validationTextValid]}>
+        Passwords must match
       </Typography>
     </View>
   );
@@ -138,14 +120,21 @@ function ValidationItem({ label, isValid }: { label: string; isValid: boolean })
 
 const styles = StyleSheet.create({
   container: { width: '100%' },
-  validationList: {
-    gap: 4,
-    marginTop: 8,
-    marginBottom: 0,
-  },
   validationItem: {
-    flexDirection: 'row',
     alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 8,
+  },
+  validationText: {
+    color: '#767676',
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
+    letterSpacing: -0.13,
+    lineHeight: 19.5,
+  },
+  validationTextValid: {
+    color: '#10B981',
   },
   submitButton: {
     borderRadius: 12,

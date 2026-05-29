@@ -1,10 +1,12 @@
 import { z } from 'zod';
 
+import { PASSWORD_SPECIAL_CHAR_REGEX } from '../utils/passwordPolicy';
+
 export const passwordPolicySchema = z
   .string()
   .min(8, 'Minimum 8 characters')
   .regex(/[A-Z]/, 'Must contain an uppercase letter')
-  .regex(/[^A-Za-z0-9]/, 'Must contain a special character');
+  .regex(PASSWORD_SPECIAL_CHAR_REGEX, 'Must contain a special character');
 
 export const loginSchema = z.object({
   email: z.string().email('Enter a valid email'),
@@ -31,7 +33,7 @@ export const registerSchema = z
     lastName: z.string().min(1, 'Last name is required'),
     email: z.string().email('Enter a valid email'),
     password: passwordPolicySchema,
-    confirmPassword: z.string().min(8, 'Minimum 8 characters'),
+    confirmPassword: z.string(),
   })
   .refine((d) => d.password === d.confirmPassword, {
     message: "Passwords don't match",

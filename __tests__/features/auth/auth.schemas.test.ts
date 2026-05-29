@@ -12,6 +12,10 @@ describe('loginSchema', () => {
     ).toBe(true);
   });
 
+  it('accepts a short non-empty password', () => {
+    expect(loginSchema.safeParse({ email: 'test@example.com', password: 'a' }).success).toBe(true);
+  });
+
   it('rejects invalid email', () => {
     expect(loginSchema.safeParse({ email: 'not-an-email', password: 'Password1' }).success).toBe(
       false,
@@ -42,6 +46,20 @@ describe('registerSchema', () => {
     );
   });
 
+  it('does not apply password length policy to confirm password separately', () => {
+    const result = registerSchema.safeParse({ ...valid, confirmPassword: 'Short!' });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(
+        result.error.issues.some(
+          (issue) =>
+            issue.path.join('.') === 'confirmPassword' && issue.message === 'Minimum 8 characters',
+        ),
+      ).toBe(false);
+    }
+  });
+
   it('rejects password without uppercase', () => {
     expect(
       registerSchema.safeParse({ ...valid, password: 'password1!', confirmPassword: 'password1!' })
@@ -67,6 +85,16 @@ describe('registerSchema', () => {
     expect(
       registerSchema.safeParse({ ...valid, password: 'Password1', confirmPassword: 'Password1' })
         .success,
+    ).toBe(false);
+  });
+
+  it('rejects non-ASCII special characters', () => {
+    expect(
+      registerSchema.safeParse({
+        ...valid,
+        password: 'Qwerty123¥',
+        confirmPassword: 'Qwerty123¥',
+      }).success,
     ).toBe(false);
   });
 });
@@ -138,6 +166,15 @@ describe('completePasswordResetSchema', () => {
       completePasswordResetSchema.safeParse({
         password: 'Password1',
         confirmPassword: 'Password1',
+      }).success,
+    ).toBe(false);
+  });
+
+  it('rejects non-ASCII special characters', () => {
+    expect(
+      completePasswordResetSchema.safeParse({
+        password: 'Qwerty123¥',
+        confirmPassword: 'Qwerty123¥',
       }).success,
     ).toBe(false);
   });

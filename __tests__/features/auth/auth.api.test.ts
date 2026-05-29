@@ -139,7 +139,7 @@ describe('authApi', () => {
       accessToken: 'access-token',
       refreshToken: null,
     });
-    expect(mockPost).toHaveBeenCalledWith('/api/v1/auth/refresh');
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/auth/refresh', undefined, { _retry: true });
   });
 
   it('requests password reset through the backend', async () => {

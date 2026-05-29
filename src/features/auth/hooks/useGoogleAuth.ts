@@ -4,14 +4,17 @@ import * as WebBrowser from 'expo-web-browser';
 import { useCallback, useState } from 'react';
 
 import { env } from '@/shared/constants/env';
+import { wait } from '@/shared/utils/wait';
 
 import { authApi } from '../api/auth.api';
+import { useAuthFeedbackStore } from '../store/authFeedback.store';
 import { useAuthStore } from '../store/auth.store';
 
 const GOOGLE_AUTH_PATH = '/api/v1/auth/google';
 const GOOGLE_AUTH_REDIRECT_URL = 'clinsight://auth/google';
 const ACCESS_TOKEN_KEYS = ['access_token', 'token', 'accessToken'];
 const REFRESH_TOKEN_KEYS = ['refresh_token', 'refreshToken'];
+const SUCCESS_REDIRECT_DELAY_MS = 1200;
 
 type UrlQueryParams = NonNullable<ReturnType<typeof Linking.parse>['queryParams']>;
 
@@ -86,14 +89,13 @@ export function useGoogleAuth(flow: 'signin' | 'signup' = 'signin') {
       const result = await WebBrowser.openAuthSessionAsync(googleAuthUrl, redirectUrl);
 
       if (result.type === 'cancel' || result.type === 'dismiss') {
-        setError(`Google ${action} was cancelled.`);
         return { success: false };
       }
 
       if (result.type === 'success' && result.url) {
         const authError = getAuthErrorFromUrl(result.url);
         if (authError) {
-          setError(`Google ${action} failed. Please try again.`);
+          setError(authError);
           return { success: false };
         }
 
@@ -105,10 +107,15 @@ export function useGoogleAuth(flow: 'signin' | 'signup' = 'signin') {
         }
 
         useAuthStore.getState().setTokens(tokens);
-
         try {
           const userProfile = await authApi.getMe();
           useAuthStore.getState().setSession(tokens, userProfile);
+          useAuthFeedbackStore
+            .getState()
+            .setSuccessMessage(
+              flow === 'signup' ? 'Google sign-up successful.' : 'Google login successful.',
+            );
+          await wait(SUCCESS_REDIRECT_DELAY_MS);
           router.replace('/(main)');
           return { success: true };
         } catch {

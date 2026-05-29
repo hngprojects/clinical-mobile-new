@@ -31,11 +31,10 @@ export function RegisterForm({ mutation, onContinueAsGuest }: RegisterFormProps)
   } = useGoogleAuth('signup');
 
   useEffect(() => {
-    if (googleError) {
-      const t = setTimeout(clearGoogleError, 5000);
-      return () => clearTimeout(t);
-    }
-    return undefined;
+    if (!googleError) return undefined;
+
+    const timer = setTimeout(clearGoogleError, 5000);
+    return () => clearTimeout(timer);
   }, [googleError, clearGoogleError]);
 
   const lastNameRef = useRef<RNTextInput>(null);
@@ -57,7 +56,9 @@ export function RegisterForm({ mutation, onContinueAsGuest }: RegisterFormProps)
 
   const passwordValue = useWatch({ control, name: 'password', defaultValue: '' }) ?? '';
   const isDisabled = isPending || !formState.isValid;
-  const onSubmit = (data: RegisterFormData) => register(data);
+  const onSubmit = (data: RegisterFormData) => {
+    register(data);
+  };
 
   const handleSocialPress = async (provider: string) => {
     if (provider === 'Google') {
@@ -69,6 +70,8 @@ export function RegisterForm({ mutation, onContinueAsGuest }: RegisterFormProps)
 
   return (
     <View style={styles.container}>
+      <Toast visible={!!googleError} message={googleError ?? ''} variant="error" />
+
       <View style={{ gap: spacing.md }}>
         <FormField
           control={control}
@@ -148,7 +151,8 @@ export function RegisterForm({ mutation, onContinueAsGuest }: RegisterFormProps)
 
         <View style={{ gap: 16 }}>
           <Button
-            label={isGooglePending ? 'Connecting...' : 'Google'}
+            label="Google"
+            loadingLabel="Signing up with Google"
             variant="outline"
             onPress={() => handleSocialPress('Google')}
             isLoading={isGooglePending}

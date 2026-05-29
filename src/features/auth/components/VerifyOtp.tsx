@@ -1,11 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Image,
   Keyboard,
-  Modal,
   Pressable,
   TextInput as RNTextInput,
   StyleSheet,
@@ -19,14 +17,19 @@ import { useAuthStore } from '@/features/auth/store/auth.store';
 import type { ApiError } from '@/shared/api/types';
 import { Toast, Typography } from '@/shared/components';
 
+import { AuthSuccessModal } from './AuthSuccessModal';
+
 const CODE_LENGTH = 6;
 
 function maskEmail(email: string): string {
   const atIndex = email.indexOf('@');
-  if (atIndex <= 2) return email;
+  if (atIndex <= 0) return email;
+
   const local = email.slice(0, atIndex);
   const domain = email.slice(atIndex);
+  if (local.length === 1) return `*${domain}`;
   if (local.length <= 3) return `${local[0]}*${local[local.length - 1]}${domain}`;
+
   const stars = '*'.repeat(Math.min(local.length - 3, 3));
   return `${local.slice(0, 2)}${stars}${local[local.length - 1]}${domain}`;
 }
@@ -67,6 +70,7 @@ export function VerifyOtp({
   const [expiredToastVisible, setExpiredToastVisible] = useState(false);
 
   const inputRef = useRef<RNTextInput>(null);
+  const resendToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isFocused, setIsFocused] = useState(false);
 
   useEffect(() => {
@@ -110,24 +114,41 @@ export function VerifyOtp({
     }
   }, [verifyOtpMutation.isSuccess]);
 
-  const showResendToast = (message: string, variant: 'success' | 'error') => {
+  useEffect(
+    () => () => {
+      if (resendToastTimerRef.current !== null) {
+        clearTimeout(resendToastTimerRef.current);
+      }
+    },
+    [],
+  );
+
+  const showResendToast = useCallback((message: string, variant: 'success' | 'error') => {
     setResendToastMessage(message);
     setResendToastVariant(variant);
     setResendToastVisible(true);
-    setTimeout(() => setResendToastVisible(false), 4000);
-  };
+
+    if (resendToastTimerRef.current !== null) {
+      clearTimeout(resendToastTimerRef.current);
+    }
+
+    resendToastTimerRef.current = setTimeout(() => {
+      setResendToastVisible(false);
+      resendToastTimerRef.current = null;
+    }, 4000);
+  }, []);
 
   useEffect(() => {
     if (resendOtpMutation.isError || resetPasswordMutation.isError) {
       showResendToast("Couldn't resend the code. Please try again.", 'error');
     }
-  }, [resendOtpMutation.isError, resetPasswordMutation.isError]);
+  }, [resendOtpMutation.isError, resetPasswordMutation.isError, showResendToast]);
 
   useEffect(() => {
     if (resendOtpMutation.isSuccess || resetPasswordMutation.isSuccess) {
       showResendToast('A new code has been sent to your email.', 'success');
     }
-  }, [resendOtpMutation.isSuccess, resetPasswordMutation.isSuccess]);
+  }, [resendOtpMutation.isSuccess, resetPasswordMutation.isSuccess, showResendToast]);
 
   const handleVerify = () => {
     if (code.length !== CODE_LENGTH) return;
@@ -210,6 +231,7 @@ export function VerifyOtp({
             type === 'reset-password' ? router.replace('/(auth)/reset-password') : router.back()
           }
           style={styles.backButton}
+          accessibilityLabel="Go back"
         >
           <Ionicons name="chevron-back" size={24} color="#1B1B1B" />
         </Pressable>
@@ -329,32 +351,13 @@ export function VerifyOtp({
         )}
       </View>
 
-      {/* Success Modal */}
-      <Modal visible={showSuccessModal} transparent animationType="fade" statusBarTranslucent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Image
-              source={require('../../../../assets/images/auth/Checked.png')}
-              style={styles.successCheckImage}
-            />
-
-            <Typography style={styles.modalTitle}>Sign-up successful</Typography>
-
-            <Typography style={styles.modalSubtitle}>
-              Your account has been created.{'\n'}
-              You can now proceed to uploading{'\n'}
-              your lab results.
-            </Typography>
-
-            <Pressable
-              onPress={handleContinue}
-              style={({ pressed }) => [styles.modalBtn, { opacity: pressed ? 0.85 : 1 }]}
-            >
-              <Typography style={styles.modalBtnText}>Go to Home Page</Typography>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
+      <AuthSuccessModal
+        visible={showSuccessModal}
+        title="Sign-up successful"
+        message={`Your account has been created.\nYou can now proceed to uploading\nyour lab results.`}
+        actionLabel="Go to Home Page"
+        onAction={handleContinue}
+      />
     </>
   );
 }
@@ -490,53 +493,5 @@ const styles = StyleSheet.create({
     color: '#1565C0',
     fontFamily: 'Inter_600SemiBold',
     textDecorationLine: 'underline',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalCard: {
-    width: '88%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    paddingVertical: 36,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-  },
-  successCheckImage: {
-    width: 96,
-    height: 96,
-  },
-  modalTitle: {
-    fontFamily: 'Inter_700Bold',
-    fontSize: 22,
-    color: '#1B1B1B',
-    marginTop: 24,
-    textAlign: 'center',
-  },
-  modalSubtitle: {
-    fontFamily: 'Inter_400Regular',
-    fontSize: 14,
-    color: '#494949',
-    textAlign: 'center',
-    lineHeight: 21,
-    marginTop: 12,
-  },
-  modalBtn: {
-    width: '100%',
-    backgroundColor: '#1565C0',
-    borderRadius: 12,
-    paddingVertical: 15,
-    paddingHorizontal: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 28,
-  },
-  modalBtnText: {
-    fontFamily: 'Inter_600SemiBold',
-    fontSize: 15,
-    color: '#FFFFFF',
   },
 });

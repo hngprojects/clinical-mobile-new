@@ -39,11 +39,10 @@ export function LoginForm({
   } = useGoogleAuth('signin');
 
   useEffect(() => {
-    if (googleError) {
-      const t = setTimeout(clearGoogleError, 5000);
-      return () => clearTimeout(t);
-    }
-    return undefined;
+    if (!googleError) return undefined;
+
+    const timer = setTimeout(clearGoogleError, 5000);
+    return () => clearTimeout(timer);
   }, [googleError, clearGoogleError]);
 
   const { control, handleSubmit } = useForm<LoginFormData>({
@@ -65,6 +64,8 @@ export function LoginForm({
 
   return (
     <View style={styles.container}>
+      <Toast visible={!!googleError} message={googleError ?? ''} variant="error" />
+
       <View style={{ gap: spacing.md }}>
         <FormField
           control={control}
@@ -98,7 +99,8 @@ export function LoginForm({
         </View>
 
         <Button
-          label={isPending ? 'Logging in...' : 'Login'}
+          label="Sign in"
+          loadingLabel="Signing in"
           onPress={handleSubmit(onSubmit)}
           isLoading={isPending}
           disabled={isPending || passwordValue.length === 0}
@@ -115,7 +117,8 @@ export function LoginForm({
 
         <View style={{ gap: 16 }}>
           <Button
-            label={isGooglePending ? 'Connecting...' : 'Google'}
+            label="Google"
+            loadingLabel="Signing in with Google"
             variant="outline"
             onPress={() => handleSocialPress('Google')}
             isLoading={isGooglePending}

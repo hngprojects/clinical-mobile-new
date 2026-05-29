@@ -3,7 +3,7 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { CompletePasswordResetForm } from '@/features/auth';
+import { AuthSuccessModal, CompletePasswordResetForm } from '@/features/auth';
 import { useCompletePasswordReset } from '@/features/auth/hooks/useCompletePasswordReset';
 import { Screen, Toast, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
@@ -17,7 +17,7 @@ export default function NewPasswordScreen() {
 
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-  const [toastVariant, setToastVariant] = useState<'success' | 'error'>('error');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   useEffect(() => {
     if (!resetToken || !resetEmail) {
@@ -28,24 +28,15 @@ export default function NewPasswordScreen() {
   useEffect(() => {
     if (completeResetMutation.error) {
       setToastMessage('We could not reset your password. Please request a new code and try again.');
-      setToastVariant('error');
       setToastVisible(true);
       const t = setTimeout(() => setToastVisible(false), 5000);
       return () => clearTimeout(t);
     }
     if (completeResetMutation.isSuccess) {
-      setToastMessage(
-        completeResetMutation.data?.message || 'Password reset successfully. You can now log in.',
-      );
-      setToastVariant('success');
-      setToastVisible(true);
-      const t = setTimeout(() => {
-        setToastVisible(false);
-        router.replace('/(auth)/login');
-      }, 2500);
-      return () => clearTimeout(t);
+      setToastVisible(false);
+      setShowSuccessModal(true);
     }
-  }, [completeResetMutation.error, completeResetMutation.isSuccess, completeResetMutation.data]);
+  }, [completeResetMutation.error, completeResetMutation.isSuccess]);
 
   if (!resetToken || !resetEmail) return null;
 
@@ -53,7 +44,17 @@ export default function NewPasswordScreen() {
     <>
       <Stack.Screen options={{ title: 'New Password', headerShown: false }} />
 
-      <Toast visible={toastVisible} message={toastMessage} variant={toastVariant} />
+      <Toast visible={toastVisible} message={toastMessage} variant="error" />
+      <AuthSuccessModal
+        visible={showSuccessModal}
+        title="Password Updated"
+        message="Your password has been changed successfully. Use your new password to log in."
+        actionLabel="Log In"
+        onAction={() => {
+          setShowSuccessModal(false);
+          router.replace('/(auth)/login');
+        }}
+      />
 
       <Screen
         scrollable
@@ -66,6 +67,7 @@ export default function NewPasswordScreen() {
           <Pressable
             onPress={() => router.replace('/(auth)/reset-password')}
             style={styles.backButton}
+            accessibilityLabel="Go back"
           >
             <Ionicons name="chevron-back" size={24} color="#1B1B1B" />
           </Pressable>
