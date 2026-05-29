@@ -22,7 +22,12 @@ interface GuestLimitModalProps {
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-export function GuestLimitModal({ visible, caseId, guestSessionId, onDismiss }: GuestLimitModalProps) {
+export function GuestLimitModal({
+  visible,
+  caseId,
+  guestSessionId,
+  onDismiss,
+}: GuestLimitModalProps) {
   const router = useRouter();
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const handleActiveAnim = useRef(new Animated.Value(0)).current;
@@ -46,7 +51,11 @@ export function GuestLimitModal({ visible, caseId, guestSessionId, onDismiss }: 
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
       onPanResponderGrant: () => {
-        Animated.timing(handleActiveAnim, { toValue: 1, duration: 120, useNativeDriver: false }).start();
+        Animated.timing(handleActiveAnim, {
+          toValue: 1,
+          duration: 120,
+          useNativeDriver: false,
+        }).start();
         slideAnim.stopAnimation();
         slideAnim.setValue(0);
       },
@@ -54,7 +63,11 @@ export function GuestLimitModal({ visible, caseId, guestSessionId, onDismiss }: 
         slideAnim.setValue(Math.max(dy, 0));
       },
       onPanResponderRelease: (_, { dy, vy }) => {
-        Animated.timing(handleActiveAnim, { toValue: 0, duration: 120, useNativeDriver: false }).start();
+        Animated.timing(handleActiveAnim, {
+          toValue: 0,
+          duration: 120,
+          useNativeDriver: false,
+        }).start();
         if (dy > 100 || vy > 0.4) {
           handleDismiss();
         } else {
@@ -62,7 +75,11 @@ export function GuestLimitModal({ visible, caseId, guestSessionId, onDismiss }: 
         }
       },
       onPanResponderTerminate: () => {
-        Animated.timing(handleActiveAnim, { toValue: 0, duration: 120, useNativeDriver: false }).start();
+        Animated.timing(handleActiveAnim, {
+          toValue: 0,
+          duration: 120,
+          useNativeDriver: false,
+        }).start();
         springSheetBack();
       },
     }),
