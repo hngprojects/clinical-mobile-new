@@ -55,7 +55,6 @@ export function RegisterForm({ mutation, onContinueAsGuest }: RegisterFormProps)
   });
 
   const passwordValue = useWatch({ control, name: 'password', defaultValue: '' }) ?? '';
-  const isDisabled = isPending || !formState.isValid;
   const onSubmit = (data: RegisterFormData) => {
     register(data);
   };
@@ -67,6 +66,8 @@ export function RegisterForm({ mutation, onContinueAsGuest }: RegisterFormProps)
       alert(`${provider} registration is coming soon!`);
     }
   };
+
+  const isDisabled = isPending || !formState.isValid;
 
   return (
     <View style={styles.container}>
