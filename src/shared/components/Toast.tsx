@@ -151,7 +151,9 @@ export function Toast({ visible, message, variant = 'neutral' }: ToastProps) {
 
   if (host) return null;
 
-  return <ToastCard message={message} variant={variant} visible={visible} topOffset={TOAST_TOP_OFFSET} />;
+  return (
+    <ToastCard message={message} variant={variant} visible={visible} topOffset={TOAST_TOP_OFFSET} />
+  );
 }
 
 function ToastCard({

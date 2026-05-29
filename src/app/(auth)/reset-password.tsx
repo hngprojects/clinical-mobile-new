@@ -28,7 +28,11 @@ export default function ResetPasswordScreen() {
     if (resetPasswordMutation.isSuccess) {
       setSuccessEmail(resetPasswordMutation.variables?.email || '');
     }
-  }, [resetPasswordMutation.error, resetPasswordMutation.isSuccess, resetPasswordMutation.variables]);
+  }, [
+    resetPasswordMutation.error,
+    resetPasswordMutation.isSuccess,
+    resetPasswordMutation.variables,
+  ]);
 
   // Driven by local state so mutation.reset() (called on field focus) can't cancel the redirect
   useEffect(() => {
@@ -60,7 +64,11 @@ export default function ResetPasswordScreen() {
         keyboardAvoiding
       >
         <View style={styles.headerContainer}>
-          <Pressable onPress={() => router.back()} style={styles.backButton} accessibilityLabel="Go back">
+          <Pressable
+            onPress={() => router.back()}
+            style={styles.backButton}
+            accessibilityLabel="Go back"
+          >
             <Ionicons name="chevron-back" size={24} color="#1B1B1B" />
           </Pressable>
           <Typography style={styles.headerTitle}>Forgot Password</Typography>

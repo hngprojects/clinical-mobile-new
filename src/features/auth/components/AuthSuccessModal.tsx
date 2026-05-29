@@ -36,8 +36,13 @@ export function AuthSuccessModal({
             style={styles.successCheckImage}
           />
 
-          <Typography variant="h2" style={[styles.modalTitle, { color: colors.text }]}>{title}</Typography>
-          <Typography variant="body2" style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
+          <Typography variant="h2" style={[styles.modalTitle, { color: colors.text }]}>
+            {title}
+          </Typography>
+          <Typography
+            variant="body2"
+            style={[styles.modalSubtitle, { color: colors.textSecondary }]}
+          >
             {message}
           </Typography>
 
@@ -48,7 +53,9 @@ export function AuthSuccessModal({
               { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
             ]}
           >
-            <Typography variant="buttonLabel" style={styles.modalBtnText}>{actionLabel}</Typography>
+            <Typography variant="buttonLabel" style={styles.modalBtnText}>
+              {actionLabel}
+            </Typography>
           </Pressable>
         </View>
       </View>
