@@ -1,4 +1,4 @@
-import { router, Stack } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -10,7 +10,8 @@ import { useTheme } from '@/shared/theme';
 
 export default function RegisterScreen() {
   const { spacing, colors } = useTheme();
-  const registerMutation = useRegister();
+  const { caseId } = useLocalSearchParams<{ caseId?: string }>();
+  const registerMutation = useRegister({ caseId });
   const { handleUpload, handleUploadError } = useGuestUploadSession();
   const [showUploadSheet, setShowUploadSheet] = useState(false);
   const bannerY = useSharedValue(-100);

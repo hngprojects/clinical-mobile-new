@@ -9,7 +9,7 @@ interface FlowErrorScreenProps {
   message: React.ReactNode;
   icon?: 'warning' | 'network';
   onClose: () => void;
-  onRetry: () => void;
+  onRetry?: () => void;
   showDisabledAiReview?: boolean;
   footer?: React.ReactNode;
 }
@@ -43,15 +43,17 @@ export function FlowErrorScreen({
             <Typography style={styles.message}>{message}</Typography>
           </View>
           <View style={styles.actions}>
-            <Button
-              label="Retry"
-              onPress={onRetry}
-              backgroundColor="#FDE1E2"
-              style={styles.retryButton}
-              textStyle={styles.errorButtonLabel}
-              textColor="#F84343"
-              leftIcon={<Ionicons name="sync-outline" size={20} color="#F84343" />}
-            />
+            {onRetry ? (
+              <Button
+                label="Retry"
+                onPress={onRetry}
+                backgroundColor="#FDE1E2"
+                style={styles.retryButton}
+                textStyle={styles.errorButtonLabel}
+                textColor="#F84343"
+                leftIcon={<Ionicons name="sync-outline" size={20} color="#F84343" />}
+              />
+            ) : null}
             {showDisabledAiReview ? (
               <Button
                 label="Get AI Review"

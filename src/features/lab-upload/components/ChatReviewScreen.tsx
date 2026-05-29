@@ -27,7 +27,7 @@ import type { ChatMessage } from '../api/chat.types';
 import { useAiReview } from '../hooks/useAiReview';
 import { useCaseChat, useCaseChatSocket, useSendChatMessage } from '../hooks/useCaseChat';
 
-import { ChatBubble, ChatComposer, ChatInterpretationCard, ChatStateMessage } from './chat';
+import { ChatBubble, ChatComposer, ChatInterpretationCard, ChatStateMessage, GuestLimitModal } from './chat';
 
 type TimelineItem =
   | {
@@ -62,6 +62,8 @@ export function ChatReviewScreen() {
   const [pendingAttachment, setPendingAttachment] = useState<UploadedFile | null>(null);
   const [showUploadSheet, setShowUploadSheet] = useState(false);
   const [uploadErrorMessage, setUploadErrorMessage] = useState<string | null>(null);
+  const [guestMessageCount, setGuestMessageCount] = useState(0);
+  const [showGuestLimitModal, setShowGuestLimitModal] = useState(false);
   const hasConnectedRef = useRef(false);
   const isMockChat = typeof __DEV__ !== 'undefined' && __DEV__ && mock === 'chat';
   const isDemoMode = demo === 'true';
@@ -110,8 +112,16 @@ export function ChatReviewScreen() {
     }
   }, [timelineItems.length]);
 
+  const GUEST_MESSAGE_LIMIT = 3;
+  const isGuest = Boolean(effectiveGuestSessionId);
+
   const handleSend = async () => {
     if (!canSend) return;
+
+    if (isGuest && guestMessageCount >= GUEST_MESSAGE_LIMIT) {
+      setShowGuestLimitModal(true);
+      return;
+    }
 
     const message = trimmedDraft;
     const attachment = pendingAttachment;
@@ -152,10 +162,20 @@ export function ChatReviewScreen() {
 
     try {
       if (chatSocket.isConnected && (await chatSocket.sendLiveMessage(message))) {
+        if (isGuest) {
+          const nextCount = guestMessageCount + 1;
+          setGuestMessageCount(nextCount);
+          if (nextCount >= GUEST_MESSAGE_LIMIT) setShowGuestLimitModal(true);
+        }
         return;
       }
 
       await sendMessage.mutateAsync(message);
+      if (isGuest) {
+        const nextCount = guestMessageCount + 1;
+        setGuestMessageCount(nextCount);
+        if (nextCount >= GUEST_MESSAGE_LIMIT) setShowGuestLimitModal(true);
+      }
     } catch {
       setDraft(message);
       setPendingAttachment(attachment);
@@ -269,6 +289,7 @@ export function ChatReviewScreen() {
               bottomInset={insets.bottom}
               canSend={canSend}
               draft={draft}
+              hideUpload={isGuest}
               isSending={isSendingMessage}
               onDraftChange={setDraft}
               onOpenUpload={() => {
@@ -294,6 +315,15 @@ export function ChatReviewScreen() {
         onUpload={handleUploadFromChat}
         onUploadError={handleUploadPickerError}
       />
+
+      {isGuest && caseId && effectiveGuestSessionId && (
+        <GuestLimitModal
+          caseId={caseId}
+          guestSessionId={effectiveGuestSessionId}
+          onDismiss={() => setShowGuestLimitModal(false)}
+          visible={showGuestLimitModal}
+        />
+      )}
     </>
   );
 }

@@ -33,11 +33,14 @@ export function VerifyOtp({
   email,
   expiresInSeconds,
   type = 'signup',
+  caseId,
 }: {
   email?: string;
   expiresInSeconds?: number;
   type?: 'signup' | 'reset-password';
+  caseId?: string;
 }) {
+  const guestSessionId = useAuthStore((state) => state.guestSessionId);
   const verifyOtpMutation = useVerifyOtp();
   const resendOtpMutation = useResendOtp();
   const resetPasswordMutation = useResetPassword();
@@ -93,7 +96,11 @@ export function VerifyOtp({
         params: { email: email || '', token: code },
       });
     } else {
-      verifyOtpMutation.mutate({ email: email || '', code });
+      verifyOtpMutation.mutate({
+        email: email || '',
+        code,
+        ...(guestSessionId ? { guestSessionId } : {}),
+      });
     }
   };
 
@@ -132,7 +139,12 @@ export function VerifyOtp({
 
     setShowSuccessModal(false);
     useAuthStore.getState().setSession(result.tokens, result.user);
-    router.replace('/(main)');
+
+    if (caseId) {
+      router.replace({ pathname: '/(main)/chat-review', params: { caseId } });
+    } else {
+      router.replace('/(main)');
+    }
   };
 
   const isCodeComplete = code.length === CODE_LENGTH;
