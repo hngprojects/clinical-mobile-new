@@ -1,21 +1,32 @@
 import { Href, router, Stack } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { LoginForm, useGuestUploadSession } from '@/features/auth';
 import { useLogin } from '@/features/auth/hooks/useLogin';
-import { Screen, Typography, UploadBottomSheet } from '@/shared/components';
+import { Screen, Toast, Typography, UploadBottomSheet } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 const RESET_PASSWORD_ROUTE = '/(auth)/reset-password' as Href;
+
+function getLoginErrorMessage(error: { message?: string; status?: number } | null): string {
+  if (!error) return '';
+  const msg = error.message?.toLowerCase() ?? '';
+  if (error.status === 0 || msg.includes('timeout') || msg.includes('network')) {
+    return 'Connection failed. Please check your network and try again.';
+  }
+  if (msg.includes('verify') || msg.includes('verified')) {
+    return 'Please verify your email before logging in.';
+  }
+  return error.message || 'Invalid email or password.';
+}
 
 export default function LoginScreen() {
   const { spacing, colors } = useTheme();
   const loginMutation = useLogin();
   const { handleUpload, handleUploadError } = useGuestUploadSession();
   const [showUploadSheet, setShowUploadSheet] = useState(false);
-  const bannerY = useSharedValue(-100);
+  const [toastVisible, setToastVisible] = useState(false);
 
   const handleContinueAsGuest = () => {
     setShowUploadSheet(true);
@@ -23,43 +34,29 @@ export default function LoginScreen() {
 
   useEffect(() => {
     if (loginMutation.error) {
-      bannerY.value = withTiming(0, { duration: 300 });
-      const timeout = setTimeout(() => {
-        bannerY.value = withTiming(-100, { duration: 300 });
-      }, 5000);
-      return () => clearTimeout(timeout);
+      setToastVisible(true);
+      const t = setTimeout(() => setToastVisible(false), 5000);
+      return () => clearTimeout(t);
     }
+    setToastVisible(false);
+  }, [loginMutation.error]);
 
-    bannerY.value = withTiming(-100, { duration: 300 });
-  }, [loginMutation.error, bannerY]);
-
-  const animatedBannerStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: bannerY.value }],
-    opacity: withTiming(bannerY.value === 0 ? 1 : 0),
-  }));
+  const errorMessage = getLoginErrorMessage(loginMutation.error);
 
   return (
     <>
       <Stack.Screen options={{ title: 'Sign In', headerShown: false }} />
 
-      <View style={styles.bannerContainer}>
-        <Animated.View style={[styles.errorBanner, animatedBannerStyle]}>
-          <Typography
-            style={{
-              color: '#494949',
-              fontFamily: 'Inter_400Regular',
-              fontSize: 12,
-              lineHeight: 18,
-              textAlign: 'center',
-            }}
-          >
-            {loginMutation.error?.message || 'Something went wrong. Please check your credentials.'}
-          </Typography>
-        </Animated.View>
-      </View>
+      <Toast visible={toastVisible} message={errorMessage} variant="error" />
 
-      <Screen scrollable padding style={{ backgroundColor: '#FFFFFF' }} keyboardAvoiding>
-        <View style={{ marginTop: spacing.xxl, marginBottom: spacing.xl }}>
+      <Screen
+        scrollable
+        padding
+        backgroundColor="#FFFFFF"
+        style={{ backgroundColor: '#FFFFFF' }}
+        keyboardAvoiding
+      >
+        <View style={{ marginTop: spacing.lg, marginBottom: spacing.xl }}>
           <Typography variant="h1" style={{ fontWeight: '700' }}>
             Welcome Back
           </Typography>
@@ -72,7 +69,10 @@ export default function LoginScreen() {
           mutation={loginMutation}
           onContinueAsGuest={handleContinueAsGuest}
           onForgotPassword={() => router.push(RESET_PASSWORD_ROUTE)}
-          onInteract={() => loginMutation.reset()}
+          onInteract={() => {
+            loginMutation.reset();
+            setToastVisible(false);
+          }}
         />
 
         <View style={styles.footer}>
@@ -115,25 +115,6 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  bannerContainer: {
-    position: 'absolute',
-    top: 54,
-    left: 0,
-    right: 0,
-    zIndex: 1000,
-  },
-  errorBanner: {
-    height: 56,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    backgroundColor: '#F5F5F5',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-  },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',

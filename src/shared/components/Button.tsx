@@ -68,7 +68,7 @@ export function Button({
       >
         {isLoading ? (
           <View style={styles.content}>
-            <ActivityIndicator color={loadingIndicatorColor ?? labelColor} size="small" />
+            <ActivityIndicator color={loadingIndicatorColor ?? BLUE} size="small" />
             {loadingLabel ? (
               <Typography variant="body1" color={labelColor} style={styles.label}>
                 {loadingLabel}
