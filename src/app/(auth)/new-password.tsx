@@ -33,6 +33,7 @@ export default function NewPasswordScreen() {
       return () => clearTimeout(t);
     }
     if (completeResetMutation.isSuccess) {
+      setToastVisible(false);
       setShowSuccessModal(true);
     }
   }, [completeResetMutation.error, completeResetMutation.isSuccess]);
@@ -66,6 +67,7 @@ export default function NewPasswordScreen() {
           <Pressable
             onPress={() => router.replace('/(auth)/reset-password')}
             style={styles.backButton}
+            accessibilityLabel="Go back"
           >
             <Ionicons name="chevron-back" size={24} color="#1B1B1B" />
           </Pressable>

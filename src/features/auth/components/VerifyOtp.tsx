@@ -231,6 +231,7 @@ export function VerifyOtp({
             type === 'reset-password' ? router.replace('/(auth)/reset-password') : router.back()
           }
           style={styles.backButton}
+          accessibilityLabel="Go back"
         >
           <Ionicons name="chevron-back" size={24} color="#1B1B1B" />
         </Pressable>

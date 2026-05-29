@@ -21,6 +21,7 @@ type AuthStateAccessor = () => {
 };
 
 let getAuthState: AuthStateAccessor | null = null;
+let refreshPromise: Promise<{ accessToken: string; refreshToken: string | null }> | null = null;
 
 export function registerAuthStore(store: AuthStateAccessor) {
   getAuthState = store;
@@ -57,8 +58,9 @@ client.interceptors.response.use(
       original._retry = true;
       const { accessToken, isGuest, clearSession } = getAuthState();
 
-      // Guest sessions use x-guest-session-id — a 401 is a guest auth issue, not a token issue
+      // Guest sessions use x-guest-session-id — a 401 means the guest session expired
       if (isGuest) {
+        clearSession();
         return Promise.reject(toApiError(error));
       }
 
@@ -69,7 +71,10 @@ client.interceptors.response.use(
       }
 
       try {
-        const newTokens = await refreshAccessToken();
+        refreshPromise ??= refreshAccessToken().finally(() => {
+          refreshPromise = null;
+        });
+        const newTokens = await refreshPromise;
         getAuthState().setTokens(newTokens);
         original.headers.Authorization = `Bearer ${newTokens.accessToken}`;
         return client(original);

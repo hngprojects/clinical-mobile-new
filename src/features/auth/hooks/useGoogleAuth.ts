@@ -95,7 +95,7 @@ export function useGoogleAuth(flow: 'signin' | 'signup' = 'signin') {
       if (result.type === 'success' && result.url) {
         const authError = getAuthErrorFromUrl(result.url);
         if (authError) {
-          setError(`Google ${action} failed. Please try again.`);
+          setError(authError);
           return { success: false };
         }
 

@@ -27,11 +27,13 @@ interface ToastEntry {
   message: string;
   variant: ToastVariant;
   visible: boolean;
+  height: number;
 }
 
 interface ToastHostContextValue {
   dismissToast: (id: string) => void;
-  updateToast: (entry: ToastEntry) => void;
+  updateToast: (entry: Omit<ToastEntry, 'height'>) => void;
+  reportHeight: (id: string, height: number) => void;
 }
 
 const ICON: Record<ToastVariant, keyof typeof Ionicons.glyphMap> = {
@@ -43,18 +45,27 @@ const ICON: Record<ToastVariant, keyof typeof Ionicons.glyphMap> = {
 const ToastHostContext = createContext<ToastHostContextValue | null>(null);
 let nextToastId = 0;
 
+const TOAST_GAP = 8;
+const TOAST_TOP_OFFSET = 62;
+
 export function ToastHost({ children }: { children: React.ReactNode }) {
   const [entries, setEntries] = useState<ToastEntry[]>([]);
 
-  const updateToast = useCallback((entry: ToastEntry) => {
+  const updateToast = useCallback((entry: Omit<ToastEntry, 'height'>) => {
     setEntries((current) => {
       const existingIndex = current.findIndex((item) => item.id === entry.id);
-      if (existingIndex === -1) return [...current, entry];
+      if (existingIndex === -1) return [...current, { ...entry, height: 0 }];
 
       const next = [...current];
-      next[existingIndex] = entry;
+      next[existingIndex] = { ...next[existingIndex], ...entry };
       return next;
     });
+  }, []);
+
+  const reportHeight = useCallback((id: string, height: number) => {
+    setEntries((current) =>
+      current.map((entry) => (entry.id === id ? { ...entry, height } : entry)),
+    );
   }, []);
 
   const dismissToast = useCallback((id: string) => {
@@ -68,12 +79,20 @@ export function ToastHost({ children }: { children: React.ReactNode }) {
   }, []);
 
   const contextValue = useMemo(
-    () => ({
-      dismissToast,
-      updateToast,
-    }),
-    [dismissToast, updateToast],
+    () => ({ dismissToast, updateToast, reportHeight }),
+    [dismissToast, updateToast, reportHeight],
   );
+
+  // Compute top offset per entry from measured heights rather than a fixed stride
+  const offsets = useMemo(() => {
+    const result: number[] = [];
+    let accumulated = TOAST_TOP_OFFSET;
+    for (const entry of entries) {
+      result.push(accumulated);
+      accumulated += (entry.height || 82) + TOAST_GAP;
+    }
+    return result;
+  }, [entries]);
 
   return (
     <ToastHostContext.Provider value={contextValue}>
@@ -86,7 +105,7 @@ export function ToastHost({ children }: { children: React.ReactNode }) {
               id={entry.id}
               message={entry.message}
               onExitComplete={removeToast}
-              stackIndex={index}
+              topOffset={offsets[index] ?? TOAST_TOP_OFFSET}
               variant={entry.variant}
               visible={entry.visible}
             />
@@ -132,21 +151,22 @@ export function Toast({ visible, message, variant = 'neutral' }: ToastProps) {
 
   if (host) return null;
 
-  return <ToastCard message={message} variant={variant} visible={visible} />;
+  return <ToastCard message={message} variant={variant} visible={visible} topOffset={TOAST_TOP_OFFSET} />;
 }
 
 function ToastCard({
   id,
   message,
   onExitComplete,
-  stackIndex = 0,
+  topOffset = TOAST_TOP_OFFSET,
   variant = 'neutral',
   visible,
 }: ToastProps & {
   id?: string;
   onExitComplete?: (id: string) => void;
-  stackIndex?: number;
+  topOffset?: number;
 }) {
+  const host = useContext(ToastHostContext);
   const { colors } = useTheme();
   const slideAnim = useRef(new Animated.Value(-160)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
@@ -197,9 +217,12 @@ function ToastCard({
 
   return (
     <Animated.View
+      onLayout={(e) => {
+        if (id && host) host.reportHeight(id, e.nativeEvent.layout.height);
+      }}
       style={[
         styles.container,
-        { backgroundColor: bgColor, top: 62 + stackIndex * 92 },
+        { backgroundColor: bgColor, top: topOffset },
         { transform: [{ translateY: slideAnim }], opacity: opacityAnim },
       ]}
     >
@@ -226,7 +249,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 16,
     right: 16,
-    height: 82,
+    minHeight: 64,
     borderRadius: 20,
     padding: 20,
     gap: 17,

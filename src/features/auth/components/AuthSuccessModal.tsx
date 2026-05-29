@@ -36,8 +36,8 @@ export function AuthSuccessModal({
             style={styles.successCheckImage}
           />
 
-          <Typography style={[styles.modalTitle, { color: colors.text }]}>{title}</Typography>
-          <Typography style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
+          <Typography variant="h2" style={[styles.modalTitle, { color: colors.text }]}>{title}</Typography>
+          <Typography variant="body2" style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
             {message}
           </Typography>
 
@@ -48,7 +48,7 @@ export function AuthSuccessModal({
               { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 },
             ]}
           >
-            <Typography style={styles.modalBtnText}>{actionLabel}</Typography>
+            <Typography variant="buttonLabel" style={styles.modalBtnText}>{actionLabel}</Typography>
           </Pressable>
         </View>
       </View>
@@ -75,13 +75,11 @@ const styles = StyleSheet.create({
     width: 96,
   },
   modalTitle: {
-    fontFamily: 'Inter_700Bold',
     fontSize: 22,
     marginTop: 24,
     textAlign: 'center',
   },
   modalSubtitle: {
-    fontFamily: 'Inter_400Regular',
     fontSize: 14,
     lineHeight: 21,
     marginTop: 12,
@@ -98,7 +96,5 @@ const styles = StyleSheet.create({
   },
   modalBtnText: {
     color: '#FFFFFF',
-    fontFamily: 'Inter_600SemiBold',
-    fontSize: 15,
   },
 });
