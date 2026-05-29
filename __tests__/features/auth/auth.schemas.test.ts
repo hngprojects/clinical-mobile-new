@@ -12,16 +12,18 @@ describe('loginSchema', () => {
     ).toBe(true);
   });
 
+  it('accepts a short non-empty password', () => {
+    expect(loginSchema.safeParse({ email: 'test@example.com', password: 'a' }).success).toBe(true);
+  });
+
   it('rejects invalid email', () => {
     expect(loginSchema.safeParse({ email: 'not-an-email', password: 'Password1' }).success).toBe(
       false,
     );
   });
 
-  it('rejects password under 8 chars', () => {
-    expect(loginSchema.safeParse({ email: 'test@example.com', password: 'abc' }).success).toBe(
-      false,
-    );
+  it('rejects empty password', () => {
+    expect(loginSchema.safeParse({ email: 'test@example.com', password: '' }).success).toBe(false);
   });
 });
 
@@ -30,8 +32,8 @@ describe('registerSchema', () => {
     firstName: 'Jane',
     lastName: 'Doe',
     email: 'jane@example.com',
-    password: 'Password1!',
-    confirmPassword: 'Password1!',
+    password: 'Password!',
+    confirmPassword: 'Password!',
   };
 
   it('passes valid registration data', () => {
@@ -44,6 +46,20 @@ describe('registerSchema', () => {
     );
   });
 
+  it('does not apply password length policy to confirm password separately', () => {
+    const result = registerSchema.safeParse({ ...valid, confirmPassword: 'Short!' });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(
+        result.error.issues.some(
+          (issue) =>
+            issue.path.join('.') === 'confirmPassword' && issue.message === 'Minimum 8 characters',
+        ),
+      ).toBe(false);
+    }
+  });
+
   it('rejects password without uppercase', () => {
     expect(
       registerSchema.safeParse({ ...valid, password: 'password1!', confirmPassword: 'password1!' })
@@ -51,24 +67,34 @@ describe('registerSchema', () => {
     ).toBe(false);
   });
 
-  it('rejects password without lowercase', () => {
-    expect(
-      registerSchema.safeParse({ ...valid, password: 'PASSWORD1!', confirmPassword: 'PASSWORD1!' })
-        .success,
-    ).toBe(false);
-  });
-
-  it('rejects password without number', () => {
+  it('accepts password without number', () => {
     expect(
       registerSchema.safeParse({ ...valid, password: 'PasswordA!', confirmPassword: 'PasswordA!' })
         .success,
-    ).toBe(false);
+    ).toBe(true);
+  });
+
+  it('accepts password without lowercase', () => {
+    expect(
+      registerSchema.safeParse({ ...valid, password: 'PASSWORD!', confirmPassword: 'PASSWORD!' })
+        .success,
+    ).toBe(true);
   });
 
   it('rejects password without special character', () => {
     expect(
       registerSchema.safeParse({ ...valid, password: 'Password1', confirmPassword: 'Password1' })
         .success,
+    ).toBe(false);
+  });
+
+  it('rejects non-ASCII special characters', () => {
+    expect(
+      registerSchema.safeParse({
+        ...valid,
+        password: 'Qwerty123¥',
+        confirmPassword: 'Qwerty123¥',
+      }).success,
     ).toBe(false);
   });
 });
@@ -85,8 +111,8 @@ describe('resetPasswordSchema', () => {
 
 describe('completePasswordResetSchema', () => {
   const valid = {
-    password: 'Password1!',
-    confirmPassword: 'Password1!',
+    password: 'Password!',
+    confirmPassword: 'Password!',
   };
 
   it('passes valid password reset data', () => {
@@ -117,13 +143,22 @@ describe('completePasswordResetSchema', () => {
     ).toBe(false);
   });
 
-  it('rejects password without number', () => {
+  it('accepts password without number', () => {
     expect(
       completePasswordResetSchema.safeParse({
         password: 'PasswordA!',
         confirmPassword: 'PasswordA!',
       }).success,
-    ).toBe(false);
+    ).toBe(true);
+  });
+
+  it('accepts password without lowercase', () => {
+    expect(
+      completePasswordResetSchema.safeParse({
+        password: 'PASSWORD!',
+        confirmPassword: 'PASSWORD!',
+      }).success,
+    ).toBe(true);
   });
 
   it('rejects password without special character', () => {
@@ -131,6 +166,15 @@ describe('completePasswordResetSchema', () => {
       completePasswordResetSchema.safeParse({
         password: 'Password1',
         confirmPassword: 'Password1',
+      }).success,
+    ).toBe(false);
+  });
+
+  it('rejects non-ASCII special characters', () => {
+    expect(
+      completePasswordResetSchema.safeParse({
+        password: 'Qwerty123¥',
+        confirmPassword: 'Qwerty123¥',
       }).success,
     ).toBe(false);
   });

@@ -58,7 +58,13 @@ export default function RegisterScreen() {
         </Animated.View>
       </View>
 
-      <Screen scrollable padding style={{ backgroundColor: '#FFFFFF' }} keyboardAvoiding>
+      <Screen
+        scrollable
+        padding
+        backgroundColor="#FFFFFF"
+        style={{ backgroundColor: '#FFFFFF' }}
+        keyboardAvoiding
+      >
         <View style={{ marginTop: spacing.xxl, marginBottom: spacing.xl }}>
           <Typography variant="h1" style={{ fontWeight: '700' }}>
             Create Account
