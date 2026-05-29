@@ -8,5 +8,6 @@ export { PatternBackground } from './PatternBackground';
 export { Screen } from './Screen';
 export { TextInput } from './TextInput';
 export { Typography } from './Typography';
+export { Toast, ToastHost } from './Toast';
 export { UploadBottomSheet } from './UploadBottomSheet';
 export type { UploadedFile, UploadError } from './UploadBottomSheet';

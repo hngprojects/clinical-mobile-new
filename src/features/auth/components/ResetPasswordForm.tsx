@@ -48,8 +48,8 @@ export function ResetPasswordForm({ mutation }: ResetPasswordFormProps) {
       />
 
       <Button
-        label="Send reset code"
-        loadingLabel="Sending code"
+        label="Send OTP"
+        loadingLabel="Sending OTP"
         loadingIndicatorColor={BLUE}
         onPress={handleSubmit(onSubmit)}
         isLoading={isPending}

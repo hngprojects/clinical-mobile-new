@@ -21,9 +21,26 @@ type AuthStateAccessor = () => {
 };
 
 let getAuthState: AuthStateAccessor | null = null;
+let refreshPromise: Promise<{ accessToken: string; refreshToken: string | null }> | null = null;
 
 export function registerAuthStore(store: AuthStateAccessor) {
   getAuthState = store;
+}
+
+async function refreshAccessToken() {
+  const { authApi } = await import('@/features/auth/api/auth.api');
+  return authApi.refreshTokens();
+}
+
+async function showSessionExpiredMessage() {
+  try {
+    const { useAuthFeedbackStore } = await import('@/features/auth/store/authFeedback.store');
+    useAuthFeedbackStore
+      .getState()
+      .setErrorMessage('Your session has expired. Please sign in again.');
+  } catch (feedbackError) {
+    if (__DEV__) console.warn('Could not show session expiry feedback:', feedbackError);
+  }
 }
 
 client.interceptors.request.use((config) => {
@@ -39,23 +56,30 @@ client.interceptors.response.use(
 
     if (error.response?.status === 401 && !original._retry && getAuthState) {
       original._retry = true;
-      const { refreshToken, clearSession } = getAuthState();
+      const { accessToken, isGuest, clearSession } = getAuthState();
 
-      if (!refreshToken) {
-        // Guest users authenticate via x-guest-session-id, not tokens — don't wipe their session
-        if (!getAuthState().isGuest) {
-          clearSession();
-        }
+      // Guest sessions use x-guest-session-id — a 401 means the guest session expired
+      if (isGuest) {
+        clearSession();
+        return Promise.reject(toApiError(error));
+      }
+
+      // No access token means we're already logged out
+      if (!accessToken) {
+        clearSession();
         return Promise.reject(toApiError(error));
       }
 
       try {
-        const { authApi } = await import('@/features/auth/api/auth.api');
-        const newTokens = await authApi.refreshTokens();
+        refreshPromise ??= refreshAccessToken().finally(() => {
+          refreshPromise = null;
+        });
+        const newTokens = await refreshPromise;
         getAuthState().setTokens(newTokens);
         original.headers.Authorization = `Bearer ${newTokens.accessToken}`;
         return client(original);
       } catch {
+        await showSessionExpiredMessage();
         getAuthState().clearSession();
         return Promise.reject(toApiError(error));
       }
