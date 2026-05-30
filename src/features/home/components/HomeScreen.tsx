@@ -50,7 +50,11 @@ export function HomeScreen() {
   };
 
   const handleRename = (id: string, newTitle: string) => {
-    renameCase(id, newTitle);
+    renameCase(id, newTitle).catch((error) => {
+      if (__DEV__) {
+        console.error('[HomeScreen] Rename failed', error);
+      }
+    });
   };
 
   const handleDelete = (id: string) => {
