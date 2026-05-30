@@ -1,8 +1,8 @@
 import { client } from '@/shared/api/client';
 
 export interface CaseListItem {
-  completed_at: Date | null;
-  created_at: Date;
+  completed_at: string | null;
+  created_at: string;
   guest_session_id: string | null;
   id: string;
   status: 'pending' | 'completed' | 'failed';
