@@ -1,18 +1,54 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useApiQuery } from '@/shared/api/hooks';
 
 import type { InsightListItem } from '../api/types';
 
-import { casesApi, type CaseListItem } from '../api/cases.api';
+import { casesApi, type CaseListItem, type CasesListResponse } from '../api/cases.api';
 
 export function useInsightCases(offset = 0, limit = 50) {
+  const queryClient = useQueryClient();
   const query = useApiQuery(
     ['insight-cases', offset, limit],
     () => casesApi.listCases(offset, limit),
     {
       retry: false,
     },
+  );
+
+  const renameCase = useCallback(
+    async (caseId: string, title: string) => {
+      await queryClient.cancelQueries({ queryKey: ['insight-cases'] });
+
+      const previousQueries = queryClient.getQueriesData<CasesListResponse>({
+        queryKey: ['insight-cases'],
+      });
+
+      queryClient.setQueriesData<CasesListResponse>(
+        { queryKey: ['insight-cases'] },
+        (current: CasesListResponse | undefined) => {
+          if (!current) return current;
+
+          return {
+            ...current,
+            data: current.data.map((item: CaseListItem) =>
+              item.id === caseId ? { ...item, title } : item,
+            ),
+          };
+        },
+      );
+
+      try {
+        await casesApi.updateCaseTitle(caseId, title);
+      } catch (error) {
+        previousQueries.forEach(([key, value]) => {
+          queryClient.setQueryData(key, value);
+        });
+        throw error;
+      }
+    },
+    [queryClient],
   );
 
   const [updateTrigger, setUpdateTrigger] = useState(0);
@@ -40,6 +76,7 @@ export function useInsightCases(offset = 0, limit = 50) {
   return {
     ...query,
     insightItems,
+    renameCase,
     refetch: query.refetch,
   };
 }
@@ -47,7 +84,7 @@ export function useInsightCases(offset = 0, limit = 50) {
 function mapCasesToInsightItems(cases: CaseListItem[]): InsightListItem[] {
   return cases.map((item) => ({
     id: item.id,
-    title: `Case ${item.id.slice(0, 8)}`,
+    title: item.title,
     subtitle: formatCaseSubtitle(item),
   }));
 }

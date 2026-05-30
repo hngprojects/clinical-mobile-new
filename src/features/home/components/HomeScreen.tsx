@@ -1,8 +1,9 @@
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useInsightCases } from '@/features/insights/hooks/useInsightCases';
 import { UploadBottomSheet, UploadedFile, UploadError } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
@@ -12,18 +13,23 @@ import { Insight } from './InsightCard';
 import { RecentInsightsSection } from './RecentInsightsSection';
 import { UploadCard } from './UploadCard';
 
-const MOCK_INSIGHTS: Insight[] = [
-  { id: '1', title: 'Hormone Health Discussion', timestamp: '2 mins ago' },
-  { id: '2', title: 'Pregnancy Test Update', timestamp: '15 mins ago' },
-  { id: '3', title: 'Menstrual Cycle Complications', timestamp: '40 mins ago' },
-];
-
 export function HomeScreen() {
   const { colors, spacing } = useTheme();
   const { user, isGuest } = useHome();
   const router = useRouter();
-  const [insights, setInsights] = useState<Insight[]>(MOCK_INSIGHTS);
+  const { insightItems, renameCase } = useInsightCases(0, 3);
   const [showUploadSheet, setShowUploadSheet] = useState(false);
+
+  const insights = useMemo<Insight[]>(
+    () =>
+      insightItems.map((item) => ({
+        caseId: item.caseId ?? item.id,
+        id: item.id,
+        title: item.title,
+        timestamp: item.subtitle,
+      })),
+    [insightItems],
+  );
 
   const handleUpload = (file: UploadedFile) => {
     router.push({
@@ -45,11 +51,15 @@ export function HomeScreen() {
   };
 
   const handleRename = (id: string, newTitle: string) => {
-    setInsights((prev) => prev.map((i) => (i.id === id ? { ...i, title: newTitle } : i)));
+    renameCase(id, newTitle).catch((error) => {
+      if (__DEV__) {
+        console.error('[HomeScreen] Rename failed', error);
+      }
+    });
   };
 
   const handleDelete = (id: string) => {
-    setInsights((prev) => prev.filter((i) => i.id !== id));
+    void id;
   };
 
   const handleViewInsight = (id: string) => {
