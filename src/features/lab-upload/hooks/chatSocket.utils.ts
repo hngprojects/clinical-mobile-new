@@ -72,6 +72,10 @@ export function parseSocketPayload(data: unknown) {
 }
 
 export function normalizeSocketPayload(value: unknown, caseId: string): ChatMessage[] {
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => normalizeSocketPayload(item, caseId));
+  }
+
   if (!value || typeof value !== 'object') return [];
 
   const payload = value as SocketPayload;

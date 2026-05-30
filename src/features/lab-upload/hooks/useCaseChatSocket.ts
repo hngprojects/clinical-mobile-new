@@ -121,6 +121,15 @@ export function useCaseChatSocket(caseId: string, guestSessionId?: string | null
     );
   }, [queryClient, queryKey]);
 
+  const removeMessage = useCallback(
+    (messageId: string) => {
+      queryClient.setQueryData<ChatMessage[]>(queryKey, (current = []) =>
+        current.filter((item) => item.id !== messageId),
+      );
+    },
+    [queryClient, queryKey],
+  );
+
   const clearResponseSettleTimer = useCallback(() => {
     if (responseSettleTimerRef.current !== null) {
       clearTimeout(responseSettleTimerRef.current);
@@ -322,9 +331,9 @@ export function useCaseChatSocket(caseId: string, guestSessionId?: string | null
       }
 
       setIsSending(true);
+      const optimisticMessage = createLocalChatMessage(caseId, message);
 
       try {
-        const optimisticMessage = createLocalChatMessage(caseId, message);
         upsertMessage(optimisticMessage);
         addPendingResponse();
         socketRef.current.send(
@@ -337,13 +346,14 @@ export function useCaseChatSocket(caseId: string, guestSessionId?: string | null
         );
         return true;
       } catch {
+        removeMessage(optimisticMessage.id);
         removePendingResponse();
         return false;
       } finally {
         setIsSending(false);
       }
     },
-    [accessToken, addPendingResponse, caseId, removePendingResponse, upsertMessage],
+    [accessToken, addPendingResponse, caseId, removeMessage, removePendingResponse, upsertMessage],
   );
 
   return {

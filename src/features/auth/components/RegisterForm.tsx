@@ -148,8 +148,6 @@ export function RegisterForm({ mutation, onContinueAsGuest }: RegisterFormProps)
           <View style={[styles.line, { backgroundColor: '#F0F0F0' }]} />
         </View>
 
-        <Toast visible={!!googleError} message={googleError ?? ''} variant="error" />
-
         <View style={{ gap: 16 }}>
           <Button
             label="Google"

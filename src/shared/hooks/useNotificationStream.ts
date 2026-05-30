@@ -52,7 +52,8 @@ export function useNotificationStream({ enabled = true, guestSessionId, onEvent 
         buffer += newData;
 
         // SSE messages are separated by double newlines
-        const messages = buffer.split('\n\n');
+        const normalizedBuffer = buffer.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+        const messages = normalizedBuffer.split('\n\n');
         // Last element may be an incomplete message — keep it in the buffer
         buffer = messages.pop() ?? '';
 
@@ -61,13 +62,14 @@ export function useNotificationStream({ enabled = true, guestSessionId, onEvent 
           if (!trimmed || trimmed.startsWith(':')) continue;
 
           let eventType = 'message';
-          let dataStr = '';
+          const dataLines: string[] = [];
 
           for (const line of trimmed.split('\n')) {
             if (line.startsWith('event:')) eventType = line.slice(6).trim();
-            else if (line.startsWith('data:')) dataStr = line.slice(5).trim();
+            else if (line.startsWith('data:')) dataLines.push(line.slice(5).trim());
           }
 
+          const dataStr = dataLines.join('\n');
           if (!dataStr) continue;
 
           try {

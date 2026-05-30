@@ -55,7 +55,7 @@ describe('aiReviewApi', () => {
             medical_case_id: 'case-1',
             status: 'complete',
             summary: 'First review',
-            value_breakdown: null,
+            value_breakdown: [{ metric: 'HbA1c', value: '7.2', status: 'high' }],
             suggested_questions: ['What should I ask next?'],
             risk_level: 'low',
             confidence: 'high',
@@ -77,8 +77,23 @@ describe('aiReviewApi', () => {
     });
 
     await expect(aiReviewApi.getInterpretations('case-1')).resolves.toMatchObject([
-      { id: 'interpretation-1', summary: 'First review' },
-      { id: 'interpretation-2', summary: 'Second review' },
+      {
+        id: 'interpretation-1',
+        medicalCaseId: 'case-1',
+        summary: 'First review',
+        valueBreakdown: [{ metric: 'HbA1c', value: '7.2', status: 'high' }],
+        suggestedQuestions: ['What should I ask next?'],
+        riskLevel: 'low',
+        generatedAt: '2026-05-19T20:00:00.000Z',
+      },
+      {
+        id: 'interpretation-2',
+        medicalCaseId: 'case-1',
+        summary: 'Second review',
+        suggestedQuestions: [],
+        riskLevel: 'moderate',
+        generatedAt: '2026-05-20T20:00:00.000Z',
+      },
     ]);
     expect(mockGet).toHaveBeenCalledWith('/api/v1/cases/case-1/interpretations', {
       headers: undefined,

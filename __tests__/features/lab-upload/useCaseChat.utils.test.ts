@@ -157,6 +157,13 @@ describe('normalizeSocketPayload', () => {
     expect(result.map((m) => m.id)).toEqual(['msg-1', 'msg-2']);
   });
 
+  it('maps a top-level array of ChatResponses', () => {
+    const second = { ...VALID_CHAT_RESPONSE, id: 'msg-2' };
+    const result = normalizeSocketPayload([VALID_CHAT_RESPONSE, second], CASE_ID);
+    expect(result).toHaveLength(2);
+    expect(result.map((m) => m.id)).toEqual(['msg-1', 'msg-2']);
+  });
+
   it('returns [] for init / connected / ack / pong types', () => {
     for (const type of ['init', 'connected', 'ack', 'pong']) {
       expect(normalizeSocketPayload({ type, content: 'ignored' }, CASE_ID)).toHaveLength(0);

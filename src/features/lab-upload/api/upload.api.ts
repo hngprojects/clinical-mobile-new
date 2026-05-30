@@ -14,6 +14,8 @@ function inferMimeType(fileName: string) {
   if (extension === 'pdf') return 'application/pdf';
   if (extension === 'png') return 'image/png';
   if (extension === 'jpg' || extension === 'jpeg') return 'image/jpeg';
+  if (extension === 'heic') return 'image/heic';
+  if (extension === 'webp') return 'image/webp';
 
   return 'application/octet-stream';
 }

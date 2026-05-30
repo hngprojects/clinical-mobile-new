@@ -73,7 +73,7 @@ export function ChatReviewScreen() {
     typeof guestSessionId === 'string' ? guestSessionId : storedGuestSessionId;
   const {
     clearUploadError,
-    isLabUploadProcessing,
+    isLabUploading,
     isUploadError,
     labUploadStatusMessage,
     review,
@@ -109,7 +109,7 @@ export function ChatReviewScreen() {
   const showReconnecting = hasConnectedRef.current && socketStatus === 'connecting';
   const showConnectionLost = hasConnectedRef.current && socketStatus === 'disconnected';
   const showSessionExpired = socketStatus === 'session_expired';
-  const isSendingMessage = sendMessage.isPending || chatSocket.isSending || isLabUploadProcessing;
+  const isSendingMessage = sendMessage.isPending || chatSocket.isSending || isLabUploading;
   const canSend = Boolean(
     (caseId || isMockChat) &&
     (trimmedDraft || pendingAttachment) &&
@@ -174,14 +174,36 @@ export function ChatReviewScreen() {
     setDraft('');
     setPendingAttachment(null);
 
+    const sendChatText = async (text: string) => {
+      if (!text) return;
+
+      if (chatSocket.isConnected && (await chatSocket.sendLiveMessage(text))) {
+        return;
+      }
+
+      await sendMessage.mutateAsync(text);
+    };
+
     if (attachment) {
       if (isMockChat) {
         const localMessage = createLocalAttachmentMessage({
           caseId: 'mock-case',
           file: attachment,
-          text: message,
+          text: '',
         });
-        setMockMessages((current) => [...current, localMessage]);
+        setMockMessages((current) => [
+          ...current,
+          localMessage,
+          ...(message
+            ? [
+                createMockMessage({
+                  id: `mock-patient-${current.length + 1}`,
+                  senderType: 'patient',
+                  text: message,
+                }),
+              ]
+            : []),
+        ]);
         return;
       }
 
@@ -191,13 +213,19 @@ export function ChatReviewScreen() {
         const attachmentMessage = createLocalAttachmentMessage({
           caseId: caseId!,
           file: attachment,
-          text: message,
+          text: '',
         });
         setLocalMessages((current) => {
           const next = [...current, attachmentMessage].slice(-LOCAL_ATTACHMENT_STORAGE_LIMIT);
           persistLocalAttachmentMessages(caseId!, next);
           return next;
         });
+
+        try {
+          await sendChatText(message);
+        } catch {
+          setDraft(message);
+        }
       } catch {
         setDraft(message);
         setPendingAttachment(attachment);
@@ -223,11 +251,7 @@ export function ChatReviewScreen() {
     }
 
     try {
-      if (chatSocket.isConnected && (await chatSocket.sendLiveMessage(message))) {
-        return;
-      }
-
-      await sendMessage.mutateAsync(message);
+      await sendChatText(message);
     } catch {
       setDraft(message);
       setPendingAttachment(attachment);
@@ -248,7 +272,7 @@ export function ChatReviewScreen() {
     }
 
     if (error.type === 'file-type') {
-      showUploadError('Please upload a PDF, JPG, JPEG, or PNG file.');
+      showUploadError('Please upload a PDF, JPG, JPEG, PNG, HEIC, or WEBP file.');
       return;
     }
 
@@ -344,7 +368,7 @@ export function ChatReviewScreen() {
               canSend={canSend}
               draft={draft}
               isSending={isSendingMessage}
-              isUploadProcessing={isLabUploadProcessing}
+              isUploadProcessing={isLabUploading}
               labUploadStatusMessage={labUploadStatusMessage}
               onDraftChange={handleDraftChange}
               onOpenUpload={() => {

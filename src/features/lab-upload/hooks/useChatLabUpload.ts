@@ -120,6 +120,7 @@ export function useChatLabUpload({
 
   return {
     clearUploadError,
+    isLabUploading: uploadMutation.isPending,
     isLabUploadProcessing: uploadMutation.isPending || isInterpretingUpload,
     isUploadError: uploadMutation.isError,
     labUploadStatusMessage,

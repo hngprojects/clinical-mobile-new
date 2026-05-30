@@ -147,6 +147,16 @@ describe('authApi', () => {
     );
   });
 
+  it('refreshes tokens without a request body when no refresh token is available', async () => {
+    mockPost.mockResolvedValueOnce(tokenResponse);
+
+    await expect(authApi.refreshTokens()).resolves.toEqual({
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+    });
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/auth/refresh', undefined, { _retry: true });
+  });
+
   it('requests password reset through the backend', async () => {
     mockPost.mockResolvedValueOnce({
       data: {
