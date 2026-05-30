@@ -1,12 +1,14 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useApiMutation, useApiQuery } from '@/shared/api/hooks';
+import { useApiQuery } from '@/shared/api/hooks';
 
 import type { InsightListItem } from '../api/types';
 
-import { casesApi, type CaseListItem } from '../api/cases.api';
+import { casesApi, type CaseListItem, type CasesListResponse } from '../api/cases.api';
 
 export function useInsightCases(offset = 0, limit = 50) {
+  const queryClient = useQueryClient();
   const query = useApiQuery(
     ['insight-cases', offset, limit],
     () => casesApi.listCases(offset, limit),
@@ -15,8 +17,38 @@ export function useInsightCases(offset = 0, limit = 50) {
     },
   );
 
-  const renameMutation = useApiMutation(({ caseId, title }: { caseId: string; title: string }) =>
-    casesApi.updateCaseTitle(caseId, title),
+  const renameCase = useCallback(
+    async (caseId: string, title: string) => {
+      await queryClient.cancelQueries({ queryKey: ['insight-cases'] });
+
+      const previousQueries = queryClient.getQueriesData<CasesListResponse>({
+        queryKey: ['insight-cases'],
+      });
+
+      queryClient.setQueriesData<CasesListResponse>(
+        { queryKey: ['insight-cases'] },
+        (current: CasesListResponse | undefined) => {
+          if (!current) return current;
+
+          return {
+            ...current,
+            data: current.data.map((item: CaseListItem) =>
+              item.id === caseId ? { ...item, title } : item,
+            ),
+          };
+        },
+      );
+
+      try {
+        await casesApi.updateCaseTitle(caseId, title);
+      } catch (error) {
+        previousQueries.forEach(([key, value]) => {
+          queryClient.setQueryData(key, value);
+        });
+        throw error;
+      }
+    },
+    [queryClient],
   );
 
   const [updateTrigger, setUpdateTrigger] = useState(0);
@@ -40,11 +72,6 @@ export function useInsightCases(offset = 0, limit = 50) {
       console.log('[Insights cases]', query.data);
     }
   }, [query.data]);
-
-  const renameCase = useCallback(
-    (caseId: string, title: string) => renameMutation.mutateAsync({ caseId, title }),
-    [renameMutation],
-  );
 
   return {
     ...query,
