@@ -17,13 +17,12 @@ export function UploadCard({ onUpload }: UploadCardProps) {
       style={[
         styles.card,
         {
-          backgroundColor: colors.cardBackground,
+          backgroundColor: colors.surfaceMuted,
           marginHorizontal: spacing.md,
           padding: spacing.xl,
           borderRadius: 16,
-          gap: spacing.md,
           borderWidth: 1,
-          borderColor: '#F0F0F0',
+          borderColor: colors.borderSubtle,
         },
       ]}
     >
@@ -36,14 +35,23 @@ export function UploadCard({ onUpload }: UploadCardProps) {
         </Typography>
       </View>
 
-      <TouchableOpacity onPress={onUpload} activeOpacity={0.8} style={styles.uploadButton}>
+      <TouchableOpacity
+        onPress={onUpload}
+        activeOpacity={0.8}
+        style={[styles.uploadButton, { backgroundColor: colors.primary, marginTop: 24 }]}
+      >
         <Ionicons name="arrow-up-circle-outline" size={20} color="#FFFFFF" />
         <Typography variant="body1" color="#FFFFFF" style={styles.buttonLabel}>
           Upload Result
         </Typography>
       </TouchableOpacity>
 
-      <Typography variant="label" color={colors.textSecondary} align="center">
+      <Typography
+        variant="label"
+        color={colors.textSecondary}
+        align="center"
+        style={styles.formatText}
+      >
         JPEG, PDF and PNG formats up to 10MB
       </Typography>
     </View>
@@ -54,10 +62,9 @@ const styles = StyleSheet.create({
   card: {},
   textGroup: {
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
   },
   uploadButton: {
-    backgroundColor: '#2563EB',
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 16,
@@ -68,5 +75,8 @@ const styles = StyleSheet.create({
   },
   buttonLabel: {
     fontWeight: '600',
+  },
+  formatText: {
+    marginTop: 16,
   },
 });

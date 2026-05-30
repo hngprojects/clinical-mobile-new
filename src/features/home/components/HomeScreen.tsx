@@ -1,12 +1,12 @@
 import { useRouter } from 'expo-router';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useInsightCases } from '@/features/insights/hooks/useInsightCases';
+import { UploadBottomSheet, UploadedFile, UploadError } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
-import { UploadBottomSheet, UploadedFile, UploadError } from '@/shared/components';
 import { useHome } from '../hooks/useHome';
 import { HomeHeader } from './HomeHeader';
 import { Insight } from './InsightCard';
@@ -23,6 +23,7 @@ export function HomeScreen() {
   const insights = useMemo<Insight[]>(
     () =>
       insightItems.map((item) => ({
+        caseId: item.caseId ?? item.id,
         id: item.id,
         title: item.title,
         timestamp: item.subtitle,
@@ -61,9 +62,17 @@ export function HomeScreen() {
     void id;
   };
 
-  const handleViewInsight = (_id: string) => {
-    router.push('/(main)/chat-review?demo=true');
-  };
+  const handleViewInsight = useCallback(
+    (id: string) => {
+      const insight = insights.find((i) => i.id === id);
+      if (insight?.caseId) {
+        router.push({ pathname: '/(main)/chat-review', params: { caseId: insight.caseId } });
+      } else {
+        router.push('/(main)/chat-review?demo=true');
+      }
+    },
+    [insights, router],
+  );
 
   return (
     <>
