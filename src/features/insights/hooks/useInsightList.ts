@@ -11,7 +11,7 @@ interface UseInsightListOptions {
 
 export function useInsightList(
   initialItems: InsightListItem[] = DUMMY_INSIGHT_LIST,
-  options: UseInsightListOptions = {},
+  { onRename }: UseInsightListOptions = {},
 ) {
   const [query, setQuery] = useState('');
   const [items, setItems] = useState<InsightListItem[]>(() => [...initialItems]);
@@ -59,13 +59,13 @@ export function useInsightList(
       });
 
       try {
-        await options.onRename?.(id, title);
+        await onRename?.(id, title);
       } catch (error) {
         setItems(previousItems);
         console.error('[Insights] Failed to rename case', error);
       }
     },
-    [options.onRename],
+    [onRename],
   );
 
   const deleteInsight = useCallback((id: string) => {
