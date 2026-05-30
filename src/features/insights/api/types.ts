@@ -54,4 +54,5 @@ export interface InsightListItem {
   id: string;
   title: string;
   subtitle: string;
+  caseId?: string;
 }
