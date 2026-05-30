@@ -104,7 +104,7 @@ export function ChatReviewScreen() {
   const chatSocket = useCaseChatSocket(
     caseId || '',
     effectiveGuestSessionId,
-    !isMockChat && !isDemoMode,
+    !isMockChat && !isDemoMode && !isGuest,
   );
   const displayedReview = isMockChat ? MOCK_REVIEW : review;
   const reviews = useMemo(
@@ -221,7 +221,7 @@ export function ChatReviewScreen() {
     const sendChatText = async (text: string): Promise<boolean> => {
       if (!text) return false;
 
-      if (chatSocket.isConnected && (await chatSocket.sendLiveMessage(text))) {
+      if (!isGuest && chatSocket.isConnected && (await chatSocket.sendLiveMessage(text))) {
         return true;
       }
 
