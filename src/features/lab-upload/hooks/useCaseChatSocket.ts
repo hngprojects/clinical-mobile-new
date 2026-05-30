@@ -47,7 +47,7 @@ export function useCaseChatSocket(caseId: string, guestSessionId?: string | null
   const [status, setStatus] = useState<SocketStatus>('idle');
   const [isSending, setIsSending] = useState(false);
   const [isAwaitingResponse, setIsAwaitingResponse] = useState(false);
-  const canUseSocket = Boolean(enabled && caseId && accessToken && !guestSessionId);
+  const canUseSocket = Boolean(enabled && caseId && (accessToken || guestSessionId));
 
   const upsertMessage = useCallback(
     (message: ChatMessage) => {
@@ -196,13 +196,10 @@ export function useCaseChatSocket(caseId: string, guestSessionId?: string | null
       socket.onopen = () => {
         reconnectAttemptsRef.current = 0;
         setStatus('connected');
-        socket.send(
-          JSON.stringify({
-            type: 'init',
-            token: accessToken,
-            case_id: caseId,
-          }),
-        );
+        const initPayload: Record<string, string> = { type: 'init', case_id: caseId };
+        if (accessToken) initPayload.token = accessToken;
+        if (guestSessionId) initPayload.guest_session_id = guestSessionId;
+        socket.send(JSON.stringify(initPayload));
       };
 
       socket.onmessage = (event) => {
@@ -268,6 +265,12 @@ export function useCaseChatSocket(caseId: string, guestSessionId?: string | null
         streamingRef.current = null;
         removePendingResponse();
 
+        // Guests don't reconnect — REST polling is the silent fallback
+        if (guestSessionId) {
+          setStatus('disconnected');
+          return;
+        }
+
         const attempts = reconnectAttemptsRef.current;
         if (attempts < RECONNECT_MAX_ATTEMPTS && canUseSocket) {
           const delay = Math.min(1000 * 2 ** attempts, RECONNECT_MAX_DELAY_MS);
@@ -318,6 +321,7 @@ export function useCaseChatSocket(caseId: string, guestSessionId?: string | null
     bufferAiResponse,
     clearResponseSettleTimer,
     flushBufferedResponse,
+    guestSessionId,
     queryClient,
     queryKey,
     removePendingResponse,
@@ -326,7 +330,7 @@ export function useCaseChatSocket(caseId: string, guestSessionId?: string | null
 
   const sendLiveMessage = useCallback(
     async (message: string) => {
-      if (!accessToken || !caseId || socketRef.current?.readyState !== WebSocket.OPEN) {
+      if (!caseId || socketRef.current?.readyState !== WebSocket.OPEN) {
         return false;
       }
 
@@ -336,14 +340,14 @@ export function useCaseChatSocket(caseId: string, guestSessionId?: string | null
       try {
         upsertMessage(optimisticMessage);
         addPendingResponse();
-        socketRef.current.send(
-          JSON.stringify({
-            type: 'message',
-            token: accessToken,
-            case_id: caseId,
-            content: message,
-          }),
-        );
+        const msgPayload: Record<string, string> = {
+          type: 'message',
+          case_id: caseId,
+          content: message,
+        };
+        if (accessToken) msgPayload.token = accessToken;
+        if (guestSessionId) msgPayload.guest_session_id = guestSessionId;
+        socketRef.current.send(JSON.stringify(msgPayload));
         return true;
       } catch {
         removeMessage(optimisticMessage.id);
@@ -353,7 +357,15 @@ export function useCaseChatSocket(caseId: string, guestSessionId?: string | null
         setIsSending(false);
       }
     },
-    [accessToken, addPendingResponse, caseId, removeMessage, removePendingResponse, upsertMessage],
+    [
+      accessToken,
+      addPendingResponse,
+      caseId,
+      guestSessionId,
+      removeMessage,
+      removePendingResponse,
+      upsertMessage,
+    ],
   );
 
   return {
