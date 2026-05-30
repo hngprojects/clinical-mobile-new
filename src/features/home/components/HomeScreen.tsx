@@ -1,8 +1,9 @@
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useInsightCases } from '@/features/insights/hooks/useInsightCases';
 import { useTheme } from '@/shared/theme';
 
 import { useHome } from '../hooks/useHome';
@@ -12,18 +13,25 @@ import { RecentInsightsSection } from './RecentInsightsSection';
 import { UploadCard } from './UploadCard';
 import { UploadBottomSheet, UploadedFile, UploadError } from '@/shared/components';
 
-const MOCK_INSIGHTS: Insight[] = [
-  { id: '1', title: 'Hormone Health Discussion', timestamp: '2 mins ago' },
-  { id: '2', title: 'Pregnancy Test Update', timestamp: '15 mins ago' },
-  { id: '3', title: 'Menstrual Cycle Complications', timestamp: '40 mins ago' },
-];
-
 export function HomeScreen() {
   const { colors, spacing } = useTheme();
   const { user, isGuest } = useHome();
   const router = useRouter();
-  const [insights, setInsights] = useState<Insight[]>(MOCK_INSIGHTS);
+  const { insightItems, renameCase } = useInsightCases(0, 3);
+  const [insights, setInsights] = useState<Insight[]>([]);
   const [showUploadSheet, setShowUploadSheet] = useState(false);
+
+  useEffect(() => {
+    if (insightItems.length > 0) {
+      setInsights(
+        insightItems.map((item) => ({
+          id: item.id,
+          title: item.title,
+          timestamp: item.subtitle,
+        })),
+      );
+    }
+  }, [insightItems]);
 
   const handleUpload = (file: UploadedFile) => {
     router.push({
@@ -45,7 +53,16 @@ export function HomeScreen() {
   };
 
   const handleRename = (id: string, newTitle: string) => {
-    setInsights((prev) => prev.map((i) => (i.id === id ? { ...i, title: newTitle } : i)));
+    let previousInsights: Insight[] = [];
+
+    setInsights((prev) => {
+      previousInsights = prev;
+      return prev.map((i) => (i.id === id ? { ...i, title: newTitle } : i));
+    });
+
+    renameCase(id, newTitle).catch(() => {
+      setInsights(previousInsights);
+    });
   };
 
   const handleDelete = (id: string) => {
