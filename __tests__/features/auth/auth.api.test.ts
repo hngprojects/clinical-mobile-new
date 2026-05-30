@@ -30,6 +30,7 @@ const tokenResponse = {
     message: 'ok',
     data: {
       access_token: 'access-token',
+      refresh_token: 'refresh-token',
       token_type: 'bearer',
       expires_in: 3600,
       user: backendUser,
@@ -66,7 +67,7 @@ describe('authApi', () => {
     });
     expect(result.tokens).toEqual({
       accessToken: 'access-token',
-      refreshToken: null,
+      refreshToken: 'refresh-token',
     });
   });
 
@@ -135,11 +136,15 @@ describe('authApi', () => {
   it('refreshes tokens through the backend', async () => {
     mockPost.mockResolvedValueOnce(tokenResponse);
 
-    await expect(authApi.refreshTokens()).resolves.toEqual({
+    await expect(authApi.refreshTokens('old-refresh-token')).resolves.toEqual({
       accessToken: 'access-token',
-      refreshToken: null,
+      refreshToken: 'refresh-token',
     });
-    expect(mockPost).toHaveBeenCalledWith('/api/v1/auth/refresh', undefined, { _retry: true });
+    expect(mockPost).toHaveBeenCalledWith(
+      '/api/v1/auth/refresh',
+      { refresh_token: 'old-refresh-token' },
+      { _retry: true },
+    );
   });
 
   it('requests password reset through the backend', async () => {

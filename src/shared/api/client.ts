@@ -27,9 +27,9 @@ export function registerAuthStore(store: AuthStateAccessor) {
   getAuthState = store;
 }
 
-async function refreshAccessToken() {
+async function refreshAccessToken(refreshToken?: string | null) {
   const { authApi } = await import('@/features/auth/api/auth.api');
-  return authApi.refreshTokens();
+  return authApi.refreshTokens(refreshToken);
 }
 
 async function showSessionExpiredMessage() {
@@ -56,7 +56,7 @@ client.interceptors.response.use(
 
     if (error.response?.status === 401 && !original._retry && getAuthState) {
       original._retry = true;
-      const { accessToken, isGuest, clearSession } = getAuthState();
+      const { accessToken, refreshToken, isGuest, clearSession } = getAuthState();
 
       // Guest sessions use x-guest-session-id — a 401 means the guest session expired
       if (isGuest) {
@@ -71,7 +71,7 @@ client.interceptors.response.use(
       }
 
       try {
-        refreshPromise ??= refreshAccessToken().finally(() => {
+        refreshPromise ??= refreshAccessToken(refreshToken).finally(() => {
           refreshPromise = null;
         });
         const newTokens = await refreshPromise;

@@ -21,11 +21,13 @@ import {
   UploadedFile,
   UploadError,
 } from '@/shared/components';
+import { asyncStorage } from '@/shared/storage/asyncStorage';
 
 import type { AiReviewResult } from '../api/ai-review.types';
 import type { ChatMessage } from '../api/chat.types';
-import { useAiReview } from '../hooks/useAiReview';
+import { useAiReviewHistory } from '../hooks/useAiReview';
 import { useCaseChat, useCaseChatSocket, useSendChatMessage } from '../hooks/useCaseChat';
+import { useChatLabUpload } from '../hooks/useChatLabUpload';
 
 import { ChatBubble, ChatComposer, ChatInterpretationCard, ChatStateMessage } from './chat';
 
@@ -45,6 +47,9 @@ type TimelineItem =
       message: ChatMessage;
     };
 
+const LOCAL_ATTACHMENT_STORAGE_KEY_PREFIX = 'case_chat_local_attachments';
+const LOCAL_ATTACHMENT_STORAGE_LIMIT = 5;
+
 export function ChatReviewScreen() {
   const router = useRouter();
   const scrollRef = useRef<ScrollView | null>(null);
@@ -61,13 +66,26 @@ export function ChatReviewScreen() {
   const [localMessages, setLocalMessages] = useState<ChatMessage[]>([]);
   const [pendingAttachment, setPendingAttachment] = useState<UploadedFile | null>(null);
   const [showUploadSheet, setShowUploadSheet] = useState(false);
-  const [uploadErrorMessage, setUploadErrorMessage] = useState<string | null>(null);
   const hasConnectedRef = useRef(false);
   const isMockChat = typeof __DEV__ !== 'undefined' && __DEV__ && mock === 'chat';
   const isDemoMode = demo === 'true';
   const effectiveGuestSessionId =
     typeof guestSessionId === 'string' ? guestSessionId : storedGuestSessionId;
-  const reviewQuery = useAiReview(caseId || '', effectiveGuestSessionId);
+  const {
+    clearUploadError,
+    isLabUploadProcessing,
+    isUploadError,
+    labUploadStatusMessage,
+    review,
+    showUploadError,
+    uploadErrorMessage,
+    uploadLabResult,
+  } = useChatLabUpload({
+    caseId: caseId || '',
+    enabled: !isMockChat && !isDemoMode,
+    guestSessionId: effectiveGuestSessionId,
+  });
+  const reviewHistoryQuery = useAiReviewHistory(caseId || '', effectiveGuestSessionId);
   const chatQuery = useCaseChat(caseId || '', effectiveGuestSessionId);
   const sendMessage = useSendChatMessage(caseId || '', effectiveGuestSessionId);
   const chatSocket = useCaseChatSocket(
@@ -75,7 +93,12 @@ export function ChatReviewScreen() {
     effectiveGuestSessionId,
     !isMockChat && !isDemoMode,
   );
-  const review = isMockChat ? MOCK_REVIEW : reviewQuery.data;
+  const displayedReview = isMockChat ? MOCK_REVIEW : review;
+  const reviews = useMemo(
+    () =>
+      isMockChat ? [MOCK_REVIEW] : getTimelineReviews(reviewHistoryQuery.data, displayedReview),
+    [displayedReview, isMockChat, reviewHistoryQuery.data],
+  );
   const messages = useMemo(
     () => (isMockChat ? mockMessages : [...(chatQuery.data ?? []), ...localMessages]),
     [chatQuery.data, isMockChat, localMessages, mockMessages],
@@ -86,20 +109,16 @@ export function ChatReviewScreen() {
   const showReconnecting = hasConnectedRef.current && socketStatus === 'connecting';
   const showConnectionLost = hasConnectedRef.current && socketStatus === 'disconnected';
   const showSessionExpired = socketStatus === 'session_expired';
-  const isSendingMessage = sendMessage.isPending || chatSocket.isSending;
+  const isSendingMessage = sendMessage.isPending || chatSocket.isSending || isLabUploadProcessing;
   const canSend = Boolean(
     (caseId || isMockChat) &&
     (trimmedDraft || pendingAttachment) &&
     !isSendingMessage &&
     !showSessionExpired,
   );
-  const hasInterpretation = Boolean(
-    review?.status === 'complete' &&
-    (review.summary || review.valueBreakdown?.length || review.suggestedQuestions?.length),
-  );
   const timelineItems = useMemo(
-    () => buildTimeline(messages, hasInterpretation ? review : undefined),
-    [hasInterpretation, messages, review],
+    () => buildTimeline(messages, reviews),
+    [messages, reviews],
   );
   const isInitialLoading = !isMockChat && chatQuery.isLoading;
   const isInitialError = !isMockChat && chatQuery.isError;
@@ -110,25 +129,81 @@ export function ChatReviewScreen() {
     }
   }, [timelineItems.length]);
 
+  useEffect(() => {
+    if (!caseId || isMockChat || isDemoMode) {
+      setLocalMessages([]);
+      return undefined;
+    }
+
+    let cancelled = false;
+    setLocalMessages([]);
+
+    asyncStorage
+      .getItem<ChatMessage[]>(getLocalAttachmentStorageKey(caseId))
+      .then((storedMessages) => {
+        if (cancelled || !Array.isArray(storedMessages)) return;
+
+        setLocalMessages(
+          storedMessages.filter((message) => isStoredLocalAttachmentMessage(message, caseId)),
+        );
+      })
+      .catch((error) => {
+        if (__DEV__) console.warn('Could not restore chat attachments:', error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [caseId, isDemoMode, isMockChat]);
+
+  const clearComposerErrors = () => {
+    if (sendMessage.isError) sendMessage.reset();
+    clearUploadError();
+  };
+
+  const handleDraftChange = (value: string) => {
+    if (sendMessage.isError || isUploadError || uploadErrorMessage) {
+      clearComposerErrors();
+    }
+    setDraft(value);
+  };
+
   const handleSend = async () => {
     if (!canSend) return;
 
     const message = trimmedDraft;
     const attachment = pendingAttachment;
+    clearComposerErrors();
     setDraft('');
     setPendingAttachment(null);
 
     if (attachment) {
-      const localMessage = createLocalAttachmentMessage({
-        caseId: caseId || 'mock-case',
-        file: attachment,
-        text: message,
-      });
-
       if (isMockChat) {
+        const localMessage = createLocalAttachmentMessage({
+          caseId: 'mock-case',
+          file: attachment,
+          text: message,
+        });
         setMockMessages((current) => [...current, localMessage]);
-      } else {
-        setLocalMessages((current) => [...current, localMessage]);
+        return;
+      }
+
+      try {
+        await uploadLabResult(attachment);
+
+        const attachmentMessage = createLocalAttachmentMessage({
+          caseId: caseId!,
+          file: attachment,
+          text: message,
+        });
+        setLocalMessages((current) => {
+          const next = [...current, attachmentMessage].slice(-LOCAL_ATTACHMENT_STORAGE_LIMIT);
+          persistLocalAttachmentMessages(caseId!, next);
+          return next;
+        });
+      } catch {
+        setDraft(message);
+        setPendingAttachment(attachment);
       }
       return;
     }
@@ -163,22 +238,24 @@ export function ChatReviewScreen() {
   };
 
   const handleUploadFromChat = (file: UploadedFile) => {
-    setUploadErrorMessage(null);
+    clearComposerErrors();
     setPendingAttachment(file);
   };
 
   const handleUploadPickerError = (error: UploadError) => {
+    clearComposerErrors();
+
     if (error.type === 'file-size') {
-      setUploadErrorMessage('File size limit exceeded. Please upload a smaller file.');
+      showUploadError('File size limit exceeded. Please upload a smaller file.');
       return;
     }
 
     if (error.type === 'file-type') {
-      setUploadErrorMessage('Please upload a PDF, JPG, JPEG, or PNG file.');
+      showUploadError('Please upload a PDF, JPG, JPEG, or PNG file.');
       return;
     }
 
-    setUploadErrorMessage('Upload failed. Please select a different file or try again.');
+    showUploadError('Upload failed. Please select a different file or try again.');
   };
 
   return (
@@ -254,7 +331,7 @@ export function ChatReviewScreen() {
                     <ChatInterpretationCard
                       key={item.id}
                       review={item.review}
-                      onQuestionPress={setDraft}
+                      onQuestionPress={handleDraftChange}
                     />
                   ) : (
                     <ChatBubble key={item.id} message={item.message} />
@@ -270,12 +347,17 @@ export function ChatReviewScreen() {
               canSend={canSend}
               draft={draft}
               isSending={isSendingMessage}
-              onDraftChange={setDraft}
+              isUploadProcessing={isLabUploadProcessing}
+              labUploadStatusMessage={labUploadStatusMessage}
+              onDraftChange={handleDraftChange}
               onOpenUpload={() => {
-                setUploadErrorMessage(null);
+                clearComposerErrors();
                 setShowUploadSheet(true);
               }}
-              onRemoveAttachment={() => setPendingAttachment(null)}
+              onRemoveAttachment={() => {
+                clearComposerErrors();
+                setPendingAttachment(null);
+              }}
               onSend={handleSend}
               pendingAttachment={pendingAttachment}
               sendErrorVisible={sendMessage.isError}
@@ -298,7 +380,7 @@ export function ChatReviewScreen() {
   );
 }
 
-function buildTimeline(messages: ChatMessage[], review?: AiReviewResult): TimelineItem[] {
+function buildTimeline(messages: ChatMessage[], reviews: AiReviewResult[]): TimelineItem[] {
   const items: TimelineItem[] = messages.map((message, index) => ({
     id: `message-${message.id}`,
     index,
@@ -307,10 +389,10 @@ function buildTimeline(messages: ChatMessage[], review?: AiReviewResult): Timeli
     type: 'message',
   }));
 
-  if (review?.status === 'complete') {
+  for (const [index, review] of reviews.entries()) {
     items.push({
-      id: `interpretation-${review.id ?? review.generatedAt ?? 'latest'}`,
-      index: messages.length,
+      id: `interpretation-${review.id ?? review.generatedAt ?? index}`,
+      index: messages.length + index,
       review,
       timestamp: getTimestamp(review.generatedAt),
       type: 'interpretation',
@@ -325,6 +407,59 @@ function getTimestamp(value?: string) {
 
   const timestamp = Date.parse(value);
   return Number.isNaN(timestamp) ? 0 : timestamp;
+}
+
+function getTimelineReviews(history: AiReviewResult[] | undefined, latest?: AiReviewResult) {
+  const source = latest ? [...(history ?? []), latest] : (history ?? []);
+  const seen = new Set<string>();
+
+  return source
+    .filter(
+      (review) =>
+        review.status === 'complete' &&
+        (review.summary || review.valueBreakdown?.length || review.suggestedQuestions?.length),
+    )
+    .filter((review) => {
+      const identity = getReviewIdentity(review);
+      if (!identity || seen.has(identity)) return false;
+
+      seen.add(identity);
+      return true;
+    })
+    .sort((a, b) => getTimestamp(a.generatedAt) - getTimestamp(b.generatedAt));
+}
+
+function getReviewIdentity(review?: AiReviewResult | null) {
+  if (!review) return null;
+  return `${review.status}:${review.id ?? ''}:${review.generatedAt ?? ''}`;
+}
+
+function getLocalAttachmentStorageKey(caseId: string) {
+  return `${LOCAL_ATTACHMENT_STORAGE_KEY_PREFIX}:${caseId}`;
+}
+
+function persistLocalAttachmentMessages(caseId: string, messages: ChatMessage[]) {
+  asyncStorage.setItem(getLocalAttachmentStorageKey(caseId), messages).catch((error) => {
+    if (__DEV__) console.warn('Could not persist chat attachments:', error);
+  });
+}
+
+function isStoredLocalAttachmentMessage(value: unknown, caseId: string): value is ChatMessage {
+  if (!value || typeof value !== 'object') return false;
+
+  const message = value as Partial<ChatMessage>;
+  const content = message.content;
+
+  return Boolean(
+    typeof message.id === 'string' &&
+      message.id.startsWith('local-attachment-') &&
+      message.senderType === 'patient' &&
+      message.medicalCaseId === caseId &&
+      content &&
+      typeof content === 'object' &&
+      typeof content.attachmentName === 'string' &&
+      typeof content.attachmentUri === 'string',
+  );
 }
 
 function createMockMessage({
