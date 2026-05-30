@@ -23,70 +23,83 @@ export function useNotificationStream({ enabled = true, guestSessionId, onEvent 
   useEffect(() => {
     if (!enabled) return;
 
-    const controller = new AbortController();
+    let xhr: XMLHttpRequest | null = null;
+    let destroyed = false;
+    let lastLength = 0;
+    let buffer = '';
 
-    async function connect() {
+    function connect() {
+      if (destroyed) return;
+
+      lastLength = 0;
+      buffer = '';
+      xhr = new XMLHttpRequest();
+      xhr.open('GET', STREAM_URL, true);
+
+      xhr.setRequestHeader('Accept', 'text/event-stream');
+      xhr.setRequestHeader('Cache-Control', 'no-cache');
+
       const token = useAuthStore.getState().accessToken;
+      if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      if (guestSessionId) xhr.setRequestHeader('x-guest-session-id', guestSessionId);
 
-      const headers: Record<string, string> = {
-        Accept: 'text/event-stream',
-        'Cache-Control': 'no-cache',
-      };
+      xhr.onprogress = () => {
+        if (!xhr) return;
 
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-      if (guestSessionId) headers['x-guest-session-id'] = guestSessionId;
+        const newData = xhr.responseText.slice(lastLength);
+        lastLength = xhr.responseText.length;
 
-      try {
-        const response = await fetch(STREAM_URL, { headers, signal: controller.signal });
+        buffer += newData;
 
-        if (!response.ok || !response.body) return;
+        // SSE messages are separated by double newlines
+        const normalizedBuffer = buffer.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+        const messages = normalizedBuffer.split('\n\n');
+        // Last element may be an incomplete message — keep it in the buffer
+        buffer = messages.pop() ?? '';
 
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
+        for (const message of messages) {
+          const trimmed = message.trim();
+          if (!trimmed || trimmed.startsWith(':')) continue;
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+          let eventType = 'message';
+          const dataLines: string[] = [];
 
-          buffer += decoder.decode(value, { stream: true });
+          for (const line of trimmed.split('\n')) {
+            if (line.startsWith('event:')) eventType = line.slice(6).trim();
+            else if (line.startsWith('data:')) dataLines.push(line.slice(5).trim());
+          }
 
-          // SSE messages are separated by double newlines
-          const messages = buffer.split('\n\n');
-          buffer = messages.pop() ?? '';
+          const dataStr = dataLines.join('\n');
+          if (!dataStr) continue;
 
-          for (const message of messages) {
-            const trimmed = message.trim();
-            if (!trimmed || trimmed.startsWith(':')) continue; // skip pings/comments
-
-            let eventType = 'message';
-            let dataStr = '';
-
-            for (const line of trimmed.split('\n')) {
-              if (line.startsWith('event:')) eventType = line.slice(6).trim();
-              else if (line.startsWith('data:')) dataStr = line.slice(5).trim();
-            }
-
-            if (!dataStr) continue;
-
-            try {
-              const parsed = JSON.parse(dataStr);
-              // Backend wraps case_id inside a nested `data` field
-              const eventData: Record<string, unknown> =
-                parsed.data && typeof parsed.data === 'object' ? parsed.data : parsed;
-              onEventRef.current({ event: eventType, data: eventData });
-            } catch {
-              // ignore malformed JSON
-            }
+          try {
+            const parsed = JSON.parse(dataStr);
+            const eventData: Record<string, unknown> =
+              parsed.data && typeof parsed.data === 'object' ? parsed.data : parsed;
+            onEventRef.current({ event: eventType, data: eventData });
+          } catch {
+            // ignore malformed JSON
           }
         }
-      } catch {
-        // aborted or network error — polling fallback in useAiReview handles recovery
-      }
+      };
+
+      xhr.onerror = () => {
+        // polling fallback in useAiReview handles recovery
+      };
+
+      xhr.onloadend = () => {
+        // connection closed — polling fallback handles recovery
+      };
+
+      xhr.send();
     }
 
     connect();
 
-    return () => controller.abort();
+    return () => {
+      destroyed = true;
+      xhr?.abort();
+      xhr = null;
+    };
   }, [enabled, guestSessionId]);
 }

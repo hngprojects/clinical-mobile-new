@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -62,14 +62,17 @@ export function HomeScreen() {
     void id;
   };
 
-  const handleViewInsight = (id: string) => {
-    const insight = insights.find((i) => i.id === id);
-    if (insight?.caseId) {
-      router.push({ pathname: '/(main)/chat-review', params: { caseId: insight.caseId } });
-    } else {
-      router.push('/(main)/chat-review?demo=true');
-    }
-  };
+  const handleViewInsight = useCallback(
+    (id: string) => {
+      const insight = insights.find((i) => i.id === id);
+      if (insight?.caseId) {
+        router.push({ pathname: '/(main)/chat-review', params: { caseId: insight.caseId } });
+      } else {
+        router.push('/(main)/chat-review?demo=true');
+      }
+    },
+    [insights, router],
+  );
 
   return (
     <>

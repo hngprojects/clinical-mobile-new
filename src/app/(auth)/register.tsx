@@ -43,15 +43,7 @@ export default function RegisterScreen() {
 
       <View style={styles.bannerContainer}>
         <Animated.View style={[styles.errorBanner, animatedBannerStyle]}>
-          <Typography
-            style={{
-              color: '#494949',
-              fontFamily: 'Inter_400Regular',
-              fontSize: 12,
-              lineHeight: 18,
-              textAlign: 'center',
-            }}
-          >
+          <Typography style={styles.errorBannerText}>
             {registerMutation.error?.message ||
               'Something went wrong. Please check your details and try again.'}
           </Typography>
@@ -77,28 +69,9 @@ export default function RegisterScreen() {
         <RegisterForm mutation={registerMutation} onContinueAsGuest={handleContinueAsGuest} />
 
         <View style={styles.footer}>
-          <Typography
-            style={{
-              color: colors.textSecondary,
-              fontFamily: 'Inter_400Regular',
-              fontSize: 14,
-              lineHeight: 21,
-              letterSpacing: -0.14,
-            }}
-          >
-            Already have an account?{' '}
-          </Typography>
+          <Typography style={styles.footerText}>Already have an account? </Typography>
           <Pressable onPress={() => router.push('/(auth)/login')}>
-            <Typography
-              style={{
-                color: colors.primary,
-                fontFamily: 'Inter_400Regular',
-                fontSize: 14,
-                lineHeight: 21,
-                letterSpacing: -0.14,
-                textDecorationLine: 'underline',
-              }}
-            >
+            <Typography style={[styles.footerText, { color: colors.primary }, styles.footerLink]}>
               Login
             </Typography>
           </Pressable>
@@ -130,41 +103,58 @@ export default function RegisterScreen() {
 
 const styles = StyleSheet.create({
   bannerContainer: {
-    position: 'absolute',
-    top: 54,
     left: 0,
+    position: 'absolute',
     right: 0,
+    top: 54,
     zIndex: 1000,
   },
   errorBanner: {
-    height: 56,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    backgroundColor: '#F5F5F5',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#F5F5F5',
+    borderBottomColor: '#F0F0F0',
+    borderBottomWidth: 1,
+    flexDirection: 'row',
     gap: 10,
+    height: 56,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  errorBannerText: {
+    color: '#494949',
+    fontFamily: 'Inter_400Regular',
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: 'center',
   },
   footer: {
+    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 40,
     marginBottom: 20,
+    marginTop: 40,
+  },
+  footerText: {
+    color: '#767676',
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+    letterSpacing: -0.14,
+    lineHeight: 21,
+  },
+  footerLink: {
+    textDecorationLine: 'underline',
   },
   legalContainer: {
-    paddingHorizontal: 8,
     marginBottom: 24,
+    paddingHorizontal: 8,
   },
   legalText: {
     color: '#1B1B1B',
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
-    lineHeight: 21,
     letterSpacing: -0.14,
+    lineHeight: 21,
     textAlign: 'center',
   },
   legalLink: {

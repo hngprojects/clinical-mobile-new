@@ -18,6 +18,8 @@ interface ChatComposerProps {
   draft: string;
   hideUpload?: boolean;
   isSending: boolean;
+  isUploadProcessing: boolean;
+  labUploadStatusMessage: string | null;
   onDraftChange: (value: string) => void;
   onOpenUpload: () => void;
   onRemoveAttachment: () => void;
@@ -36,6 +38,8 @@ export function ChatComposer({
   draft,
   hideUpload = false,
   isSending,
+  isUploadProcessing,
+  labUploadStatusMessage,
   onDraftChange,
   onOpenUpload,
   onRemoveAttachment,
@@ -108,6 +112,12 @@ export function ChatComposer({
       {uploadErrorMessage ? (
         <Typography style={styles.sendError}>{uploadErrorMessage}</Typography>
       ) : null}
+      {labUploadStatusMessage ? (
+        <View style={styles.uploadStatus}>
+          <ActivityIndicator color="#1565C0" size="small" />
+          <Typography style={styles.uploadStatusText}>{labUploadStatusMessage}</Typography>
+        </View>
+      ) : null}
       {pendingAttachment ? (
         <View style={styles.pendingAttachment}>
           <AttachmentPreviewThumb file={pendingAttachment} />
@@ -120,9 +130,10 @@ export function ChatComposer({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Remove attachment"
+            disabled={isUploadProcessing}
             hitSlop={8}
             onPress={onRemoveAttachment}
-            style={styles.pendingAttachmentRemove}
+            style={[styles.pendingAttachmentRemove, isUploadProcessing && styles.disabledButton]}
           >
             <Ionicons name="close" size={18} color="#767676" />
           </Pressable>
@@ -134,8 +145,9 @@ export function ChatComposer({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Upload lab result"
+              disabled={isUploadProcessing}
               onPress={onOpenUpload}
-              style={styles.attachButton}
+              style={[styles.attachButton, isUploadProcessing && styles.disabledButton]}
             >
               <Ionicons name="arrow-up-circle-outline" size={24} color="#767676" />
             </Pressable>
@@ -156,7 +168,10 @@ export function ChatComposer({
                 updateInputHeight(event.nativeEvent.contentSize.height)
               }
               onChangeText={onDraftChange}
-              placeholder="Ask about results"
+              editable={!isUploadProcessing}
+              placeholder={
+                isUploadProcessing ? 'Interpreting uploaded result...' : 'Ask about results'
+              }
               placeholderTextColor="#767676"
               returnKeyType="default"
               scrollEnabled={inputHeight >= COMPOSER_INPUT_MAX_HEIGHT}
@@ -349,6 +364,25 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginBottom: 8,
     textAlign: 'center',
+  },
+  uploadStatus: {
+    alignItems: 'center',
+    backgroundColor: '#F8FBFF',
+    borderColor: '#D7E8FA',
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  uploadStatusText: {
+    color: '#1565C0',
+    flex: 1,
+    fontFamily: 'Inter_500Medium',
+    fontSize: 12,
+    lineHeight: 18,
   },
   socketError: {
     color: '#EF4444',

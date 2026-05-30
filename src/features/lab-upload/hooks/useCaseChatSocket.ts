@@ -121,6 +121,15 @@ export function useCaseChatSocket(caseId: string, guestSessionId?: string | null
     );
   }, [queryClient, queryKey]);
 
+  const removeMessage = useCallback(
+    (messageId: string) => {
+      queryClient.setQueryData<ChatMessage[]>(queryKey, (current = []) =>
+        current.filter((item) => item.id !== messageId),
+      );
+    },
+    [queryClient, queryKey],
+  );
+
   const clearResponseSettleTimer = useCallback(() => {
     if (responseSettleTimerRef.current !== null) {
       clearTimeout(responseSettleTimerRef.current);
@@ -222,11 +231,6 @@ export function useCaseChatSocket(caseId: string, guestSessionId?: string | null
           }
 
           if (type === 'error') {
-            if (isAuthSocketFailure(p)) {
-              stopForSessionExpired();
-              continue;
-            }
-
             clearResponseSettleTimer();
             streamingRef.current = null;
             removePendingResponse();
@@ -327,9 +331,9 @@ export function useCaseChatSocket(caseId: string, guestSessionId?: string | null
       }
 
       setIsSending(true);
+      const optimisticMessage = createLocalChatMessage(caseId, message);
 
       try {
-        const optimisticMessage = createLocalChatMessage(caseId, message);
         upsertMessage(optimisticMessage);
         addPendingResponse();
         socketRef.current.send(
@@ -342,13 +346,14 @@ export function useCaseChatSocket(caseId: string, guestSessionId?: string | null
         );
         return true;
       } catch {
+        removeMessage(optimisticMessage.id);
         removePendingResponse();
         return false;
       } finally {
         setIsSending(false);
       }
     },
-    [accessToken, addPendingResponse, caseId, removePendingResponse, upsertMessage],
+    [accessToken, addPendingResponse, caseId, removeMessage, removePendingResponse, upsertMessage],
   );
 
   return {
@@ -361,45 +366,7 @@ export function useCaseChatSocket(caseId: string, guestSessionId?: string | null
 }
 
 function isAuthSocketClose(event: WebSocketCloseEvent) {
-  if (event.code === 1008 || event.code === 4001 || event.code === 4401 || event.code === 4403) {
-    return true;
-  }
-
-  return isAuthFailureText(event.reason ?? '');
-}
-
-function isAuthSocketFailure(payload: SocketPayload) {
-  return isAuthFailureText(getSocketFailureText(payload));
-}
-
-function getSocketFailureText(value: unknown): string {
-  if (!value) return '';
-  if (typeof value === 'string') return value;
-  if (typeof value === 'number') return String(value);
-  if (Array.isArray(value)) return value.map(getSocketFailureText).join(' ');
-  if (typeof value !== 'object') return '';
-
-  const record = value as Record<string, unknown>;
-  return ['message', 'detail', 'error', 'content', 'text', 'reason', 'code', 'status']
-    .map((key) => getSocketFailureText(record[key]))
-    .filter(Boolean)
-    .join(' ');
-}
-
-function isAuthFailureText(value: string) {
-  const text = value.toLowerCase();
-
-  return (
-    text.includes('401') ||
-    text.includes('403') ||
-    text.includes('unauthorized') ||
-    text.includes('unauthenticated') ||
-    text.includes('forbidden') ||
-    text.includes('expired') ||
-    text.includes('invalid token') ||
-    text.includes('token expired') ||
-    text.includes('session expired')
-  );
+  return event.code === 1008 || event.code === 4001 || event.code === 4401 || event.code === 4403;
 }
 
 function createLocalChatMessage(caseId: string, message: string): ChatMessage {
