@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import type { InsightListItem } from '../api/types';
 import { DUMMY_INSIGHT_LIST } from '../data/dummyInsights';
@@ -16,6 +16,7 @@ export function useInsightList(
   const [query, setQuery] = useState('');
   const [items, setItems] = useState<InsightListItem[]>(() => [...initialItems]);
   const [isSearching, setIsSearching] = useState(false);
+  const previousItemsRef = useRef<InsightListItem[]>([]);
 
   useLayoutEffect(() => {
     setItems([...initialItems]);
@@ -51,17 +52,15 @@ export function useInsightList(
 
   const renameInsight = useCallback(
     async (id: string, title: string) => {
-      let previousItems: InsightListItem[] = [];
-
       setItems((prev) => {
-        previousItems = prev;
+        previousItemsRef.current = prev;
         return prev.map((row) => (row.id === id ? { ...row, title } : row));
       });
 
       try {
         await onRename?.(id, title);
       } catch (error) {
-        setItems(previousItems);
+        setItems(previousItemsRef.current);
         console.error('[Insights] Failed to rename case', error);
       }
     },
