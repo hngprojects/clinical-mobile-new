@@ -1,11 +1,12 @@
 import { client } from '@/shared/api/client';
 
 export interface CaseListItem {
-  completed_at: Date | null;
-  created_at: Date;
+  completed_at: string | null;
+  created_at: string;
   guest_session_id: string | null;
   id: string;
   status: 'pending' | 'completed' | 'failed';
+  title: string;
   user_id: string | null;
 }
 
@@ -23,6 +24,17 @@ async function listCases(offset = 0, limit = 50): Promise<CasesListResponse> {
   return data;
 }
 
+async function updateCaseTitle(caseId: string, title: string): Promise<void> {
+  const response = await client.patch(`/api/v1/cases/${caseId}`, { title });
+
+  if (__DEV__) {
+    console.log('[Insights rename response]', response.data);
+  }
+
+  return;
+}
+
 export const casesApi = {
   listCases,
+  updateCaseTitle,
 };
