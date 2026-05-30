@@ -54,7 +54,7 @@ export function HomeScreen() {
   };
 
   const handleDelete = (id: string) => {
-    id;
+    void id;
   };
 
   const handleViewInsight = (_id: string) => {
