@@ -5,7 +5,14 @@ import { DUMMY_INSIGHT_LIST } from '../data/dummyInsights';
 
 const SEARCH_DEBOUNCE_MS = 420;
 
-export function useInsightList(initialItems: InsightListItem[] = DUMMY_INSIGHT_LIST) {
+interface UseInsightListOptions {
+  onRename?: (id: string, title: string) => Promise<void> | void;
+}
+
+export function useInsightList(
+  initialItems: InsightListItem[] = DUMMY_INSIGHT_LIST,
+  options: UseInsightListOptions = {},
+) {
   const [query, setQuery] = useState('');
   const [items, setItems] = useState<InsightListItem[]>(() => [...initialItems]);
   const [isSearching, setIsSearching] = useState(false);
@@ -42,9 +49,24 @@ export function useInsightList(initialItems: InsightListItem[] = DUMMY_INSIGHT_L
     ]);
   }, []);
 
-  const renameInsight = useCallback((id: string, title: string) => {
-    setItems((prev) => prev.map((row) => (row.id === id ? { ...row, title } : row)));
-  }, []);
+  const renameInsight = useCallback(
+    async (id: string, title: string) => {
+      let previousItems: InsightListItem[] = [];
+
+      setItems((prev) => {
+        previousItems = prev;
+        return prev.map((row) => (row.id === id ? { ...row, title } : row));
+      });
+
+      try {
+        await options.onRename?.(id, title);
+      } catch (error) {
+        setItems(previousItems);
+        console.error('[Insights] Failed to rename case', error);
+      }
+    },
+    [options.onRename],
+  );
 
   const deleteInsight = useCallback((id: string) => {
     setItems((prev) => prev.filter((row) => row.id !== id));

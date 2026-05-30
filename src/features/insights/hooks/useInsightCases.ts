@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useApiQuery } from '@/shared/api/hooks';
+import { useApiMutation, useApiQuery } from '@/shared/api/hooks';
 
 import type { InsightListItem } from '../api/types';
 
@@ -13,6 +13,10 @@ export function useInsightCases(offset = 0, limit = 50) {
     {
       retry: false,
     },
+  );
+
+  const renameMutation = useApiMutation(({ caseId, title }: { caseId: string; title: string }) =>
+    casesApi.updateCaseTitle(caseId, title),
   );
 
   const [updateTrigger, setUpdateTrigger] = useState(0);
@@ -37,9 +41,15 @@ export function useInsightCases(offset = 0, limit = 50) {
     }
   }, [query.data]);
 
+  const renameCase = useCallback(
+    (caseId: string, title: string) => renameMutation.mutateAsync({ caseId, title }),
+    [renameMutation],
+  );
+
   return {
     ...query,
     insightItems,
+    renameCase,
     refetch: query.refetch,
   };
 }
