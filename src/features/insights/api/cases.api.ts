@@ -6,6 +6,7 @@ export interface CaseListItem {
   guest_session_id: string | null;
   id: string;
   status: 'pending' | 'completed' | 'failed';
+  title: string;
   user_id: string | null;
 }
 

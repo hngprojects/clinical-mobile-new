@@ -47,7 +47,7 @@ export function useInsightCases(offset = 0, limit = 50) {
 function mapCasesToInsightItems(cases: CaseListItem[]): InsightListItem[] {
   return cases.map((item) => ({
     id: item.id,
-    title: `Case ${item.id.slice(0, 8)}`,
+    title: item.title,
     subtitle: formatCaseSubtitle(item),
   }));
 }
