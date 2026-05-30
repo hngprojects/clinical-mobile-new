@@ -27,7 +27,13 @@ import type { ChatMessage } from '../api/chat.types';
 import { useAiReview } from '../hooks/useAiReview';
 import { useCaseChat, useCaseChatSocket, useSendChatMessage } from '../hooks/useCaseChat';
 
-import { ChatBubble, ChatComposer, ChatInterpretationCard, ChatStateMessage, GuestLimitModal } from './chat';
+import {
+  ChatBubble,
+  ChatComposer,
+  ChatInterpretationCard,
+  ChatStateMessage,
+  GuestLimitModal,
+} from './chat';
 
 type TimelineItem =
   | {
