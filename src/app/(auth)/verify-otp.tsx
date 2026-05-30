@@ -17,7 +17,12 @@ export default function VerifyOtpScreen() {
   return (
     <>
       <Stack.Screen options={{ title: 'OTP Verification', headerShown: false }} />
-      <Screen padding style={{ backgroundColor: '#FFFFFF' }} keyboardAvoiding>
+      <Screen
+        padding
+        backgroundColor="#FFFFFF"
+        style={{ backgroundColor: '#FFFFFF' }}
+        keyboardAvoiding
+      >
         <VerifyOtp email={email} expiresInSeconds={countdownSeconds} type={type} />
       </Screen>
     </>

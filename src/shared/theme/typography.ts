@@ -37,6 +37,12 @@ export const typography = {
     fontWeight: '500',
     fontFamily: 'Inter_500Medium',
   } satisfies TextStyle,
+  buttonLabel: {
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '600',
+    fontFamily: 'Inter_600SemiBold',
+  } satisfies TextStyle,
 } as const;
 
 export type TypographyVariant = keyof typeof typography;

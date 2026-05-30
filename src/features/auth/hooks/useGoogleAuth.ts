@@ -1,17 +1,20 @@
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { env } from '@/shared/constants/env';
+import { wait } from '@/shared/utils/wait';
 
 import { authApi } from '../api/auth.api';
+import { useAuthFeedbackStore } from '../store/authFeedback.store';
 import { useAuthStore } from '../store/auth.store';
 
 const GOOGLE_AUTH_PATH = '/api/v1/auth/google';
 const GOOGLE_AUTH_REDIRECT_URL = 'clinsight://auth/google';
 const ACCESS_TOKEN_KEYS = ['access_token', 'token', 'accessToken'];
-const REFRESH_TOKEN_KEYS = ['refresh_token', 'refreshToken']; // cookie-based; may not be in URL
+const REFRESH_TOKEN_KEYS = ['refresh_token', 'refreshToken'];
+const SUCCESS_REDIRECT_DELAY_MS = 1200;
 
 type UrlQueryParams = NonNullable<ReturnType<typeof Linking.parse>['queryParams']>;
 
@@ -68,12 +71,16 @@ function getAuthErrorFromUrl(url: string) {
   );
 }
 
-export function useGoogleAuth() {
+export function useGoogleAuth(flow: 'signin' | 'signup' = 'signin') {
   const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const action = flow === 'signup' ? 'sign-up' : 'login';
 
   const startGoogleAuth = async () => {
     if (isPending) return { success: false };
     setIsPending(true);
+    setError(null);
 
     try {
       const redirectUrl = GOOGLE_AUTH_REDIRECT_URL;
@@ -81,27 +88,46 @@ export function useGoogleAuth() {
 
       const result = await WebBrowser.openAuthSessionAsync(googleAuthUrl, redirectUrl);
 
-      if (result.type === 'success' && result.url) {
-        const tokens = getTokensFromUrl(result.url);
+      if (result.type === 'cancel' || result.type === 'dismiss') {
+        return { success: false };
+      }
 
-        if (tokens) {
-          useAuthStore.getState().setTokens(tokens);
-          try {
-            const userProfile = await authApi.getMe();
-            useAuthStore.getState().setSession(tokens, userProfile);
-            router.replace('/(main)');
-            return { success: true };
-          } catch (profileError) {
-            useAuthStore.getState().clearSession();
-            console.error('Google Auth Profile Fetch Error:', profileError);
-          }
+      if (result.type === 'success' && result.url) {
+        const authError = getAuthErrorFromUrl(result.url);
+        if (authError) {
+          setError(authError);
+          return { success: false };
         }
 
-        const authError = getAuthErrorFromUrl(result.url);
-        if (authError) console.error('Google Auth Redirect Error:', authError);
+        const tokens = getTokensFromUrl(result.url);
+
+        if (!tokens) {
+          setError(`Google ${action} failed. Please try again.`);
+          return { success: false };
+        }
+
+        useAuthStore.getState().setTokens(tokens);
+        try {
+          const userProfile = await authApi.getMe();
+          useAuthStore.getState().setSession(tokens, userProfile);
+          useAuthFeedbackStore
+            .getState()
+            .setSuccessMessage(
+              flow === 'signup' ? 'Google sign-up successful.' : 'Google login successful.',
+            );
+          await wait(SUCCESS_REDIRECT_DELAY_MS);
+          router.replace('/(main)');
+          return { success: true };
+        } catch {
+          useAuthStore.getState().clearSession();
+          setError(
+            `${flow === 'signup' ? 'Signed up' : 'Logged in'} but couldn't load your profile. Please try again.`,
+          );
+          return { success: false };
+        }
       }
-    } catch (e) {
-      console.error('Google Auth Session Error:', e);
+    } catch {
+      setError(`Google ${action} failed. Please check your connection and try again.`);
     } finally {
       setIsPending(false);
     }
@@ -109,5 +135,7 @@ export function useGoogleAuth() {
     return { success: false };
   };
 
-  return { startGoogleAuth, isPending };
+  const clearError = useCallback(() => setError(null), []);
+
+  return { startGoogleAuth, isPending, error, clearError };
 }
