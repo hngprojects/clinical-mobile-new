@@ -194,3 +194,45 @@ jobs:
           else
             echo "| ⚠️ Appetize | Upload failed or \`APPETIZE_API_TOKEN\` not set |" >> $GITHUB_STEP_SUMMARY
           fi
+
+      - name: Post APK to Slack
+        if: success()
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        run: |
+          if [ -z "$SLACK_BOT_TOKEN" ]; then
+            echo "SLACK_BOT_TOKEN not set, skipping Slack notification"
+            exit 0
+          fi
+
+          BRANCH="${{ github.ref_name }}"
+          SHORT_SHA="${{ github.sha }}"
+          SHORT_SHA="${SHORT_SHA:0:7}"
+          ARTIFACT_URL="${{ steps.artifact.outputs.artifact-url }}"
+          APPETIZE_URL="${{ steps.appetize-links.outputs.appUrl }}"
+          RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          LINKS="<${ARTIFACT_URL}|Download APK>"
+          if [ -n "$APPETIZE_URL" ]; then
+            LINKS="${LINKS}  |  <${APPETIZE_URL}|Run in Appetize>"
+          fi
+
+          curl -sf -X POST https://slack.com/api/chat.postMessage \
+            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$(cat <<PAYLOAD
+          {
+            "channel": "C0B02832G0Z",
+            "unfurl_links": false,
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "*New APK build* — \`${BRANCH}\` (\`${SHORT_SHA}\`)\n${LINKS}\n<${RUN_URL}|View build>"
+                }
+              }
+            ]
+          }
+          PAYLOAD
+          )"
