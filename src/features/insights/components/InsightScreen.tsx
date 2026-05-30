@@ -1,12 +1,12 @@
 import React, { useCallback, useMemo } from 'react';
 import { ActivityIndicator, FlatList, ListRenderItem, StyleSheet, View } from 'react-native';
 
-import { Screen, Typography } from '@/shared/components';
+import { Button, Screen, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
+import { useInsightCases } from '@/features/insights/hooks/useInsightCases';
 import type { InsightListItem } from '../api/types';
 import { useInsightList } from '../hooks/useInsightList';
-import { useInsightCases } from '@/features/insights/hooks/useInsightCases';
 
 import { InsightListEmpty } from './InsightListEmpty';
 import { InsightListRenderItem } from './InsightListRenderItem';
@@ -14,7 +14,7 @@ import { InsightSearchBar } from './InsightSearchBar';
 
 export function InsightScreen() {
   const { spacing, colors } = useTheme();
-  const { insightItems, isLoading, refetch } = useInsightCases();
+  const { insightItems, isLoading, isError, refetch } = useInsightCases();
   const {
     query,
     setQuery,
@@ -55,6 +55,7 @@ export function InsightScreen() {
 
   const listEmptyVisible = listData.length === 0;
   const isInitialLoading = isLoading && items.length === 0;
+  const isInitialError = isError && items.length === 0;
 
   return (
     <Screen scrollable={false} padding>
@@ -68,7 +69,25 @@ export function InsightScreen() {
         {isInitialLoading ? (
           <View style={styles.loadingState}>
             <ActivityIndicator color={colors.primary} size="small" />
-            <Typography style={styles.loadingText}>Loading insights...</Typography>
+            <Typography color={colors.textSecondary} style={styles.loadingText}>
+              Loading insights...
+            </Typography>
+          </View>
+        ) : isInitialError ? (
+          <View style={styles.errorState}>
+            <Typography variant="h3" color={colors.text} align="center">
+              Unable to load cases
+            </Typography>
+            <Typography color={colors.textSecondary} align="center" style={styles.errorMessage}>
+              Check your connection and try again.
+            </Typography>
+            <Button
+              label="Retry"
+              onPress={() => {
+                refetch();
+              }}
+              style={styles.retryButton}
+            />
           </View>
         ) : (
           <FlatList
@@ -109,9 +128,22 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   loadingText: {
-    color: '#767676',
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
     lineHeight: 21,
+  },
+  errorState: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    gap: 12,
+  },
+  errorMessage: {
+    maxWidth: 280,
+  },
+  retryButton: {
+    minWidth: 140,
+    marginTop: 4,
   },
 });
