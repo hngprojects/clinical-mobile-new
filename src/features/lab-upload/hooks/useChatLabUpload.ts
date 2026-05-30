@@ -40,7 +40,7 @@ export function useChatLabUpload({
       setUploadErrorMessage(status === 'failed' ? LAB_INTERPRETATION_FAILED_MESSAGE : null);
     },
   });
-  const review = reviewQuery.data;
+  const { data: review, refetch: refetchReview } = reviewQuery;
 
   useEffect(() => {
     if (!enabled || !isInterpretingUpload) return undefined;
@@ -50,11 +50,11 @@ export function useChatLabUpload({
       baselineReviewRef.current = null;
       setIsInterpretingUpload(false);
       setUploadErrorMessage(LAB_INTERPRETATION_TIMEOUT_MESSAGE);
-      reviewQuery.refetch();
+      refetchReview();
     }, LAB_UPLOAD_INTERPRETATION_TIMEOUT_MS);
 
     return () => clearTimeout(timeout);
-  }, [enabled, isInterpretingUpload, reviewQuery.refetch]);
+  }, [enabled, isInterpretingUpload, refetchReview]);
 
   useEffect(() => {
     if (!enabled || !isInterpretingUpload || !review) return;
@@ -76,9 +76,7 @@ export function useChatLabUpload({
     uploadStartedAtRef.current = null;
     baselineReviewRef.current = null;
     setIsInterpretingUpload(false);
-    setUploadErrorMessage(
-      review.status === 'failed' ? LAB_INTERPRETATION_FAILED_MESSAGE : null,
-    );
+    setUploadErrorMessage(review.status === 'failed' ? LAB_INTERPRETATION_FAILED_MESSAGE : null);
   }, [enabled, isInterpretingUpload, review]);
 
   const clearUploadError = useCallback(() => {

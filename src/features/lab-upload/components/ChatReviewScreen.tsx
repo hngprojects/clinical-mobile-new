@@ -116,10 +116,7 @@ export function ChatReviewScreen() {
     !isSendingMessage &&
     !showSessionExpired,
   );
-  const timelineItems = useMemo(
-    () => buildTimeline(messages, reviews),
-    [messages, reviews],
-  );
+  const timelineItems = useMemo(() => buildTimeline(messages, reviews), [messages, reviews]);
   const isInitialLoading = !isMockChat && chatQuery.isLoading;
   const isInitialError = !isMockChat && chatQuery.isError;
 
@@ -452,13 +449,13 @@ function isStoredLocalAttachmentMessage(value: unknown, caseId: string): value i
 
   return Boolean(
     typeof message.id === 'string' &&
-      message.id.startsWith('local-attachment-') &&
-      message.senderType === 'patient' &&
-      message.medicalCaseId === caseId &&
-      content &&
-      typeof content === 'object' &&
-      typeof content.attachmentName === 'string' &&
-      typeof content.attachmentUri === 'string',
+    message.id.startsWith('local-attachment-') &&
+    message.senderType === 'patient' &&
+    message.medicalCaseId === caseId &&
+    content &&
+    typeof content === 'object' &&
+    typeof content.attachmentName === 'string' &&
+    typeof content.attachmentUri === 'string',
   );
 }
 

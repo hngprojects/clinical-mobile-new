@@ -131,10 +131,7 @@ export function ChatComposer({
             disabled={isUploadProcessing}
             hitSlop={8}
             onPress={onRemoveAttachment}
-            style={[
-              styles.pendingAttachmentRemove,
-              isUploadProcessing && styles.disabledButton,
-            ]}
+            style={[styles.pendingAttachmentRemove, isUploadProcessing && styles.disabledButton]}
           >
             <Ionicons name="close" size={18} color="#767676" />
           </Pressable>
