@@ -221,8 +221,12 @@ export function ChatReviewScreen() {
     const sendChatText = async (text: string): Promise<boolean> => {
       if (!text) return false;
 
-      if (!isGuest && chatSocket.isConnected && (await chatSocket.sendLiveMessage(text))) {
-        return true;
+      try {
+        if (!isGuest && chatSocket.isConnected && (await chatSocket.sendLiveMessage(text))) {
+          return true;
+        }
+      } catch {
+        // socket threw — fall through to REST fallback
       }
 
       await sendMessage.mutateAsync(text);
