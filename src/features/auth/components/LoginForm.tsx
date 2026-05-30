@@ -92,17 +92,7 @@ export function LoginForm({
             onSubmitEditing={handleSubmit(onSubmit)}
           />
           <Pressable style={styles.forgotPassword} onPress={onForgotPassword}>
-            <Typography
-              variant="body2"
-              color={colors.primary}
-              style={{
-                fontWeight: '400',
-                textDecorationLine: 'underline',
-                lineHeight: 21,
-                letterSpacing: -0.14,
-                marginTop: 6,
-              }}
-            >
+            <Typography variant="body2" color={colors.primary} style={styles.forgotPasswordText}>
               Forgot Password?
             </Typography>
           </Pressable>
@@ -119,18 +109,7 @@ export function LoginForm({
 
         <View style={styles.separatorContainer}>
           <View style={[styles.line, { backgroundColor: '#F0F0F0' }]} />
-          <Typography
-            style={{
-              paddingHorizontal: 16,
-              color: '#767676',
-              fontFamily: 'Inter_500Medium',
-              fontSize: 14,
-              lineHeight: 21,
-              letterSpacing: -0.14,
-            }}
-          >
-            or
-          </Typography>
+          <Typography style={styles.separatorText}>or</Typography>
           <View style={[styles.line, { backgroundColor: '#F0F0F0' }]} />
         </View>
 
@@ -171,22 +150,37 @@ const styles = StyleSheet.create({
   forgotPassword: {
     alignSelf: 'flex-end',
   },
-  separatorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 16,
+  forgotPasswordText: {
+    fontWeight: '400',
+    letterSpacing: -0.14,
+    lineHeight: 21,
+    marginTop: 6,
+    textDecorationLine: 'underline',
   },
   line: {
     flex: 1,
     height: 1,
   },
+  separatorContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginBottom: 16,
+    marginTop: 16,
+  },
+  separatorText: {
+    color: '#767676',
+    fontFamily: 'Inter_500Medium',
+    fontSize: 14,
+    letterSpacing: -0.14,
+    lineHeight: 21,
+    paddingHorizontal: 16,
+  },
   socialIconButton: {
-    paddingVertical: 15,
-    paddingHorizontal: 24,
+    backgroundColor: '#FFFFFF',
+    borderColor: '#D0D0D0',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#D0D0D0',
-    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 24,
+    paddingVertical: 15,
   },
 });

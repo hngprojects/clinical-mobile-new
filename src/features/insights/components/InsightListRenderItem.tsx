@@ -15,23 +15,27 @@ export function InsightListRenderItem({ item, onRename, onDelete }: InsightListR
   const router = useRouter();
 
   const openChatReview = useCallback(() => {
-    router.push({
-      pathname: '/(main)/chat-review',
-      params: { caseId: item.id },
-    });
-  }, [item.id, router]);
+    if (item.caseId) {
+      router.push({ pathname: '/(main)/chat-review', params: { caseId: item.caseId } });
+      return;
+    }
+
+    router.push('/(main)/chat-review?demo=true');
+  }, [item.caseId, router]);
 
   return (
-    <InsightItemCard
-      insight={{
-        id: item.id,
-        title: item.title,
-        timestamp: item.subtitle,
-      }}
-      onPress={openChatReview}
-      onView={() => openChatReview()}
-      onRename={onRename}
-      onDelete={onDelete}
-    />
+    <>
+      <InsightItemCard
+        insight={{
+          id: item.id,
+          title: item.title,
+          timestamp: item.subtitle,
+        }}
+        onPress={openChatReview}
+        onView={() => openChatReview()}
+        onRename={onRename}
+        onDelete={onDelete}
+      />
+    </>
   );
 }
