@@ -68,6 +68,7 @@ export function RegisterForm({ mutation, onContinueAsGuest }: RegisterFormProps)
   };
 
   const isDisabled = isPending || !formState.isValid;
+  const isAuthBusy = isPending || isGooglePending;
 
   return (
     <View style={styles.container}>
@@ -138,7 +139,7 @@ export function RegisterForm({ mutation, onContinueAsGuest }: RegisterFormProps)
           loadingIndicatorColor="#1565C0"
           onPress={handleSubmit(onSubmit)}
           isLoading={isPending}
-          disabled={isDisabled}
+          disabled={isDisabled || isGooglePending}
           style={{ marginTop: 32 }}
         />
 
@@ -155,7 +156,7 @@ export function RegisterForm({ mutation, onContinueAsGuest }: RegisterFormProps)
             variant="outline"
             onPress={() => handleSocialPress('Google')}
             isLoading={isGooglePending}
-            style={styles.socialIconButton}
+            disabled={isPending}
             leftIcon={
               !isGooglePending && (
                 <Image
@@ -168,10 +169,10 @@ export function RegisterForm({ mutation, onContinueAsGuest }: RegisterFormProps)
           />
 
           <Button
-            label="Continue as guest"
+            label="Continue as Guest"
             variant="outline"
             onPress={onContinueAsGuest}
-            style={styles.socialIconButton}
+            disabled={isAuthBusy || !onContinueAsGuest}
             textColor={colors.textSecondary}
           />
         </View>
@@ -199,13 +200,5 @@ const styles = StyleSheet.create({
     letterSpacing: -0.14,
     lineHeight: 21,
     paddingHorizontal: 16,
-  },
-  socialIconButton: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#D0D0D0',
-    borderRadius: 12,
-    borderWidth: 1,
-    paddingHorizontal: 24,
-    paddingVertical: 15,
   },
 });
