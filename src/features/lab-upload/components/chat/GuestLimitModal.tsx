@@ -127,7 +127,10 @@ export function GuestLimitModal({
       useNativeDriver: true,
     }).start(() => {
       onDismiss();
-      router.push('/(auth)/login');
+      router.push({
+        pathname: '/(auth)/login',
+        params: { caseId },
+      });
     });
   };
 

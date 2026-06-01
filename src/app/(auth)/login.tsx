@@ -1,4 +1,4 @@
-import { Href, router, Stack } from 'expo-router';
+import { Href, router, Stack, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -23,7 +23,8 @@ function getLoginErrorMessage(error: { message?: string; status?: number } | nul
 
 export default function LoginScreen() {
   const { spacing, colors } = useTheme();
-  const loginMutation = useLogin();
+  const { caseId } = useLocalSearchParams<{ caseId?: string }>();
+  const loginMutation = useLogin({ caseId });
   const { handleUpload, handleUploadError } = useGuestUploadSession();
   const [showUploadSheet, setShowUploadSheet] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);

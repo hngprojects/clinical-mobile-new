@@ -218,19 +218,18 @@ export function ChatReviewScreen() {
     setDraft('');
     setPendingAttachment(null);
 
-    const sendChatText = async (text: string): Promise<boolean> => {
-      if (!text) return false;
+    const sendChatText = async (text: string) => {
+      if (!text) return;
 
       try {
         if (!isGuest && chatSocket.isConnected && (await chatSocket.sendLiveMessage(text))) {
-          return true;
+          return;
         }
       } catch {
         // socket threw — fall through to REST fallback
       }
 
       await sendMessage.mutateAsync(text);
-      return false;
     };
 
     const recordGuestMessage = () => {
