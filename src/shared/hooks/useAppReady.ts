@@ -32,6 +32,7 @@ export function useAppReady() {
 
         if (tokens) {
           try {
+            useAuthStore.getState().setTokens(tokens);
             // Restore full user profile
             const { authApi } = await import('@/features/auth/api/auth.api');
             const userProfile = await authApi.getMe();
@@ -40,6 +41,8 @@ export function useAppReady() {
               {
                 accessToken: latestAuthState.accessToken ?? tokens.accessToken,
                 refreshToken: latestAuthState.refreshToken ?? tokens.refreshToken,
+                accessTokenExpiresAt:
+                  latestAuthState.accessTokenExpiresAt ?? tokens.accessTokenExpiresAt,
               },
               userProfile,
             );

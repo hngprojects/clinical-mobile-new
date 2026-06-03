@@ -9,7 +9,11 @@ export function useUpdateProfile() {
       const state = useAuthStore.getState();
       if (state.user) {
         state.setSession(
-          { accessToken: state.accessToken!, refreshToken: state.refreshToken! },
+          {
+            accessToken: state.accessToken!,
+            refreshToken: state.refreshToken,
+            accessTokenExpiresAt: state.accessTokenExpiresAt,
+          },
           user,
         );
       }
