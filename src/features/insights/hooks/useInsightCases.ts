@@ -81,9 +81,10 @@ export function useInsightCases(offset = 0, limit = 50) {
   };
 }
 
-function mapCasesToInsightItems(cases: CaseListItem[]): InsightListItem[] {
+export function mapCasesToInsightItems(cases: CaseListItem[]): InsightListItem[] {
   return cases.map((item) => ({
     id: item.id,
+    caseId: item.id,
     title: item.title,
     subtitle: formatCaseSubtitle(item),
   }));

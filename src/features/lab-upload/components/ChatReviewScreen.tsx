@@ -55,11 +55,12 @@ export function ChatReviewScreen() {
   const scrollRef = useRef<ScrollView | null>(null);
   const insets = useSafeAreaInsets();
   const storedGuestSessionId = useAuthStore((state) => state.guestSessionId);
-  const { caseId, guestSessionId, mock, demo } = useLocalSearchParams<{
+  const { caseId, guestSessionId, mock, demo, returnTo } = useLocalSearchParams<{
     caseId?: string;
     guestSessionId?: string;
     mock?: string;
     demo?: string;
+    returnTo?: string;
   }>();
   const [draft, setDraft] = useState('');
   const [mockMessages, setMockMessages] = useState<ChatMessage[]>(MOCK_CHAT_MESSAGES);
@@ -279,6 +280,20 @@ export function ChatReviewScreen() {
     showUploadError('Upload failed. Please select a different file or try again.');
   };
 
+  const handleBack = () => {
+    if (returnTo === 'insights') {
+      router.replace('/(main)/insights');
+      return;
+    }
+
+    if (returnTo === 'home') {
+      router.replace('/(main)');
+      return;
+    }
+
+    router.back();
+  };
+
   return (
     <>
       <Screen edges={['top']} backgroundColor="#FFFFFF" style={styles.screen}>
@@ -286,7 +301,7 @@ export function ChatReviewScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Go back"
-            onPress={() => router.back()}
+            onPress={handleBack}
             hitSlop={12}
             style={styles.backButton}
           >

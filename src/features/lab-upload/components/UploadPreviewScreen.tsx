@@ -18,6 +18,12 @@ import { useUploadLabResult } from '../hooks/useUploadLabResult';
 import { FileSizeMessage, FlowErrorScreen } from './FlowErrorScreen';
 
 const UPLOAD_LOADING_DURATION_MS = 2400;
+const REVIEW_FILE_ERROR_TITLE = 'There was a problem reviewing your file';
+const REVIEW_FILE_ERROR_MESSAGE =
+  "Please check that you've uploaded a lab result. If the file is correct, try uploading it again.";
+const NETWORK_UPLOAD_ERROR_TITLE = 'There was an issue uploading your file';
+const NETWORK_UPLOAD_ERROR_MESSAGE =
+  "We couldn't connect to the server. Please check your internet connection and try again.";
 
 export function UploadPreviewScreen() {
   const { colors, spacing } = useTheme();
@@ -143,23 +149,44 @@ export function UploadPreviewScreen() {
     router.replace('/(auth)/register');
   };
 
+  const retrySelectedUpload = () => {
+    if (!hasSelectedFile || !fileUri || !hasUploadIdentity) {
+      setShowUploadSheet(true);
+      return;
+    }
+
+    lastUploadUriRef.current = null;
+    setIsUploading(true);
+    uploadMutate({
+      file: {
+        name: fileName,
+        uri: fileUri,
+        mimeType: fileMimeType,
+      },
+      guest_session_id: effectiveGuestSessionId,
+    });
+  };
+
   if (errorType === 'upload-failed' || errorType === 'file-size' || errorType === 'file-type') {
     return (
       <>
         <FlowErrorScreen
-          title="There was a problem uploading your lab result"
+          title={
+            errorType === 'upload-failed'
+              ? REVIEW_FILE_ERROR_TITLE
+              : 'There was a problem uploading your lab result'
+          }
           message={
             errorType === 'file-size' ? (
               <FileSizeMessage />
             ) : errorType === 'file-type' ? (
               'Please upload a PDF, JPG, JPEG, or PNG file.'
             ) : (
-              'Please select a different file or try uploading the file again.'
+              REVIEW_FILE_ERROR_MESSAGE
             )
           }
           onClose={handleBack}
           onRetry={() => setShowUploadSheet(true)}
-          showDisabledAiReview
         />
         <UploadBottomSheet
           visible={showUploadSheet}
@@ -172,6 +199,7 @@ export function UploadPreviewScreen() {
   }
 
   const isUploadLimitError = uploadMutation.isError && uploadMutation.error?.status === 403;
+  const isNetworkUploadError = uploadMutation.isError && uploadMutation.error?.status === 0;
 
   if (isUploadLimitError && !isUploadProcessing) {
     return (
@@ -201,11 +229,11 @@ export function UploadPreviewScreen() {
     return (
       <>
         <FlowErrorScreen
-          title="There was a problem uploading your lab result"
-          message="Please select a different file or try uploading the file again."
+          title={isNetworkUploadError ? NETWORK_UPLOAD_ERROR_TITLE : REVIEW_FILE_ERROR_TITLE}
+          message={isNetworkUploadError ? NETWORK_UPLOAD_ERROR_MESSAGE : REVIEW_FILE_ERROR_MESSAGE}
+          icon={isNetworkUploadError ? 'network' : 'warning'}
           onClose={handleBack}
-          onRetry={() => setShowUploadSheet(true)}
-          showDisabledAiReview
+          onRetry={isNetworkUploadError ? retrySelectedUpload : () => setShowUploadSheet(true)}
         />
         <UploadBottomSheet
           visible={showUploadSheet}
@@ -231,9 +259,10 @@ export function UploadPreviewScreen() {
             >
               <Ionicons name="chevron-back" size={24} color="#111827" />
             </Pressable>
-            <Typography variant="h2" color={colors.textSecondary} style={styles.headerTitle}>
-              Preview Upload
+            <Typography variant="h2" style={styles.headerTitle}>
+              File preview
             </Typography>
+            <View style={styles.headerSpacer} />
           </View>
 
           <View style={styles.previewCard}>
@@ -420,7 +449,7 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   header: {
-    height: 32,
+    height: 40,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -428,15 +457,19 @@ const styles = StyleSheet.create({
   },
   backButton: {
     alignItems: 'center',
-    height: 24,
+    height: 32,
     justifyContent: 'center',
-    width: 24,
+    width: 32,
+  },
+  headerSpacer: {
+    width: 32,
   },
   headerTitle: {
-    fontFamily: 'Inter_400Regular',
-    fontSize: 16,
-    fontWeight: '400',
-    letterSpacing: -0.16,
+    color: '#111827',
+    fontFamily: 'Inter_500Medium',
+    fontSize: 17,
+    fontWeight: '500',
+    letterSpacing: 0,
     lineHeight: 24,
   },
   previewCard: {
@@ -590,7 +623,5 @@ const styles = StyleSheet.create({
   },
   outlineButton: {
     backgroundColor: '#FFFFFF',
-    borderColor: '#D0D0D0',
-    borderWidth: 1,
   },
 });

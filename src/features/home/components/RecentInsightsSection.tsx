@@ -12,6 +12,7 @@ interface RecentInsightsSectionProps {
   onRename?: (id: string, newTitle: string) => void;
   onView?: (id: string) => void;
   onDelete?: (id: string) => void;
+  onExportPdf?: (id: string) => void;
 }
 
 export function RecentInsightsSection({
@@ -20,6 +21,7 @@ export function RecentInsightsSection({
   onRename,
   onView,
   onDelete,
+  onExportPdf,
 }: RecentInsightsSectionProps) {
   const { colors, spacing } = useTheme();
 
@@ -39,9 +41,11 @@ export function RecentInsightsSection({
           <InsightCard
             key={insight.id}
             insight={insight}
+            onPress={onView}
             onRename={onRename}
             onView={onView}
             onDelete={onDelete}
+            onExportPdf={onExportPdf}
           />
         ))}
       </View>

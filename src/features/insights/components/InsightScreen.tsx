@@ -58,7 +58,7 @@ export function InsightScreen() {
   const isInitialError = isError && items.length === 0;
 
   return (
-    <Screen scrollable={false} padding>
+    <Screen scrollable={false} padding backgroundColor={colors.surface}>
       <View style={styles.screenBody}>
         <Typography variant="h2" color="#000000" style={{ marginBottom: spacing.md }}>
           Insights

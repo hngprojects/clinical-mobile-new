@@ -20,6 +20,7 @@ export function InsightItemCard({
   onRename,
   onView,
   onDelete,
+  onExportPdf,
 }: InsightItemCardProps) {
   const { colors, spacing } = useTheme();
   const [menuVisible, setMenuVisible] = useState(false);
@@ -53,6 +54,11 @@ export function InsightItemCard({
   const handleDelete = () => {
     closeMenu();
     setDeleteVisible(true);
+  };
+
+  const handleExportPdf = () => {
+    closeMenu();
+    onExportPdf?.(insight.id);
   };
 
   const handleDeleteConfirm = () => {
@@ -116,6 +122,13 @@ export function InsightItemCard({
             <Pressable style={styles.menuItem} onPress={handleView}>
               <Typography variant="body1">View</Typography>
               <ChevronRightIcon size={18} color={colors.text} />
+            </Pressable>
+
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+            <Pressable style={styles.menuItem} onPress={handleExportPdf}>
+              <Typography variant="body1">Export as PDF</Typography>
+              <Ionicons name="document-text-outline" size={18} color={colors.text} />
             </Pressable>
 
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
