@@ -1,3 +1,5 @@
+import type { AuthTokens as SharedAuthTokens } from '@/shared/auth/authTokens';
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -38,11 +40,7 @@ export interface CompletePasswordResetResponse {
   message: string;
 }
 
-export interface AuthTokens {
-  accessToken: string;
-  refreshToken: string | null;
-  accessTokenExpiresAt: string | null;
-}
+export type AuthTokens = SharedAuthTokens;
 
 export interface UserProfile {
   id: string;

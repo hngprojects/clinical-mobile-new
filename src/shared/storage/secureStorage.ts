@@ -1,12 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 
+import type { AuthTokens } from '@/shared/auth/authTokens';
 import { STORAGE_KEYS } from '@/shared/constants/keys';
-
-export interface AuthTokens {
-  accessToken: string;
-  refreshToken: string | null;
-  accessTokenExpiresAt: string | null;
-}
 
 export const secureStorage = {
   async saveTokens(tokens: AuthTokens): Promise<void> {

@@ -13,7 +13,11 @@ function getRegisterErrorMessage(error: { message?: string; status?: number } | 
   if (error.status === 0 || msg.includes('timeout') || msg.includes('network')) {
     return 'Connection failed. Please check your network and try again.';
   }
-  if (msg.includes('already exists') || msg.includes('already registered') || msg.includes('email taken')) {
+  if (
+    msg.includes('already exists') ||
+    msg.includes('already registered') ||
+    msg.includes('email taken')
+  ) {
     return 'An account with this email already exists. Please log in instead.';
   }
   if (msg.includes('password') && (msg.includes('weak') || msg.includes('too short'))) {

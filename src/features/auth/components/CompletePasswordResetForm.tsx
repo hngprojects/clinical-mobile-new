@@ -24,7 +24,10 @@ interface CompletePasswordResetFormProps {
   resetToken: string;
 }
 
-export function CompletePasswordResetForm({ mutation, resetToken }: CompletePasswordResetFormProps) {
+export function CompletePasswordResetForm({
+  mutation,
+  resetToken,
+}: CompletePasswordResetFormProps) {
   const { spacing } = useTheme();
   const { mutate: completeReset, isPending } = mutation;
   const [showPassword, setShowPassword] = useState(false);

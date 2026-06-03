@@ -37,12 +37,22 @@ async function refreshAccessToken(refreshToken?: string | null) {
 }
 
 function isAccessTokenExpiring(expiresAt: string | null) {
-  if (!expiresAt) return false;
+  if (!expiresAt) return true;
 
   const expiresAtMs = Date.parse(expiresAt);
   if (Number.isNaN(expiresAtMs)) return true;
 
   return expiresAtMs - Date.now() <= ACCESS_TOKEN_REFRESH_BUFFER_MS;
+}
+
+function isRefreshAuthFailure(error: unknown) {
+  if (error instanceof ApiError)
+    return error.status === 400 || error.status === 401 || error.status === 403;
+  if (isAxiosError(error)) {
+    const status = error.response?.status;
+    return status === 400 || status === 401 || status === 403;
+  }
+  return false;
 }
 
 async function showSessionExpiredMessage() {
@@ -72,6 +82,10 @@ export async function ensureFreshAccessToken(options: { force?: boolean } = {}) 
     getAuthState?.().setTokens(newTokens);
     return newTokens.accessToken;
   } catch (error) {
+    if (!options.force && !isRefreshAuthFailure(error)) {
+      return state.accessToken;
+    }
+
     await showSessionExpiredMessage();
     getAuthState?.().clearSession();
     throw error;

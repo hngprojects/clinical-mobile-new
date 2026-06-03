@@ -113,6 +113,20 @@ export const useAuthStore = createStore<AuthState & AuthActions>((set, get) => (
       accessTokenExpiresAt: null,
       user: null,
     });
+    secureStorage.clearTokens().catch(console.warn);
+
+    if (isGuest) {
+      asyncStorage.setItem(STORAGE_KEYS.GUEST_SESSION, true).catch(console.warn);
+      if (guestSessionId) {
+        asyncStorage.setItem(STORAGE_KEYS.GUEST_SESSION_ID, guestSessionId).catch(console.warn);
+      } else {
+        asyncStorage.removeItem(STORAGE_KEYS.GUEST_SESSION_ID).catch(console.warn);
+      }
+      return;
+    }
+
+    asyncStorage.removeItem(STORAGE_KEYS.GUEST_SESSION).catch(console.warn);
+    asyncStorage.removeItem(STORAGE_KEYS.GUEST_SESSION_ID).catch(console.warn);
   },
 
   clearSession: () => {

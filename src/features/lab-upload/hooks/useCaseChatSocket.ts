@@ -354,7 +354,8 @@ export function useCaseChatSocket(caseId: string, guestSessionId?: string | null
 
   const sendLiveMessage = useCallback(
     async (message: string) => {
-      if (!accessToken || !caseId || socketRef.current?.readyState !== WebSocket.OPEN) {
+      const socket = socketRef.current;
+      if (!accessToken || !caseId || socket?.readyState !== WebSocket.OPEN) {
         return false;
       }
 
@@ -368,10 +369,14 @@ export function useCaseChatSocket(caseId: string, guestSessionId?: string | null
           return false;
         }
 
+        if (socketRef.current !== socket || socket.readyState !== WebSocket.OPEN) {
+          return false;
+        }
+
         optimisticMessage = createLocalChatMessage(caseId, message);
         upsertMessage(optimisticMessage);
         addPendingResponse();
-        socketRef.current.send(
+        socket.send(
           JSON.stringify({
             type: 'message',
             token: freshAccessToken,

@@ -56,6 +56,7 @@ export function VerifyOtp({
   const verifyOtpMutation = useVerifyOtp();
   const { reset: resetVerifyOtp } = verifyOtpMutation;
   const verifyResetOtpMutation = useVerifyResetOtp();
+  const { reset: resetVerifyResetOtp } = verifyResetOtpMutation;
   const resendOtpMutation = useResendOtp();
   const resetPasswordMutation = useResetPassword();
 
@@ -114,7 +115,7 @@ export function VerifyOtp({
         const t = setTimeout(() => {
           setHasNetworkError(false);
           resetVerifyOtp();
-          verifyResetOtpMutation.reset();
+          resetVerifyResetOtp();
         }, 5000);
         return () => clearTimeout(t);
       }
@@ -126,7 +127,7 @@ export function VerifyOtp({
     verifyResetOtpMutation.isError,
     verifyResetOtpMutation.error,
     resetVerifyOtp,
-    verifyResetOtpMutation.reset,
+    resetVerifyResetOtp,
   ]);
 
   useEffect(() => {
@@ -198,7 +199,7 @@ export function VerifyOtp({
     setExpiredToastVisible(false);
     setCode('');
     resetVerifyOtp();
-    verifyResetOtpMutation.reset();
+    resetVerifyResetOtp();
     if (type === 'reset-password') {
       resetPasswordMutation.mutate({ email: email || '' });
     } else {

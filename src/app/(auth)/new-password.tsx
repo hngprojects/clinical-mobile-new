@@ -83,10 +83,7 @@ export default function NewPasswordScreen() {
           </Typography>
         </View>
 
-        <CompletePasswordResetForm
-          mutation={completeResetMutation}
-          resetToken={resetToken}
-        />
+        <CompletePasswordResetForm mutation={completeResetMutation} resetToken={resetToken} />
 
         <View style={styles.footer}>
           <Typography
