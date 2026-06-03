@@ -57,7 +57,7 @@ function getTokensFromUrl(url: string) {
     getParamValue(fragmentParams, REFRESH_TOKEN_KEYS) ||
     null;
 
-  return { accessToken, refreshToken };
+  return { accessToken, refreshToken, accessTokenExpiresAt: null };
 }
 
 function getAuthErrorFromUrl(url: string) {

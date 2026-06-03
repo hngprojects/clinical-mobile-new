@@ -44,7 +44,8 @@ interface BackendTokenResponse {
   refresh_token?: string | null;
   refreshToken?: string | null;
   token_type: string;
-  expires_in: number;
+  expires_in?: number | null;
+  expires_at?: string | null;
   user: BackendUserResponse;
 }
 
@@ -79,13 +80,27 @@ function mapUser(user: BackendUserResponse): UserProfile {
   };
 }
 
+function getAccessTokenExpiresAt(data: Pick<BackendTokenResponse, 'expires_at' | 'expires_in'>) {
+  if (data.expires_at) return data.expires_at;
+  if (typeof data.expires_in !== 'number' || data.expires_in <= 0) return null;
+  return new Date(Date.now() + data.expires_in * 1000).toISOString();
+}
+
+function mapTokens(
+  data: BackendTokenResponse,
+  fallbackRefreshToken: string | null = null,
+): AuthTokens {
+  return {
+    accessToken: data.access_token,
+    refreshToken: data.refresh_token ?? data.refreshToken ?? fallbackRefreshToken,
+    accessTokenExpiresAt: getAccessTokenExpiresAt(data),
+  };
+}
+
 function mapAuthResponse(data: BackendTokenResponse): AuthResponse {
   return {
     user: mapUser(data.user),
-    tokens: {
-      accessToken: data.access_token,
-      refreshToken: data.refresh_token ?? data.refreshToken ?? null,
-    },
+    tokens: mapTokens(data),
   };
 }
 
@@ -186,11 +201,7 @@ async function refreshTokens(refreshToken?: string | null): Promise<AuthTokens> 
     refreshToken ? { refresh_token: refreshToken } : undefined,
     { _retry: true } as object,
   );
-  return {
-    accessToken: response.data.data.access_token,
-    refreshToken:
-      response.data.data.refresh_token ?? response.data.data.refreshToken ?? refreshToken ?? null,
-  };
+  return mapTokens(response.data.data, refreshToken ?? null);
 }
 
 async function resetPassword(data: ResetPasswordRequest): Promise<ResetPasswordResponse> {

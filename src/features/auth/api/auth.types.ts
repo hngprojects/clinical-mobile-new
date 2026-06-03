@@ -41,6 +41,7 @@ export interface CompletePasswordResetResponse {
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string | null;
+  accessTokenExpiresAt: string | null;
 }
 
 export interface UserProfile {

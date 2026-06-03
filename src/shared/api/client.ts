@@ -1,8 +1,11 @@
 import { create, isAxiosError } from 'axios';
 
+import type { AuthTokens } from '@/features/auth/api/auth.types';
 import { env } from '@/shared/constants/env';
 
 import { ApiError } from './types';
+
+const ACCESS_TOKEN_REFRESH_BUFFER_MS = 60_000;
 
 export const client = create({
   baseURL: env.API_BASE_URL,
@@ -14,14 +17,15 @@ export const client = create({
 type AuthStateAccessor = () => {
   accessToken: string | null;
   refreshToken: string | null;
+  accessTokenExpiresAt: string | null;
   isGuest: boolean;
 
-  setTokens: (tokens: { accessToken: string; refreshToken: string | null }) => void;
+  setTokens: (tokens: AuthTokens) => void;
   clearSession: () => void;
 };
 
 let getAuthState: AuthStateAccessor | null = null;
-let refreshPromise: Promise<{ accessToken: string; refreshToken: string | null }> | null = null;
+let refreshPromise: Promise<AuthTokens> | null = null;
 
 export function registerAuthStore(store: AuthStateAccessor) {
   getAuthState = store;
@@ -30,6 +34,15 @@ export function registerAuthStore(store: AuthStateAccessor) {
 async function refreshAccessToken(refreshToken?: string | null) {
   const { authApi } = await import('@/features/auth/api/auth.api');
   return authApi.refreshTokens(refreshToken);
+}
+
+function isAccessTokenExpiring(expiresAt: string | null) {
+  if (!expiresAt) return false;
+
+  const expiresAtMs = Date.parse(expiresAt);
+  if (Number.isNaN(expiresAtMs)) return true;
+
+  return expiresAtMs - Date.now() <= ACCESS_TOKEN_REFRESH_BUFFER_MS;
 }
 
 async function showSessionExpiredMessage() {
@@ -43,8 +56,40 @@ async function showSessionExpiredMessage() {
   }
 }
 
-client.interceptors.request.use((config) => {
-  const token = getAuthState?.().accessToken;
+export async function ensureFreshAccessToken(options: { force?: boolean } = {}) {
+  const state = getAuthState?.();
+  if (!state?.accessToken || state.isGuest) return state?.accessToken ?? null;
+
+  if (!options.force && !isAccessTokenExpiring(state.accessTokenExpiresAt)) {
+    return state.accessToken;
+  }
+
+  try {
+    refreshPromise ??= refreshAccessToken(state.refreshToken).finally(() => {
+      refreshPromise = null;
+    });
+    const newTokens = await refreshPromise;
+    getAuthState?.().setTokens(newTokens);
+    return newTokens.accessToken;
+  } catch (error) {
+    await showSessionExpiredMessage();
+    getAuthState?.().clearSession();
+    throw error;
+  }
+}
+
+client.interceptors.request.use(async (config) => {
+  const original = config as typeof config & { _retry?: boolean };
+  let token = getAuthState?.().accessToken;
+
+  if (!original._retry) {
+    try {
+      token = (await ensureFreshAccessToken()) ?? token;
+    } catch (error) {
+      return Promise.reject(toApiError(error));
+    }
+  }
+
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
@@ -56,7 +101,7 @@ client.interceptors.response.use(
 
     if (error.response?.status === 401 && !original._retry && getAuthState) {
       original._retry = true;
-      const { accessToken, refreshToken, isGuest, clearSession } = getAuthState();
+      const { accessToken, isGuest, clearSession } = getAuthState();
 
       // Guest sessions use x-guest-session-id — a 401 means the guest session expired
       if (isGuest) {
@@ -71,16 +116,11 @@ client.interceptors.response.use(
       }
 
       try {
-        refreshPromise ??= refreshAccessToken(refreshToken).finally(() => {
-          refreshPromise = null;
-        });
-        const newTokens = await refreshPromise;
-        getAuthState().setTokens(newTokens);
-        original.headers.Authorization = `Bearer ${newTokens.accessToken}`;
+        const newAccessToken = await ensureFreshAccessToken({ force: true });
+        if (!newAccessToken) throw error;
+        original.headers.Authorization = `Bearer ${newAccessToken}`;
         return client(original);
       } catch {
-        await showSessionExpiredMessage();
-        getAuthState().clearSession();
         return Promise.reject(toApiError(error));
       }
     }

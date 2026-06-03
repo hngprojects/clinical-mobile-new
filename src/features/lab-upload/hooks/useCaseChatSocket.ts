@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { useAuthStore } from '@/features/auth/store/auth.store';
+import { ensureFreshAccessToken } from '@/shared/api/client';
 
 import type { ChatMessage } from '../api/chat.types';
 
@@ -39,6 +40,7 @@ export function useCaseChatSocket(caseId: string, guestSessionId?: string | null
   );
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectAttemptsRef = useRef(0);
+  const connectGenerationRef = useRef(0);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const responseSettleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const streamingRef = useRef<{ id: string; text: string } | null>(null);
@@ -174,24 +176,41 @@ export function useCaseChatSocket(caseId: string, guestSessionId?: string | null
       return undefined;
     }
 
-    function connect() {
+    const connectionId = connectGenerationRef.current + 1;
+    connectGenerationRef.current = connectionId;
+
+    function stopForSessionExpired(socket?: WebSocket | null) {
+      sessionExpiredRef.current = true;
+      socketRef.current = null;
+      clearResponseSettleTimer();
+      streamingRef.current = null;
+      removePendingResponse();
+      setStatus('session_expired');
+
+      if (
+        socket &&
+        (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)
+      ) {
+        socket.close();
+      }
+    }
+
+    async function connect() {
       sessionExpiredRef.current = false;
-      const socket = new WebSocket(getChatSocketUrl());
-      socketRef.current = socket;
       setStatus('connecting');
 
-      function stopForSessionExpired() {
-        sessionExpiredRef.current = true;
-        socketRef.current = null;
-        clearResponseSettleTimer();
-        streamingRef.current = null;
-        removePendingResponse();
-        setStatus('session_expired');
-
-        if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
-          socket.close();
-        }
+      let freshAccessToken: string | null;
+      try {
+        freshAccessToken = await ensureFreshAccessToken();
+      } catch {
+        stopForSessionExpired();
+        return;
       }
+
+      if (!freshAccessToken || connectGenerationRef.current !== connectionId) return;
+
+      const socket = new WebSocket(getChatSocketUrl());
+      socketRef.current = socket;
 
       socket.onopen = () => {
         reconnectAttemptsRef.current = 0;
@@ -199,7 +218,7 @@ export function useCaseChatSocket(caseId: string, guestSessionId?: string | null
         socket.send(
           JSON.stringify({
             type: 'init',
-            token: accessToken,
+            token: freshAccessToken,
             case_id: caseId,
           }),
         );
@@ -287,7 +306,15 @@ export function useCaseChatSocket(caseId: string, guestSessionId?: string | null
 
       socket.onclose = (event) => {
         if (isAuthSocketClose(event)) {
-          stopForSessionExpired();
+          ensureFreshAccessToken({ force: true })
+            .then((newAccessToken) => {
+              if (!newAccessToken) {
+                stopForSessionExpired(socket);
+                return;
+              }
+              scheduleReconnect();
+            })
+            .catch(() => stopForSessionExpired(socket));
           return;
         }
 
@@ -299,6 +326,7 @@ export function useCaseChatSocket(caseId: string, guestSessionId?: string | null
     connect();
 
     return () => {
+      connectGenerationRef.current += 1;
       connectRef.current = null;
       if (reconnectTimerRef.current !== null) {
         clearTimeout(reconnectTimerRef.current);
@@ -331,22 +359,29 @@ export function useCaseChatSocket(caseId: string, guestSessionId?: string | null
       }
 
       setIsSending(true);
-      const optimisticMessage = createLocalChatMessage(caseId, message);
+      let optimisticMessage: ChatMessage | null = null;
 
       try {
+        const freshAccessToken = await ensureFreshAccessToken();
+        if (!freshAccessToken) {
+          setStatus('session_expired');
+          return false;
+        }
+
+        optimisticMessage = createLocalChatMessage(caseId, message);
         upsertMessage(optimisticMessage);
         addPendingResponse();
         socketRef.current.send(
           JSON.stringify({
             type: 'message',
-            token: accessToken,
+            token: freshAccessToken,
             case_id: caseId,
             content: message,
           }),
         );
         return true;
       } catch {
-        removeMessage(optimisticMessage.id);
+        if (optimisticMessage) removeMessage(optimisticMessage.id);
         removePendingResponse();
         return false;
       } finally {
