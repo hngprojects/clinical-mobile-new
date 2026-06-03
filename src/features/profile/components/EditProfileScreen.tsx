@@ -168,10 +168,7 @@ export function EditProfileScreen() {
     const parts = data.fullName.trim().split(/\s+/);
     const firstName = parts[0] ?? '';
     const lastName = parts.slice(1).join(' ') || firstName;
-    updateProfile(
-      { firstName, lastName, email: data.email.trim() },
-      { onSuccess: () => router.back() },
-    );
+    updateProfile({ firstName, lastName }, { onSuccess: () => router.back() });
   };
 
   const initials = user ? `${user.firstName[0] ?? ''}${user.lastName[0] ?? ''}`.toUpperCase() : 'G';
@@ -229,6 +226,7 @@ export function EditProfileScreen() {
             placeholder="Enter your email"
             keyboardType="email-address"
             autoCapitalize="none"
+            editable={false}
             returnKeyType="done"
           />
         </View>

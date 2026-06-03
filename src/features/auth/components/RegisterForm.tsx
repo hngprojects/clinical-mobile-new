@@ -1,9 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { Image, StyleSheet, TextInput as RNTextInput, View } from 'react-native';
 
-import { Button, FormField, Typography } from '@/shared/components';
+import { Button, FormField, Toast, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
@@ -23,7 +23,19 @@ interface RegisterFormProps {
 export function RegisterForm({ mutation, onContinueAsGuest }: RegisterFormProps) {
   const { spacing, colors } = useTheme();
   const { mutate: register, isPending } = mutation;
-  const { startGoogleAuth, isPending: isGooglePending } = useGoogleAuth();
+  const {
+    startGoogleAuth,
+    isPending: isGooglePending,
+    error: googleError,
+    clearError: clearGoogleError,
+  } = useGoogleAuth('signup');
+
+  useEffect(() => {
+    if (!googleError) return undefined;
+
+    const timer = setTimeout(clearGoogleError, 5000);
+    return () => clearTimeout(timer);
+  }, [googleError, clearGoogleError]);
 
   const lastNameRef = useRef<RNTextInput>(null);
   const emailRef = useRef<RNTextInput>(null);
@@ -43,7 +55,9 @@ export function RegisterForm({ mutation, onContinueAsGuest }: RegisterFormProps)
   });
 
   const passwordValue = useWatch({ control, name: 'password', defaultValue: '' }) ?? '';
-  const onSubmit = (data: RegisterFormData) => register(data);
+  const onSubmit = (data: RegisterFormData) => {
+    register(data);
+  };
 
   const handleSocialPress = async (provider: string) => {
     if (provider === 'Google') {
@@ -57,6 +71,8 @@ export function RegisterForm({ mutation, onContinueAsGuest }: RegisterFormProps)
 
   return (
     <View style={styles.container}>
+      <Toast visible={!!googleError} message={googleError ?? ''} variant="error" />
+
       <View style={{ gap: spacing.md }}>
         <FormField
           control={control}
@@ -128,24 +144,14 @@ export function RegisterForm({ mutation, onContinueAsGuest }: RegisterFormProps)
 
         <View style={styles.separatorContainer}>
           <View style={[styles.line, { backgroundColor: '#F0F0F0' }]} />
-          <Typography
-            style={{
-              paddingHorizontal: 16,
-              color: '#767676',
-              fontFamily: 'Inter_500Medium',
-              fontSize: 14,
-              lineHeight: 21,
-              letterSpacing: -0.14,
-            }}
-          >
-            or
-          </Typography>
+          <Typography style={styles.separatorText}>or</Typography>
           <View style={[styles.line, { backgroundColor: '#F0F0F0' }]} />
         </View>
 
         <View style={{ gap: 16 }}>
           <Button
-            label={isGooglePending ? 'Connecting...' : 'Google'}
+            label="Google"
+            loadingLabel="Signing up with Google"
             variant="outline"
             onPress={() => handleSocialPress('Google')}
             isLoading={isGooglePending}
@@ -176,22 +182,30 @@ export function RegisterForm({ mutation, onContinueAsGuest }: RegisterFormProps)
 
 const styles = StyleSheet.create({
   container: { width: '100%' },
-  separatorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 16,
-  },
   line: {
     flex: 1,
     height: 1,
   },
+  separatorContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginBottom: 16,
+    marginTop: 16,
+  },
+  separatorText: {
+    color: '#767676',
+    fontFamily: 'Inter_500Medium',
+    fontSize: 14,
+    letterSpacing: -0.14,
+    lineHeight: 21,
+    paddingHorizontal: 16,
+  },
   socialIconButton: {
-    paddingVertical: 15,
-    paddingHorizontal: 24,
+    backgroundColor: '#FFFFFF',
+    borderColor: '#D0D0D0',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#D0D0D0',
-    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 24,
+    paddingVertical: 15,
   },
 });

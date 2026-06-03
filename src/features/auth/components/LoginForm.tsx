@@ -1,16 +1,15 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 
-import { Button, FormField, Typography } from '@/shared/components';
+import { Button, FormField, Toast, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { LoginFormData, loginSchema } from '../schemas/auth.schemas';
 
 import { PasswordField } from './PasswordField';
-import { PasswordValidationList } from './PasswordValidationList';
 
 interface LoginFormProps {
   mutation: {
@@ -32,7 +31,19 @@ export function LoginForm({
   const { mutate: login, isPending } = mutation;
   const passwordRef = useRef<any>(null);
 
-  const { startGoogleAuth, isPending: isGooglePending } = useGoogleAuth();
+  const {
+    startGoogleAuth,
+    isPending: isGooglePending,
+    error: googleError,
+    clearError: clearGoogleError,
+  } = useGoogleAuth('signin');
+
+  useEffect(() => {
+    if (!googleError) return undefined;
+
+    const timer = setTimeout(clearGoogleError, 5000);
+    return () => clearTimeout(timer);
+  }, [googleError, clearGoogleError]);
 
   const { control, handleSubmit } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -53,6 +64,8 @@ export function LoginForm({
 
   return (
     <View style={styles.container}>
+      <Toast visible={!!googleError} message={googleError ?? ''} variant="error" />
+
       <View style={{ gap: spacing.md }}>
         <FormField
           control={control}
@@ -64,7 +77,7 @@ export function LoginForm({
           onFocus={onInteract}
           returnKeyType="next"
           onSubmitEditing={() => passwordRef.current?.focus()}
-          blurOnSubmit={false}
+          submitBehavior="submit"
         />
 
         <View>
@@ -79,26 +92,15 @@ export function LoginForm({
             onSubmitEditing={handleSubmit(onSubmit)}
           />
           <Pressable style={styles.forgotPassword} onPress={onForgotPassword}>
-            <Typography
-              variant="body2"
-              color={colors.primary}
-              style={{
-                fontWeight: '400',
-                textDecorationLine: 'underline',
-                lineHeight: 21,
-                letterSpacing: -0.14,
-                marginTop: 6,
-              }}
-            >
+            <Typography variant="body2" color={colors.primary} style={styles.forgotPasswordText}>
               Forgot Password?
             </Typography>
           </Pressable>
         </View>
 
-        <PasswordValidationList password={passwordValue} variant="full" />
-
         <Button
-          label={isPending ? 'Logging in...' : 'Login'}
+          label="Sign in"
+          loadingLabel="Signing in"
           onPress={handleSubmit(onSubmit)}
           isLoading={isPending}
           disabled={isPending || passwordValue.length === 0}
@@ -107,24 +109,14 @@ export function LoginForm({
 
         <View style={styles.separatorContainer}>
           <View style={[styles.line, { backgroundColor: '#F0F0F0' }]} />
-          <Typography
-            style={{
-              paddingHorizontal: 16,
-              color: '#767676',
-              fontFamily: 'Inter_500Medium',
-              fontSize: 14,
-              lineHeight: 21,
-              letterSpacing: -0.14,
-            }}
-          >
-            or
-          </Typography>
+          <Typography style={styles.separatorText}>or</Typography>
           <View style={[styles.line, { backgroundColor: '#F0F0F0' }]} />
         </View>
 
         <View style={{ gap: 16 }}>
           <Button
-            label={isGooglePending ? 'Connecting...' : 'Google'}
+            label="Google"
+            loadingLabel="Signing in with Google"
             variant="outline"
             onPress={() => handleSocialPress('Google')}
             isLoading={isGooglePending}
@@ -158,22 +150,37 @@ const styles = StyleSheet.create({
   forgotPassword: {
     alignSelf: 'flex-end',
   },
-  separatorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 16,
+  forgotPasswordText: {
+    fontWeight: '400',
+    letterSpacing: -0.14,
+    lineHeight: 21,
+    marginTop: 6,
+    textDecorationLine: 'underline',
   },
   line: {
     flex: 1,
     height: 1,
   },
+  separatorContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginBottom: 16,
+    marginTop: 16,
+  },
+  separatorText: {
+    color: '#767676',
+    fontFamily: 'Inter_500Medium',
+    fontSize: 14,
+    letterSpacing: -0.14,
+    lineHeight: 21,
+    paddingHorizontal: 16,
+  },
   socialIconButton: {
-    paddingVertical: 15,
-    paddingHorizontal: 24,
+    backgroundColor: '#FFFFFF',
+    borderColor: '#D0D0D0',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#D0D0D0',
-    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 24,
+    paddingVertical: 15,
   },
 });

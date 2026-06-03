@@ -21,6 +21,13 @@ interface MedicalCaseDetailResponse {
     status: AiReviewStatus;
   };
   interpretation?: AIInterpretationResponse | null;
+  interpretations?: AIInterpretationResponse[] | null;
+}
+
+interface AIInterpretationListResponse {
+  interpretations?: AIInterpretationResponse[] | null;
+  items?: AIInterpretationResponse[] | null;
+  results?: AIInterpretationResponse[] | null;
 }
 
 function mapInterpretation(interpretation: AIInterpretationResponse): AiReviewResult {
@@ -39,6 +46,13 @@ function mapInterpretation(interpretation: AIInterpretationResponse): AiReviewRe
 
 function isNoInterpretationYetError(error: unknown) {
   return error instanceof ApiError && error.status === 404;
+}
+
+function getInterpretationList(
+  data: AIInterpretationResponse[] | AIInterpretationListResponse | null,
+) {
+  if (Array.isArray(data)) return data;
+  return data?.interpretations ?? data?.items ?? data?.results ?? [];
 }
 
 async function getCaseProcessingStatus(
@@ -97,6 +111,36 @@ async function getLatestInterpretation(
   }
 }
 
+async function getInterpretations(
+  caseId: string,
+  guestSessionId?: string | null,
+): Promise<AiReviewResult[]> {
+  try {
+    const { data } = await client.get<
+      ApiSuccessResponse<AIInterpretationResponse[] | AIInterpretationListResponse>
+    >(`/api/v1/cases/${caseId}/interpretations`, {
+      headers: guestSessionId ? { 'x-guest-session-id': guestSessionId } : undefined,
+    });
+
+    return getInterpretationList(data.data).map(mapInterpretation);
+  } catch (error) {
+    if (!isNoInterpretationYetError(error)) throw error;
+
+    const { data } = await client.get<ApiSuccessResponse<MedicalCaseDetailResponse>>(
+      `/api/v1/cases/${caseId}/full`,
+      {
+        headers: guestSessionId ? { 'x-guest-session-id': guestSessionId } : undefined,
+      },
+    );
+
+    const interpretations =
+      data.data?.interpretations ?? (data.data?.interpretation ? [data.data.interpretation] : []);
+
+    return interpretations.map(mapInterpretation);
+  }
+}
+
 export const aiReviewApi = {
+  getInterpretations,
   getLatestInterpretation,
 };

@@ -1,8 +1,11 @@
 import { create, isAxiosError } from 'axios';
 
+import type { AuthTokens } from '@/features/auth/api/auth.types';
 import { env } from '@/shared/constants/env';
 
 import { ApiError } from './types';
+
+const ACCESS_TOKEN_REFRESH_BUFFER_MS = 60_000;
 
 export const client = create({
   baseURL: env.API_BASE_URL,
@@ -14,20 +17,93 @@ export const client = create({
 type AuthStateAccessor = () => {
   accessToken: string | null;
   refreshToken: string | null;
+  accessTokenExpiresAt: string | null;
   isGuest: boolean;
 
-  setTokens: (tokens: { accessToken: string; refreshToken: string | null }) => void;
+  setTokens: (tokens: AuthTokens) => void;
   clearSession: () => void;
 };
 
 let getAuthState: AuthStateAccessor | null = null;
+let refreshPromise: Promise<AuthTokens> | null = null;
 
 export function registerAuthStore(store: AuthStateAccessor) {
   getAuthState = store;
 }
 
-client.interceptors.request.use((config) => {
-  const token = getAuthState?.().accessToken;
+async function refreshAccessToken(refreshToken?: string | null) {
+  const { authApi } = await import('@/features/auth/api/auth.api');
+  return authApi.refreshTokens(refreshToken);
+}
+
+function isAccessTokenExpiring(expiresAt: string | null) {
+  if (!expiresAt) return true;
+
+  const expiresAtMs = Date.parse(expiresAt);
+  if (Number.isNaN(expiresAtMs)) return true;
+
+  return expiresAtMs - Date.now() <= ACCESS_TOKEN_REFRESH_BUFFER_MS;
+}
+
+function isRefreshAuthFailure(error: unknown) {
+  if (error instanceof ApiError)
+    return error.status === 400 || error.status === 401 || error.status === 403;
+  if (isAxiosError(error)) {
+    const status = error.response?.status;
+    return status === 400 || status === 401 || status === 403;
+  }
+  return false;
+}
+
+async function showSessionExpiredMessage() {
+  try {
+    const { useAuthFeedbackStore } = await import('@/features/auth/store/authFeedback.store');
+    useAuthFeedbackStore
+      .getState()
+      .setErrorMessage('Your session has expired. Please sign in again.');
+  } catch (feedbackError) {
+    if (__DEV__) console.warn('Could not show session expiry feedback:', feedbackError);
+  }
+}
+
+export async function ensureFreshAccessToken(options: { force?: boolean } = {}) {
+  const state = getAuthState?.();
+  if (!state?.accessToken || state.isGuest) return state?.accessToken ?? null;
+
+  if (!options.force && !isAccessTokenExpiring(state.accessTokenExpiresAt)) {
+    return state.accessToken;
+  }
+
+  try {
+    refreshPromise ??= refreshAccessToken(state.refreshToken).finally(() => {
+      refreshPromise = null;
+    });
+    const newTokens = await refreshPromise;
+    getAuthState?.().setTokens(newTokens);
+    return newTokens.accessToken;
+  } catch (error) {
+    if (!options.force && !isRefreshAuthFailure(error)) {
+      return state.accessToken;
+    }
+
+    await showSessionExpiredMessage();
+    getAuthState?.().clearSession();
+    throw error;
+  }
+}
+
+client.interceptors.request.use(async (config) => {
+  const original = config as typeof config & { _retry?: boolean };
+  let token = getAuthState?.().accessToken;
+
+  if (!original._retry) {
+    try {
+      token = (await ensureFreshAccessToken()) ?? token;
+    } catch (error) {
+      return Promise.reject(toApiError(error));
+    }
+  }
+
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
@@ -39,24 +115,26 @@ client.interceptors.response.use(
 
     if (error.response?.status === 401 && !original._retry && getAuthState) {
       original._retry = true;
-      const { refreshToken, clearSession } = getAuthState();
+      const { accessToken, isGuest, clearSession } = getAuthState();
 
-      if (!refreshToken) {
-        // Guest users authenticate via x-guest-session-id, not tokens — don't wipe their session
-        if (!getAuthState().isGuest) {
-          clearSession();
-        }
+      // Guest sessions use x-guest-session-id — a 401 means the guest session expired
+      if (isGuest) {
+        clearSession();
+        return Promise.reject(toApiError(error));
+      }
+
+      // No access token means we're already logged out
+      if (!accessToken) {
+        clearSession();
         return Promise.reject(toApiError(error));
       }
 
       try {
-        const { authApi } = await import('@/features/auth/api/auth.api');
-        const newTokens = await authApi.refreshTokens();
-        getAuthState().setTokens(newTokens);
-        original.headers.Authorization = `Bearer ${newTokens.accessToken}`;
+        const newAccessToken = await ensureFreshAccessToken({ force: true });
+        if (!newAccessToken) throw error;
+        original.headers.Authorization = `Bearer ${newAccessToken}`;
         return client(original);
       } catch {
-        getAuthState().clearSession();
         return Promise.reject(toApiError(error));
       }
     }

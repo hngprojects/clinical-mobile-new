@@ -32,10 +32,20 @@ export function useAppReady() {
 
         if (tokens) {
           try {
+            useAuthStore.getState().setTokens(tokens);
             // Restore full user profile
             const { authApi } = await import('@/features/auth/api/auth.api');
             const userProfile = await authApi.getMe();
-            useAuthStore.getState().setSession(tokens, userProfile);
+            const latestAuthState = useAuthStore.getState();
+            useAuthStore.getState().setSession(
+              {
+                accessToken: latestAuthState.accessToken ?? tokens.accessToken,
+                refreshToken: latestAuthState.refreshToken ?? tokens.refreshToken,
+                accessTokenExpiresAt:
+                  latestAuthState.accessTokenExpiresAt ?? tokens.accessTokenExpiresAt,
+              },
+              userProfile,
+            );
           } catch (e) {
             console.warn('Launch session restore failed, clearing tokens:', e);
             if (!useAuthStore.getState().isGuest) {

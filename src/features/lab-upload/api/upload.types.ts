@@ -20,6 +20,11 @@ export interface UploadRequest {
   guest_session_id?: string | null;
 }
 
+export interface UploadChatLabResultRequest {
+  caseId: string;
+  file: UploadFile;
+}
+
 export type OcrStatus = 'pending' | 'processing' | 'complete' | 'failed';
 
 export interface LabResultResponse {

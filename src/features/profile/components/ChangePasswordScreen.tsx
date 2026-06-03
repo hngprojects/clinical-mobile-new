@@ -23,9 +23,9 @@ export function ChangePasswordScreen() {
     setShowSuccessModal(true);
   };
 
-  const handleBackToProfile = () => {
+  const handleBackToLogin = () => {
     setShowSuccessModal(false);
-    router.back();
+    router.replace('/(auth)/login');
   };
 
   const handleError = (message: string) => {
@@ -67,7 +67,14 @@ export function ChangePasswordScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      <PasswordSuccessModal visible={showSuccessModal} onConfirm={handleBackToProfile} />
+      <PasswordSuccessModal
+        visible={showSuccessModal}
+        message={
+          'Your password has successfully\nbeen updated. Sign in again with your new password.'
+        }
+        buttonLabel="Back To Login"
+        onConfirm={handleBackToLogin}
+      />
     </SafeAreaView>
   );
 }
