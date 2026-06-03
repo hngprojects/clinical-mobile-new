@@ -1,12 +1,13 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import { Alert, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAuthStore } from '@/features/auth/store/auth.store';
 import { useTheme } from '@/shared/theme';
 
 import { PROFILE_HORIZONTAL_PADDING } from '../constants';
+import { useDeleteAccount } from '../hooks/useDeleteAccount';
 
 import { DeleteAccountConfirmModal } from './DeleteAccountConfirmModal';
 import { LogoutConfirmModal } from './LogoutConfirmModal';
@@ -28,6 +29,7 @@ export function ProfileScreen() {
 
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const deleteAccountMutation = useDeleteAccount();
 
   const handleConfirmLogout = () => {
     setLogoutModalVisible(false);
@@ -36,8 +38,18 @@ export function ProfileScreen() {
   };
 
   const handleConfirmDeleteAccount = () => {
-    setDeleteModalVisible(false);
-    // TODO: wire delete-account API when available
+    deleteAccountMutation.mutate(undefined, {
+      onSuccess: () => {
+        setDeleteModalVisible(false);
+        router.replace('/(auth)/login');
+      },
+      onError: (error) => {
+        Alert.alert(
+          'Could not delete account',
+          error.message || 'Something went wrong. Please try again.',
+        );
+      },
+    });
   };
 
   return (
@@ -108,6 +120,7 @@ export function ProfileScreen() {
         visible={deleteModalVisible}
         onClose={() => setDeleteModalVisible(false)}
         onConfirm={handleConfirmDeleteAccount}
+        isLoading={deleteAccountMutation.isPending}
       />
     </SafeAreaView>
   );
