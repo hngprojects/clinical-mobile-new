@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Keyboard,
+  Platform,
   Pressable,
   TextInput as RNTextInput,
   StyleSheet,
@@ -65,7 +66,9 @@ export function VerifyOtp({
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [hasOtpError, setHasOtpError] = useState(false);
-  const [otpErrorMessage, setOtpErrorMessage] = useState('The code you entered is incorrect. Check again.');
+  const [otpErrorMessage, setOtpErrorMessage] = useState(
+    'The code you entered is incorrect. Check again.',
+  );
   const [hasNetworkError, setHasNetworkError] = useState(false);
   const [resendToastVisible, setResendToastVisible] = useState(false);
   const [resendToastMessage, setResendToastMessage] = useState('');
@@ -292,6 +295,8 @@ export function VerifyOtp({
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         textContentType="oneTimeCode"
+        autoComplete={Platform.OS === 'android' ? 'sms-otp' : 'one-time-code'}
+        importantForAutofill="yes"
         autoFocus
       />
 
@@ -315,9 +320,7 @@ export function VerifyOtp({
       </Pressable>
 
       {/* Red Error Message if Code is Incorrect */}
-      {hasOtpError && (
-        <Typography style={styles.errorText}>{otpErrorMessage}</Typography>
-      )}
+      {hasOtpError && <Typography style={styles.errorText}>{otpErrorMessage}</Typography>}
 
       {/* Verify Button matching all states */}
       <Pressable
