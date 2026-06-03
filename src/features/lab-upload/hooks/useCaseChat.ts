@@ -4,9 +4,18 @@ import { useApiMutation, useApiQuery } from '@/shared/api/hooks';
 
 import { chatApi } from '../api/chat.api';
 
-export function getCaseChatQueryKey(caseId: string, guestSessionId?: string | null) {
-  return ['case-chat', caseId, guestSessionId];
-}
+import { getCaseChatQueryKey } from './chatQueryKeys';
+
+export { getCaseChatQueryKey } from './chatQueryKeys';
+export {
+  getSocketSenderType,
+  getSocketText,
+  isChatResponse,
+  normalizeSocketPayload,
+  parseSocketPayload,
+} from './chatSocket.utils';
+export type { SocketPayload } from './chatSocket.utils';
+export { useCaseChatSocket } from './useCaseChatSocket';
 
 export function useCaseChat(caseId: string, guestSessionId?: string | null) {
   return useApiQuery(

@@ -80,6 +80,7 @@ export const useAuthStore = createStore<AuthState & AuthActions>((set, get) => (
 
   setTokens: (tokens) => {
     set({ ...tokens, isGuest: false, guestSessionId: null });
+    secureStorage.saveTokens(tokens).catch(console.warn);
     asyncStorage.removeItem(STORAGE_KEYS.GUEST_SESSION).catch(console.warn);
     asyncStorage.removeItem(STORAGE_KEYS.GUEST_SESSION_ID).catch(console.warn);
   },

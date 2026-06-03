@@ -1,14 +1,22 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import type { InsightListItem } from '../api/types';
 import { DUMMY_INSIGHT_LIST } from '../data/dummyInsights';
 
 const SEARCH_DEBOUNCE_MS = 420;
 
-export function useInsightList(initialItems: InsightListItem[] = DUMMY_INSIGHT_LIST) {
+interface UseInsightListOptions {
+  onRename?: (id: string, title: string) => Promise<void> | void;
+}
+
+export function useInsightList(
+  initialItems: InsightListItem[] = DUMMY_INSIGHT_LIST,
+  { onRename }: UseInsightListOptions = {},
+) {
   const [query, setQuery] = useState('');
   const [items, setItems] = useState<InsightListItem[]>(() => [...initialItems]);
   const [isSearching, setIsSearching] = useState(false);
+  const previousItemsRef = useRef<InsightListItem[]>([]);
 
   useLayoutEffect(() => {
     setItems([...initialItems]);
@@ -42,9 +50,22 @@ export function useInsightList(initialItems: InsightListItem[] = DUMMY_INSIGHT_L
     ]);
   }, []);
 
-  const renameInsight = useCallback((id: string, title: string) => {
-    setItems((prev) => prev.map((row) => (row.id === id ? { ...row, title } : row)));
-  }, []);
+  const renameInsight = useCallback(
+    async (id: string, title: string) => {
+      setItems((prev) => {
+        previousItemsRef.current = prev;
+        return prev.map((row) => (row.id === id ? { ...row, title } : row));
+      });
+
+      try {
+        await onRename?.(id, title);
+      } catch (error) {
+        setItems(previousItemsRef.current);
+        console.error('[Insights] Failed to rename case', error);
+      }
+    },
+    [onRename],
+  );
 
   const deleteInsight = useCallback((id: string) => {
     setItems((prev) => prev.filter((row) => row.id !== id));

@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Keyboard,
@@ -9,18 +9,27 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Screen, Typography } from '@/shared/components';
+import { useAuthStore } from '@/features/auth/store/auth.store';
+import {
+  Screen,
+  Typography,
+  UploadBottomSheet,
+  UploadedFile,
+  UploadError,
+} from '@/shared/components';
+import { asyncStorage } from '@/shared/storage/asyncStorage';
 
-import type { AiReviewResult, ValueBreakdown } from '../api/ai-review.types';
+import type { AiReviewResult } from '../api/ai-review.types';
 import type { ChatMessage } from '../api/chat.types';
-import { useAiReview } from '../hooks/useAiReview';
-import { useCaseChat, useSendChatMessage } from '../hooks/useCaseChat';
+import { useAiReviewHistory } from '../hooks/useAiReview';
+import { useCaseChat, useCaseChatSocket, useSendChatMessage } from '../hooks/useCaseChat';
+import { useChatLabUpload } from '../hooks/useChatLabUpload';
+
+import { ChatBubble, ChatComposer, ChatInterpretationCard, ChatStateMessage } from './chat';
 
 type TimelineItem =
   | {
@@ -38,16 +47,14 @@ type TimelineItem =
       message: ChatMessage;
     };
 
-const COMPOSER_INPUT_MIN_HEIGHT = 24;
-const COMPOSER_INPUT_MAX_HEIGHT = 112;
-const COMPOSER_VERTICAL_PADDING = 20;
-const COMPOSER_MIN_HEIGHT = 48;
-const COMPOSER_MEASURE_TEXT = ' ';
+const LOCAL_ATTACHMENT_STORAGE_KEY_PREFIX = 'case_chat_local_attachments';
+const LOCAL_ATTACHMENT_STORAGE_LIMIT = 5;
 
 export function ChatReviewScreen() {
   const router = useRouter();
   const scrollRef = useRef<ScrollView | null>(null);
   const insets = useSafeAreaInsets();
+  const storedGuestSessionId = useAuthStore((state) => state.guestSessionId);
   const { caseId, guestSessionId, mock, demo } = useLocalSearchParams<{
     caseId?: string;
     guestSessionId?: string;
@@ -55,31 +62,63 @@ export function ChatReviewScreen() {
     demo?: string;
   }>();
   const [draft, setDraft] = useState('');
-  const [inputHeight, setInputHeight] = useState(COMPOSER_INPUT_MIN_HEIGHT);
   const [mockMessages, setMockMessages] = useState<ChatMessage[]>(MOCK_CHAT_MESSAGES);
+  const [localMessages, setLocalMessages] = useState<ChatMessage[]>([]);
+  const [pendingAttachment, setPendingAttachment] = useState<UploadedFile | null>(null);
+  const [showUploadSheet, setShowUploadSheet] = useState(false);
+  const hasConnectedRef = useRef(false);
   const isMockChat = typeof __DEV__ !== 'undefined' && __DEV__ && mock === 'chat';
   const isDemoMode = demo === 'true';
-  const reviewQuery = useAiReview(caseId || '', guestSessionId);
-  const chatQuery = useCaseChat(caseId || '', guestSessionId);
-  const sendMessage = useSendChatMessage(caseId || '', guestSessionId);
-  const review = isMockChat ? MOCK_REVIEW : reviewQuery.data;
+  const effectiveGuestSessionId =
+    typeof guestSessionId === 'string' ? guestSessionId : storedGuestSessionId;
+  const {
+    clearUploadError,
+    isLabUploading,
+    isUploadError,
+    labUploadStatusMessage,
+    review,
+    showUploadError,
+    uploadErrorMessage,
+    uploadLabResult,
+  } = useChatLabUpload({
+    caseId: caseId || '',
+    enabled: !isMockChat && !isDemoMode,
+    guestSessionId: effectiveGuestSessionId,
+  });
+  const reviewHistoryQuery = useAiReviewHistory(caseId || '', effectiveGuestSessionId);
+  const chatQuery = useCaseChat(caseId || '', effectiveGuestSessionId);
+  const sendMessage = useSendChatMessage(caseId || '', effectiveGuestSessionId);
+  const chatSocket = useCaseChatSocket(
+    caseId || '',
+    effectiveGuestSessionId,
+    !isMockChat && !isDemoMode,
+  );
+  const displayedReview = isMockChat ? MOCK_REVIEW : review;
+  const reviews = useMemo(
+    () =>
+      isMockChat ? [MOCK_REVIEW] : getTimelineReviews(reviewHistoryQuery.data, displayedReview),
+    [displayedReview, isMockChat, reviewHistoryQuery.data],
+  );
   const messages = useMemo(
-    () => (isMockChat ? mockMessages : (chatQuery.data ?? [])),
-    [chatQuery.data, isMockChat, mockMessages],
+    () => (isMockChat ? mockMessages : [...(chatQuery.data ?? []), ...localMessages]),
+    [chatQuery.data, isMockChat, localMessages, mockMessages],
   );
   const trimmedDraft = draft.trim();
-  const canSend = Boolean((caseId || isMockChat) && trimmedDraft && !sendMessage.isPending);
-  const hasInterpretation = Boolean(
-    review?.status === 'complete' &&
-    (review.summary || review.valueBreakdown?.length || review.suggestedQuestions?.length),
+  const { status: socketStatus } = chatSocket;
+  if (socketStatus === 'connected') hasConnectedRef.current = true;
+  const showReconnecting = hasConnectedRef.current && socketStatus === 'connecting';
+  const showConnectionLost = hasConnectedRef.current && socketStatus === 'disconnected';
+  const showSessionExpired = socketStatus === 'session_expired';
+  const isSendingMessage = sendMessage.isPending || chatSocket.isSending || isLabUploading;
+  const canSend = Boolean(
+    (caseId || isMockChat) &&
+    (trimmedDraft || pendingAttachment) &&
+    !isSendingMessage &&
+    !showSessionExpired,
   );
-  const timelineItems = useMemo(
-    () => buildTimeline(messages, hasInterpretation ? review : undefined),
-    [hasInterpretation, messages, review],
-  );
+  const timelineItems = useMemo(() => buildTimeline(messages, reviews), [messages, reviews]);
   const isInitialLoading = !isMockChat && chatQuery.isLoading;
   const isInitialError = !isMockChat && chatQuery.isError;
-  const composerHeight = Math.max(COMPOSER_MIN_HEIGHT, inputHeight + COMPOSER_VERTICAL_PADDING);
 
   useEffect(() => {
     if (timelineItems.length > 0) {
@@ -87,28 +126,112 @@ export function ChatReviewScreen() {
     }
   }, [timelineItems.length]);
 
-  const updateInputHeight = useCallback((height: number) => {
-    const nextHeight = Math.min(
-      Math.max(Math.ceil(height), COMPOSER_INPUT_MIN_HEIGHT),
-      COMPOSER_INPUT_MAX_HEIGHT,
-    );
+  useEffect(() => {
+    if (!caseId || isMockChat || isDemoMode) {
+      setLocalMessages([]);
+      return undefined;
+    }
 
-    setInputHeight((currentHeight) => (currentHeight === nextHeight ? currentHeight : nextHeight));
-  }, []);
+    let cancelled = false;
+    setLocalMessages([]);
+
+    asyncStorage
+      .getItem<ChatMessage[]>(getLocalAttachmentStorageKey(caseId))
+      .then((storedMessages) => {
+        if (cancelled || !Array.isArray(storedMessages)) return;
+
+        setLocalMessages(
+          storedMessages.filter((message) => isStoredLocalAttachmentMessage(message, caseId)),
+        );
+      })
+      .catch((error) => {
+        if (__DEV__) console.warn('Could not restore chat attachments:', error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [caseId, isDemoMode, isMockChat]);
+
+  const clearComposerErrors = () => {
+    if (sendMessage.isError) sendMessage.reset();
+    clearUploadError();
+  };
 
   const handleDraftChange = (value: string) => {
-    setDraft(value);
-    if (!value) {
-      setInputHeight(COMPOSER_INPUT_MIN_HEIGHT);
+    if (sendMessage.isError || isUploadError || uploadErrorMessage) {
+      clearComposerErrors();
     }
+    setDraft(value);
   };
 
   const handleSend = async () => {
     if (!canSend) return;
 
     const message = trimmedDraft;
+    const attachment = pendingAttachment;
+    clearComposerErrors();
     setDraft('');
-    setInputHeight(COMPOSER_INPUT_MIN_HEIGHT);
+    setPendingAttachment(null);
+
+    const sendChatText = async (text: string) => {
+      if (!text) return;
+
+      if (chatSocket.isConnected && (await chatSocket.sendLiveMessage(text))) {
+        return;
+      }
+
+      await sendMessage.mutateAsync(text);
+    };
+
+    if (attachment) {
+      if (isMockChat) {
+        const localMessage = createLocalAttachmentMessage({
+          caseId: 'mock-case',
+          file: attachment,
+          text: '',
+        });
+        setMockMessages((current) => [
+          ...current,
+          localMessage,
+          ...(message
+            ? [
+                createMockMessage({
+                  id: `mock-patient-${current.length + 1}`,
+                  senderType: 'patient',
+                  text: message,
+                }),
+              ]
+            : []),
+        ]);
+        return;
+      }
+
+      try {
+        await uploadLabResult(attachment);
+
+        const attachmentMessage = createLocalAttachmentMessage({
+          caseId: caseId!,
+          file: attachment,
+          text: '',
+        });
+        setLocalMessages((current) => {
+          const next = [...current, attachmentMessage].slice(-LOCAL_ATTACHMENT_STORAGE_LIMIT);
+          persistLocalAttachmentMessages(caseId!, next);
+          return next;
+        });
+
+        try {
+          await sendChatText(message);
+        } catch {
+          setDraft(message);
+        }
+      } catch {
+        setDraft(message);
+        setPendingAttachment(attachment);
+      }
+      return;
+    }
 
     if (isMockChat) {
       setMockMessages((current) => [
@@ -128,183 +251,157 @@ export function ChatReviewScreen() {
     }
 
     try {
-      await sendMessage.mutateAsync(message);
+      await sendChatText(message);
     } catch {
       setDraft(message);
+      setPendingAttachment(attachment);
     }
   };
 
+  const handleUploadFromChat = (file: UploadedFile) => {
+    clearComposerErrors();
+    setPendingAttachment(file);
+  };
+
+  const handleUploadPickerError = (error: UploadError) => {
+    clearComposerErrors();
+
+    if (error.type === 'file-size') {
+      showUploadError('File size limit exceeded. Please upload a smaller file.');
+      return;
+    }
+
+    if (error.type === 'file-type') {
+      showUploadError('Please upload a PDF, JPG, JPEG, PNG, HEIC, or WEBP file.');
+      return;
+    }
+
+    showUploadError('Upload failed. Please select a different file or try again.');
+  };
+
   return (
-    <Screen edges={['top']} backgroundColor="#FFFFFF" style={styles.screen}>
-      <View style={styles.header}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-          onPress={() => router.back()}
-          hitSlop={12}
-          style={styles.backButton}
-        >
-          <Ionicons name="chevron-back" size={24} color="#111827" />
-        </Pressable>
-        <Typography style={styles.headerTitle}>
-          Chat with <Typography style={styles.floHeaderWord}>Flo</Typography>
-        </Typography>
-        <View style={styles.headerSpacer} />
-      </View>
+    <>
+      <Screen edges={['top']} backgroundColor="#FFFFFF" style={styles.screen}>
+        <View style={styles.header}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            onPress={() => router.back()}
+            hitSlop={12}
+            style={styles.backButton}
+          >
+            <Ionicons name="chevron-back" size={24} color="#111827" />
+          </Pressable>
+          <Typography style={styles.headerTitle}>
+            Chat with <Typography style={styles.floHeaderWord}>Flo</Typography>
+          </Typography>
+          <View style={styles.headerSpacer} />
+        </View>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={0}
-        style={styles.body}
-      >
-        <ScrollView
-          ref={scrollRef}
-          contentContainerStyle={styles.content}
-          keyboardShouldPersistTaps="handled"
-          onTouchStart={Keyboard.dismiss}
-          showsVerticalScrollIndicator={false}
-          style={styles.scroll}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={0}
+          style={styles.body}
         >
-          {isDemoMode ? (
-            <View style={styles.demoState}>
-              <View style={styles.demoIconWrap}>
-                <Ionicons name="chatbubbles-outline" size={52} color="#1565C0" />
-              </View>
-              <Typography style={styles.demoTitle}>Coming Soon</Typography>
-              <Typography style={styles.demoSubtitle}>
-                This is still a demo. Full chat review with Flo is on its way — stay tuned!
-              </Typography>
-            </View>
-          ) : !caseId && !isMockChat ? (
-            <StateMessage message="We could not find the case for this chat." />
-          ) : isInitialLoading ? (
-            <View style={styles.loadingState}>
-              <ActivityIndicator color="#1565C0" size="small" />
-              <Typography style={styles.stateText}>Loading chat...</Typography>
-            </View>
-          ) : isInitialError ? (
-            <StateMessage
-              message="We could not load your chat. Please check your connection and try again."
-              actionLabel="Retry"
-              onAction={() => {
-                chatQuery.refetch();
-              }}
-            />
-          ) : timelineItems.length === 0 ? (
-            <StateMessage
-              message={
-                <>
-                  Ask a question about your <Typography style={styles.floInline}>Flo</Typography>{' '}
-                  review to start the chat.
-                </>
-              }
-            />
-          ) : (
-            <>
-              {timelineItems.map((item) =>
-                item.type === 'interpretation' ? (
-                  <InterpretationCard
-                    key={item.id}
-                    review={item.review}
-                    onQuestionPress={setDraft}
-                  />
-                ) : (
-                  <ChatBubble key={item.id} message={item.message} />
-                ),
-              )}
-            </>
-          )}
-        </ScrollView>
-
-        {!isDemoMode && (
-          <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-            {sendMessage.isError ? (
-              <Typography style={styles.sendError}>Message failed. Please try again.</Typography>
-            ) : null}
-            <View style={styles.composerRow}>
-              <View
-                style={[
-                  styles.inputPill,
-                  {
-                    height: composerHeight,
-                  },
-                ]}
-              >
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Attach image"
-                  onPress={() => {}}
-                  style={styles.attachButton}
-                >
-                  <Ionicons name="arrow-up-circle-outline" size={24} color="#767676" />
-                </Pressable>
-                <View style={[styles.inputWrap, { height: inputHeight }]}>
-                  <Text
-                    aria-hidden
-                    onLayout={(event) => {
-                      updateInputHeight(event.nativeEvent.layout.height);
-                    }}
-                    pointerEvents="none"
-                    style={styles.inputMeasure}
-                  >
-                    {draft || COMPOSER_MEASURE_TEXT}
-                  </Text>
-                  <TextInput
-                    multiline
-                    blurOnSubmit={false}
-                    onContentSizeChange={(event) => {
-                      updateInputHeight(event.nativeEvent.contentSize.height);
-                    }}
-                    onChangeText={handleDraftChange}
-                    placeholder="Ask about results"
-                    placeholderTextColor="#767676"
-                    returnKeyType="default"
-                    scrollEnabled={inputHeight >= COMPOSER_INPUT_MAX_HEIGHT}
-                    style={[styles.input, { height: inputHeight }]}
-                    value={draft}
-                  />
+          <ScrollView
+            ref={scrollRef}
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
+            onTouchStart={Keyboard.dismiss}
+            showsVerticalScrollIndicator={false}
+            style={styles.scroll}
+          >
+            {isDemoMode ? (
+              <View style={styles.demoState}>
+                <View style={styles.demoIconWrap}>
+                  <Ionicons name="chatbubbles-outline" size={52} color="#1565C0" />
                 </View>
+                <Typography style={styles.demoTitle}>Coming Soon</Typography>
+                <Typography style={styles.demoSubtitle}>
+                  This is still a demo. Full chat review with Flo is on its way — stay tuned!
+                </Typography>
               </View>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Record voice"
-                disabled
-                style={[styles.iconButton, styles.disabledButton]}
-              >
-                <Ionicons name="mic-outline" size={28} color="#767676" />
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Send message"
-                disabled={!canSend}
-                onPress={handleSend}
-                style={[
-                  styles.sendButton,
-                  (canSend || sendMessage.isPending) && styles.sendButtonActive,
-                ]}
-              >
-                {sendMessage.isPending ? (
-                  <ActivityIndicator color="#FFFFFF" size="small" />
-                ) : (
-                  <Ionicons
-                    name="paper-plane-outline"
-                    size={26}
-                    color={canSend ? '#FFFFFF' : '#767676'}
-                  />
+            ) : !caseId && !isMockChat ? (
+              <ChatStateMessage message="We could not find the case for this chat." />
+            ) : isInitialLoading ? (
+              <View style={styles.loadingState}>
+                <ActivityIndicator color="#1565C0" size="small" />
+                <Typography style={styles.stateText}>Loading chat...</Typography>
+              </View>
+            ) : isInitialError ? (
+              <ChatStateMessage
+                message="We could not load your chat. Please check your connection and try again."
+                actionLabel="Retry"
+                onAction={() => {
+                  chatQuery.refetch();
+                }}
+              />
+            ) : timelineItems.length === 0 ? (
+              <ChatStateMessage
+                message={
+                  <>
+                    Ask a question about your <Typography style={styles.floInline}>Flo</Typography>{' '}
+                    review to start the chat.
+                  </>
+                }
+              />
+            ) : (
+              <>
+                {timelineItems.map((item) =>
+                  item.type === 'interpretation' ? (
+                    <ChatInterpretationCard
+                      key={item.id}
+                      review={item.review}
+                      onQuestionPress={handleDraftChange}
+                    />
+                  ) : (
+                    <ChatBubble key={item.id} message={item.message} />
+                  ),
                 )}
-              </Pressable>
-            </View>
-            <Typography style={styles.disclaimer}>
-              Flo provides AI-powered explanations, not medical diagnoses.
-            </Typography>
-          </View>
-        )}
-      </KeyboardAvoidingView>
-    </Screen>
+              </>
+            )}
+          </ScrollView>
+
+          {!isDemoMode && (
+            <ChatComposer
+              bottomInset={insets.bottom}
+              canSend={canSend}
+              draft={draft}
+              isSending={isSendingMessage}
+              isUploadProcessing={isLabUploading}
+              labUploadStatusMessage={labUploadStatusMessage}
+              onDraftChange={handleDraftChange}
+              onOpenUpload={() => {
+                clearComposerErrors();
+                setShowUploadSheet(true);
+              }}
+              onRemoveAttachment={() => {
+                clearComposerErrors();
+                setPendingAttachment(null);
+              }}
+              onSend={handleSend}
+              pendingAttachment={pendingAttachment}
+              sendErrorVisible={sendMessage.isError}
+              showConnectionLost={showConnectionLost}
+              showReconnecting={showReconnecting}
+              showSessionExpired={showSessionExpired}
+              uploadErrorMessage={uploadErrorMessage}
+            />
+          )}
+        </KeyboardAvoidingView>
+      </Screen>
+
+      <UploadBottomSheet
+        visible={showUploadSheet}
+        onClose={() => setShowUploadSheet(false)}
+        onUpload={handleUploadFromChat}
+        onUploadError={handleUploadPickerError}
+      />
+    </>
   );
 }
 
-function buildTimeline(messages: ChatMessage[], review?: AiReviewResult): TimelineItem[] {
+function buildTimeline(messages: ChatMessage[], reviews: AiReviewResult[]): TimelineItem[] {
   const items: TimelineItem[] = messages.map((message, index) => ({
     id: `message-${message.id}`,
     index,
@@ -313,10 +410,10 @@ function buildTimeline(messages: ChatMessage[], review?: AiReviewResult): Timeli
     type: 'message',
   }));
 
-  if (review?.status === 'complete') {
+  for (const [index, review] of reviews.entries()) {
     items.push({
-      id: `interpretation-${review.id ?? review.generatedAt ?? 'latest'}`,
-      index: messages.length,
+      id: `interpretation-${review.id ?? review.generatedAt ?? index}`,
+      index: messages.length + index,
       review,
       timestamp: getTimestamp(review.generatedAt),
       type: 'interpretation',
@@ -331,6 +428,59 @@ function getTimestamp(value?: string) {
 
   const timestamp = Date.parse(value);
   return Number.isNaN(timestamp) ? 0 : timestamp;
+}
+
+function getTimelineReviews(history: AiReviewResult[] | undefined, latest?: AiReviewResult) {
+  const source = latest ? [...(history ?? []), latest] : (history ?? []);
+  const seen = new Set<string>();
+
+  return source
+    .filter(
+      (review) =>
+        review.status === 'complete' &&
+        (review.summary || review.valueBreakdown?.length || review.suggestedQuestions?.length),
+    )
+    .filter((review) => {
+      const identity = getReviewIdentity(review);
+      if (!identity || seen.has(identity)) return false;
+
+      seen.add(identity);
+      return true;
+    })
+    .sort((a, b) => getTimestamp(a.generatedAt) - getTimestamp(b.generatedAt));
+}
+
+function getReviewIdentity(review?: AiReviewResult | null) {
+  if (!review) return null;
+  return `${review.status}:${review.id ?? ''}:${review.generatedAt ?? ''}`;
+}
+
+function getLocalAttachmentStorageKey(caseId: string) {
+  return `${LOCAL_ATTACHMENT_STORAGE_KEY_PREFIX}:${caseId}`;
+}
+
+function persistLocalAttachmentMessages(caseId: string, messages: ChatMessage[]) {
+  asyncStorage.setItem(getLocalAttachmentStorageKey(caseId), messages).catch((error) => {
+    if (__DEV__) console.warn('Could not persist chat attachments:', error);
+  });
+}
+
+function isStoredLocalAttachmentMessage(value: unknown, caseId: string): value is ChatMessage {
+  if (!value || typeof value !== 'object') return false;
+
+  const message = value as Partial<ChatMessage>;
+  const content = message.content;
+
+  return Boolean(
+    typeof message.id === 'string' &&
+    message.id.startsWith('local-attachment-') &&
+    message.senderType === 'patient' &&
+    message.medicalCaseId === caseId &&
+    content &&
+    typeof content === 'object' &&
+    typeof content.attachmentName === 'string' &&
+    typeof content.attachmentUri === 'string',
+  );
 }
 
 function createMockMessage({
@@ -349,6 +499,33 @@ function createMockMessage({
     text,
     medicalCaseId: 'mock-case',
     userId: senderType === 'patient' ? 'mock-user' : null,
+    sentAt: new Date().toISOString(),
+  };
+}
+
+function createLocalAttachmentMessage({
+  caseId,
+  file,
+  text,
+}: {
+  caseId: string;
+  file: UploadedFile;
+  text: string;
+}): ChatMessage {
+  return {
+    id: `local-attachment-${Date.now()}`,
+    senderType: 'patient',
+    content: {
+      attachmentMimeType: file.mimeType,
+      attachmentName: file.name,
+      attachmentSize: file.size,
+      attachmentText: text,
+      attachmentUri: file.uri,
+      message: text || file.name,
+    },
+    text: text || file.name,
+    medicalCaseId: caseId,
+    userId: useAuthStore.getState().user?.id ?? null,
     sentAt: new Date().toISOString(),
   };
 }
@@ -398,169 +575,14 @@ const MOCK_CHAT_MESSAGES: ChatMessage[] = [
   },
 ];
 
-function StateMessage({
-  message,
-  actionLabel,
-  onAction,
-}: {
-  message: React.ReactNode;
-  actionLabel?: string;
-  onAction?: () => void;
-}) {
-  return (
-    <View style={styles.stateCard}>
-      <Typography style={styles.stateText}>{message}</Typography>
-      {actionLabel && onAction ? (
-        <Pressable accessibilityRole="button" onPress={onAction} style={styles.stateAction}>
-          <Typography style={styles.stateActionText}>{actionLabel}</Typography>
-        </Pressable>
-      ) : null}
-    </View>
-  );
-}
-
-function ChatBubble({ message }: { message: ChatMessage }) {
-  const isPatient = message.senderType === 'patient';
-
-  if (!isPatient) {
-    return (
-      <View style={styles.aiMessageGroup}>
-        <View style={[styles.bubble, styles.aiBubble]}>
-          <Typography style={styles.bubbleText}>{message.text}</Typography>
-        </View>
-      </View>
-    );
-  }
-
-  return (
-    <View style={[styles.bubble, styles.patientBubble]}>
-      <Typography style={[styles.bubbleText, styles.patientBubbleText]}>{message.text}</Typography>
-    </View>
-  );
-}
-
-function InterpretationCard({
-  review,
-  onQuestionPress,
-}: {
-  review: AiReviewResult;
-  onQuestionPress: (question: string) => void;
-}) {
-  const valueBreakdown = review.valueBreakdown ?? [];
-  const suggestedQuestions = review.suggestedQuestions ?? [];
-
-  return (
-    <View style={styles.interpretationCard}>
-      <View style={styles.interpretationHeader}>
-        <View style={styles.aiAvatar}>
-          <Ionicons name="sparkles-outline" size={16} color="#1565C0" />
-        </View>
-        <View style={styles.interpretationTitleBlock}>
-          <Typography style={styles.interpretationTitle}>
-            <Typography style={styles.floTitle}>Flo&apos;s</Typography> Review
-          </Typography>
-          <Typography style={styles.interpretationSubtitle}>Your lab result is ready</Typography>
-        </View>
-      </View>
-
-      {review.summary ? <Typography style={styles.summaryText}>{review.summary}</Typography> : null}
-
-      {review.riskLevel || review.confidence ? (
-        <View style={styles.metaRow}>
-          {review.riskLevel ? <MetaPill label={`Risk: ${review.riskLevel}`} /> : null}
-          {review.confidence ? <MetaPill label={`Confidence: ${review.confidence}`} /> : null}
-        </View>
-      ) : null}
-
-      {valueBreakdown.length > 0 ? (
-        <View style={styles.valueList}>
-          {valueBreakdown.slice(0, 6).map((item, index) => (
-            <ValueRow item={item} key={`${item.metric}-${index}`} />
-          ))}
-        </View>
-      ) : null}
-
-      {suggestedQuestions.length > 0 ? (
-        <View style={styles.questionGroup}>
-          <Typography style={styles.questionTitle}>Suggested questions</Typography>
-          {suggestedQuestions.map((question) => (
-            <Pressable
-              accessibilityRole="button"
-              key={question}
-              onPress={() => onQuestionPress(question)}
-              style={styles.questionChip}
-            >
-              <Typography style={styles.questionText}>{question}</Typography>
-            </Pressable>
-          ))}
-        </View>
-      ) : null}
-    </View>
-  );
-}
-
-function MetaPill({ label }: { label: string }) {
-  return (
-    <View style={styles.metaPill}>
-      <Typography style={styles.metaText}>{label}</Typography>
-    </View>
-  );
-}
-
-function ValueRow({ item }: { item: ValueBreakdown }) {
-  const value = [item.value, item.unit].filter(Boolean).join(' ');
-
-  return (
-    <View style={styles.valueRow}>
-      <View style={styles.valueCopy}>
-        <Typography style={styles.valueMetric}>{item.metric}</Typography>
-        {item.status ? <Typography style={styles.valueStatus}>{item.status}</Typography> : null}
-      </View>
-      <Typography style={styles.valueAmount}>{value}</Typography>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  screen: {
-    backgroundColor: '#FFFFFF',
-  },
-  body: {
-    flex: 1,
-  },
-  header: {
-    alignItems: 'center',
-    borderBottomColor: '#F0F0F0',
-    borderBottomWidth: 1,
-    flexDirection: 'row',
-    height: 72,
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-  },
   backButton: {
     alignItems: 'center',
     height: 32,
     justifyContent: 'center',
     width: 32,
   },
-  headerSpacer: {
-    width: 32,
-  },
-  headerTitle: {
-    color: '#1B1B1B',
-    fontFamily: 'Inter_400Regular',
-    fontSize: 18,
-    fontWeight: '400',
-    letterSpacing: -0.18,
-    lineHeight: 27,
-  },
-  floHeaderWord: {
-    color: '#1565C0',
-    fontFamily: 'Inter_600SemiBold',
-    fontSize: 18,
-    lineHeight: 27,
-  },
-  scroll: {
+  body: {
     flex: 1,
   },
   content: {
@@ -568,314 +590,6 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
     paddingHorizontal: 16,
     paddingTop: 24,
-  },
-  loadingState: {
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 28,
-  },
-  stateCard: {
-    alignItems: 'center',
-    alignSelf: 'stretch',
-    backgroundColor: '#FAFAFA',
-    borderRadius: 12,
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 18,
-  },
-  stateText: {
-    color: '#767676',
-    fontFamily: 'Inter_400Regular',
-    fontSize: 14,
-    lineHeight: 21,
-    textAlign: 'center',
-  },
-  stateAction: {
-    borderColor: '#1565C0',
-    borderRadius: 8,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  stateActionText: {
-    color: '#1565C0',
-    fontFamily: 'Inter_500Medium',
-    fontSize: 14,
-    lineHeight: 21,
-  },
-  floInline: {
-    color: '#1565C0',
-    fontFamily: 'Inter_600SemiBold',
-    fontSize: 14,
-    lineHeight: 21,
-  },
-  bubble: {
-    borderRadius: 12,
-    maxWidth: '88%',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  aiBubble: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#FAFAFA',
-  },
-  aiMessageGroup: {
-    alignSelf: 'flex-start',
-  },
-  patientBubble: {
-    alignSelf: 'flex-end',
-    backgroundColor: '#1565C0',
-  },
-  bubbleText: {
-    color: '#494949',
-    fontFamily: 'Inter_400Regular',
-    fontSize: 16,
-    fontWeight: '400',
-    letterSpacing: -0.16,
-    lineHeight: 24,
-  },
-  patientBubbleText: {
-    color: '#FFFFFF',
-  },
-  interpretationCard: {
-    alignSelf: 'stretch',
-    backgroundColor: '#F8FBFF',
-    borderColor: '#D7E8FA',
-    borderRadius: 12,
-    borderWidth: 1,
-    gap: 14,
-    padding: 14,
-  },
-  interpretationHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 10,
-  },
-  aiAvatar: {
-    alignItems: 'center',
-    backgroundColor: '#EAF4FF',
-    borderRadius: 16,
-    height: 32,
-    justifyContent: 'center',
-    width: 32,
-  },
-  interpretationTitleBlock: {
-    flex: 1,
-  },
-  interpretationTitle: {
-    color: '#1B1B1B',
-    fontFamily: 'Inter_500Medium',
-    fontSize: 16,
-    lineHeight: 22,
-  },
-  floTitle: {
-    color: '#1565C0',
-    fontFamily: 'Inter_600SemiBold',
-    fontSize: 16,
-    lineHeight: 22,
-  },
-  interpretationSubtitle: {
-    color: '#767676',
-    fontFamily: 'Inter_400Regular',
-    fontSize: 12,
-    lineHeight: 18,
-  },
-  summaryText: {
-    color: '#333333',
-    fontFamily: 'Inter_400Regular',
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  metaPill: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#D7E8FA',
-    borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  metaText: {
-    color: '#1565C0',
-    fontFamily: 'Inter_500Medium',
-    fontSize: 12,
-    lineHeight: 16,
-    textTransform: 'capitalize',
-  },
-  valueList: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E7EEF6',
-    borderRadius: 10,
-    borderWidth: 1,
-  },
-  valueRow: {
-    alignItems: 'center',
-    borderBottomColor: '#EEF3F8',
-    borderBottomWidth: 1,
-    flexDirection: 'row',
-    gap: 12,
-    justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  valueCopy: {
-    flex: 1,
-    gap: 2,
-  },
-  valueMetric: {
-    color: '#1B1B1B',
-    fontFamily: 'Inter_500Medium',
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  valueStatus: {
-    color: '#767676',
-    fontFamily: 'Inter_400Regular',
-    fontSize: 12,
-    lineHeight: 16,
-    textTransform: 'capitalize',
-  },
-  valueAmount: {
-    color: '#1B1B1B',
-    fontFamily: 'Inter_500Medium',
-    fontSize: 13,
-    lineHeight: 18,
-    textAlign: 'right',
-  },
-  questionGroup: {
-    gap: 8,
-  },
-  questionTitle: {
-    color: '#494949',
-    fontFamily: 'Inter_500Medium',
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  questionChip: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#D7E8FA',
-    borderRadius: 10,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  questionText: {
-    color: '#1565C0',
-    fontFamily: 'Inter_400Regular',
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  footer: {
-    backgroundColor: '#FFFFFF',
-    borderTopColor: '#F0F0F0',
-    borderTopLeftRadius: 14,
-    borderTopRightRadius: 14,
-    borderTopWidth: 1,
-    paddingHorizontal: 16,
-    paddingTop: 14,
-  },
-  sendError: {
-    color: '#EF4444',
-    fontFamily: 'Inter_400Regular',
-    fontSize: 12,
-    lineHeight: 18,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  composerRow: {
-    alignItems: 'flex-end',
-    flexDirection: 'row',
-    gap: 14,
-  },
-  inputPill: {
-    alignItems: 'flex-end',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E5E5E5',
-    borderRadius: 24,
-    borderWidth: 1,
-    flex: 1,
-    flexShrink: 1,
-    flexDirection: 'row',
-    gap: 12,
-    maxHeight: COMPOSER_INPUT_MAX_HEIGHT + COMPOSER_VERTICAL_PADDING,
-    minHeight: COMPOSER_MIN_HEIGHT,
-    overflow: 'hidden',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  inputWrap: {
-    flex: 1,
-    flexShrink: 1,
-    minHeight: COMPOSER_INPUT_MIN_HEIGHT,
-  },
-  inputMeasure: {
-    color: 'transparent',
-    fontFamily: 'Inter_400Regular',
-    fontSize: 14,
-    includeFontPadding: false,
-    left: 0,
-    lineHeight: 21,
-    opacity: 0,
-    padding: 0,
-    paddingBottom: 0,
-    paddingHorizontal: 0,
-    paddingTop: 0,
-    position: 'absolute',
-    right: 0,
-    top: 0,
-  },
-  input: {
-    color: '#1B1B1B',
-    fontFamily: 'Inter_400Regular',
-    fontSize: 14,
-    includeFontPadding: false,
-    lineHeight: 21,
-    maxHeight: COMPOSER_INPUT_MAX_HEIGHT,
-    minHeight: COMPOSER_INPUT_MIN_HEIGHT,
-    padding: 0,
-    paddingBottom: 0,
-    paddingHorizontal: 0,
-    paddingTop: 0,
-    textAlignVertical: 'top',
-    width: '100%',
-  },
-  attachButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingRight: 4,
-  },
-  disabledButton: {
-    opacity: 0.5,
-  },
-  iconButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 4,
-  },
-  sendButton: {
-    alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-    borderRadius: 24,
-    padding: 12,
-    justifyContent: 'center',
-  },
-  sendButtonActive: {
-    backgroundColor: '#1565C0',
-  },
-  disclaimer: {
-    color: '#8A8A8A',
-    fontFamily: 'Inter_400Regular',
-    fontSize: 11,
-    fontWeight: '400',
-    lineHeight: 16.5,
-    marginTop: 14,
-    textAlign: 'center',
   },
   demoState: {
     alignItems: 'center',
@@ -906,6 +620,56 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
     lineHeight: 22,
+    textAlign: 'center',
+  },
+  floHeaderWord: {
+    color: '#1565C0',
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 18,
+    lineHeight: 27,
+  },
+  floInline: {
+    color: '#1565C0',
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 14,
+    lineHeight: 21,
+  },
+  header: {
+    alignItems: 'center',
+    borderBottomColor: '#F0F0F0',
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    height: 72,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+  },
+  headerSpacer: {
+    width: 32,
+  },
+  headerTitle: {
+    color: '#1B1B1B',
+    fontFamily: 'Inter_400Regular',
+    fontSize: 18,
+    fontWeight: '400',
+    letterSpacing: -0.18,
+    lineHeight: 27,
+  },
+  loadingState: {
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 28,
+  },
+  screen: {
+    backgroundColor: '#FFFFFF',
+  },
+  scroll: {
+    flex: 1,
+  },
+  stateText: {
+    color: '#767676',
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+    lineHeight: 21,
     textAlign: 'center',
   },
 });

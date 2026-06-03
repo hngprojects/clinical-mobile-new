@@ -25,8 +25,14 @@ interface UploadBottomSheetProps {
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const MAX_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024;
-const ACCEPTED_DOCUMENT_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
-const ACCEPTED_EXTENSIONS = ['PDF', 'JPG', 'JPEG', 'PNG'];
+const ACCEPTED_DOCUMENT_TYPES = [
+  'application/pdf',
+  'image/heic',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+];
+const ACCEPTED_EXTENSIONS = ['PDF', 'HEIC', 'JPG', 'JPEG', 'PNG', 'WEBP'];
 
 export interface UploadedFile {
   name: string;
@@ -382,11 +388,11 @@ export function UploadBottomSheet({
                   <Typography style={styles.sheetTitle}>Upload Your Lab Result</Typography>
 
                   <Typography style={styles.sheetSubtitle}>
-                    Upload your first lab report to get started
+                    Upload a lab report to get started
                   </Typography>
 
                   <Typography style={styles.sheetFormat}>
-                    JPEG, PDF and PNG formats up to 5-10 MB
+                    JPEG, PDF, PNG, HEIC and WEBP formats up to 5-10 MB
                   </Typography>
                 </View>
 

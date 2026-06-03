@@ -14,6 +14,7 @@ export interface Insight {
   id: string;
   title: string;
   timestamp: string;
+  caseId?: string;
 }
 
 interface InsightCardProps {
