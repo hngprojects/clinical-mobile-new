@@ -11,6 +11,7 @@ import type { AuthTokens, UserProfile } from '../api/auth.types';
 interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
+  accessTokenExpiresAt: string | null;
   user: UserProfile | null;
   isGuest: boolean;
   guestSessionId: string | null;
@@ -67,6 +68,7 @@ export function getOrCreateGuestDeviceFingerprint(): Promise<string> {
 export const useAuthStore = createStore<AuthState & AuthActions>((set, get) => ({
   accessToken: null,
   refreshToken: null,
+  accessTokenExpiresAt: null,
   user: null,
   isGuest: false,
   guestSessionId: null,
@@ -91,6 +93,7 @@ export const useAuthStore = createStore<AuthState & AuthActions>((set, get) => (
     set({
       accessToken: null,
       refreshToken: null,
+      accessTokenExpiresAt: null,
       user: null,
       isGuest: true,
       guestSessionId: nextGuestSessionId,
@@ -102,13 +105,35 @@ export const useAuthStore = createStore<AuthState & AuthActions>((set, get) => (
   },
 
   setGuestSession: (isGuest, guestSessionId = null) => {
-    set({ isGuest, guestSessionId, accessToken: null, refreshToken: null, user: null });
+    set({
+      isGuest,
+      guestSessionId,
+      accessToken: null,
+      refreshToken: null,
+      accessTokenExpiresAt: null,
+      user: null,
+    });
+    secureStorage.clearTokens().catch(console.warn);
+
+    if (isGuest) {
+      asyncStorage.setItem(STORAGE_KEYS.GUEST_SESSION, true).catch(console.warn);
+      if (guestSessionId) {
+        asyncStorage.setItem(STORAGE_KEYS.GUEST_SESSION_ID, guestSessionId).catch(console.warn);
+      } else {
+        asyncStorage.removeItem(STORAGE_KEYS.GUEST_SESSION_ID).catch(console.warn);
+      }
+      return;
+    }
+
+    asyncStorage.removeItem(STORAGE_KEYS.GUEST_SESSION).catch(console.warn);
+    asyncStorage.removeItem(STORAGE_KEYS.GUEST_SESSION_ID).catch(console.warn);
   },
 
   clearSession: () => {
     set({
       accessToken: null,
       refreshToken: null,
+      accessTokenExpiresAt: null,
       user: null,
       isGuest: false,
       guestSessionId: null,
@@ -123,6 +148,7 @@ export const useAuthStore = createStore<AuthState & AuthActions>((set, get) => (
 registerAuthStore(() => ({
   accessToken: useAuthStore.getState().accessToken,
   refreshToken: useAuthStore.getState().refreshToken,
+  accessTokenExpiresAt: useAuthStore.getState().accessTokenExpiresAt,
   isGuest: useAuthStore.getState().isGuest,
   setTokens: useAuthStore.getState().setTokens,
   clearSession: useAuthStore.getState().clearSession,

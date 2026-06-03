@@ -1,19 +1,37 @@
 import { router, Stack } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { RegisterForm, useGuestUploadSession } from '@/features/auth';
 import { useRegister } from '@/features/auth/hooks/useRegister';
-import { Screen, Typography, UploadBottomSheet } from '@/shared/components';
+import { Screen, Toast, Typography, UploadBottomSheet } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
+
+function getRegisterErrorMessage(error: { message?: string; status?: number } | null): string {
+  if (!error) return '';
+  const msg = error.message?.toLowerCase() ?? '';
+  if (error.status === 0 || msg.includes('timeout') || msg.includes('network')) {
+    return 'Connection failed. Please check your network and try again.';
+  }
+  if (
+    msg.includes('already exists') ||
+    msg.includes('already registered') ||
+    msg.includes('email taken')
+  ) {
+    return 'An account with this email already exists. Please log in instead.';
+  }
+  if (msg.includes('password') && (msg.includes('weak') || msg.includes('too short'))) {
+    return 'Your password is too weak. Please choose a stronger password.';
+  }
+  return error.message || 'Something went wrong. Please check your details and try again.';
+}
 
 export default function RegisterScreen() {
   const { spacing, colors } = useTheme();
   const registerMutation = useRegister();
   const { handleUpload, handleUploadError } = useGuestUploadSession();
   const [showUploadSheet, setShowUploadSheet] = useState(false);
-  const bannerY = useSharedValue(-100);
+  const [toastVisible, setToastVisible] = useState(false);
 
   const handleContinueAsGuest = () => {
     setShowUploadSheet(true);
@@ -21,33 +39,20 @@ export default function RegisterScreen() {
 
   useEffect(() => {
     if (registerMutation.error) {
-      bannerY.value = withTiming(0, { duration: 300 });
-      const timeout = setTimeout(() => {
-        bannerY.value = withTiming(-100, { duration: 300 });
-      }, 5000);
-      return () => clearTimeout(timeout);
+      setToastVisible(true);
+      const t = setTimeout(() => setToastVisible(false), 5000);
+      return () => clearTimeout(t);
     }
+    setToastVisible(false);
+  }, [registerMutation.error]);
 
-    bannerY.value = withTiming(-100, { duration: 300 });
-  }, [registerMutation.error, bannerY]);
-
-  const animatedBannerStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: bannerY.value }],
-    opacity: withTiming(bannerY.value === 0 ? 1 : 0),
-  }));
+  const errorMessage = getRegisterErrorMessage(registerMutation.error);
 
   return (
     <>
       <Stack.Screen options={{ title: 'Create Account', headerShown: false }} />
 
-      <View style={styles.bannerContainer}>
-        <Animated.View style={[styles.errorBanner, animatedBannerStyle]}>
-          <Typography style={styles.errorBannerText}>
-            {registerMutation.error?.message ||
-              'Something went wrong. Please check your details and try again.'}
-          </Typography>
-        </Animated.View>
-      </View>
+      <Toast visible={toastVisible} message={errorMessage} variant="error" />
 
       <Screen
         scrollable
@@ -101,32 +106,6 @@ export default function RegisterScreen() {
 }
 
 const styles = StyleSheet.create({
-  bannerContainer: {
-    left: 0,
-    position: 'absolute',
-    right: 0,
-    top: 54,
-    zIndex: 1000,
-  },
-  errorBanner: {
-    alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-    borderBottomColor: '#F0F0F0',
-    borderBottomWidth: 1,
-    flexDirection: 'row',
-    gap: 10,
-    height: 56,
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  errorBannerText: {
-    color: '#494949',
-    fontFamily: 'Inter_400Regular',
-    fontSize: 12,
-    lineHeight: 18,
-    textAlign: 'center',
-  },
   footer: {
     alignItems: 'center',
     flexDirection: 'row',

@@ -68,7 +68,30 @@ describe('authApi', () => {
     expect(result.tokens).toEqual({
       accessToken: 'access-token',
       refreshToken: 'refresh-token',
+      accessTokenExpiresAt: expect.any(String),
     });
+    expect(Date.parse(result.tokens.accessTokenExpiresAt!)).toBeGreaterThan(Date.now());
+  });
+
+  it('prefers explicit backend token expiry timestamps when provided', async () => {
+    const explicitExpiresAt = '2026-06-03T12:00:00.000Z';
+    mockPost.mockResolvedValueOnce({
+      data: {
+        status: 'success',
+        message: 'ok',
+        data: {
+          ...tokenResponse.data.data,
+          expires_at: explicitExpiresAt,
+        },
+      },
+    });
+
+    const result = await authApi.login({
+      email: 'jane@example.com',
+      password: 'Password1',
+    });
+
+    expect(result.tokens.accessTokenExpiresAt).toBe(explicitExpiresAt);
   });
 
   it('signs up with backend field names and returns OTP expiry details', async () => {
@@ -136,10 +159,14 @@ describe('authApi', () => {
   it('refreshes tokens through the backend', async () => {
     mockPost.mockResolvedValueOnce(tokenResponse);
 
-    await expect(authApi.refreshTokens('old-refresh-token')).resolves.toEqual({
+    const result = await authApi.refreshTokens('old-refresh-token');
+
+    expect(result).toEqual({
       accessToken: 'access-token',
       refreshToken: 'refresh-token',
+      accessTokenExpiresAt: expect.any(String),
     });
+    expect(Date.parse(result.accessTokenExpiresAt!)).toBeGreaterThan(Date.now());
     expect(mockPost).toHaveBeenCalledWith(
       '/api/v1/auth/refresh',
       { refresh_token: 'old-refresh-token' },
@@ -150,10 +177,14 @@ describe('authApi', () => {
   it('refreshes tokens without a request body when no refresh token is available', async () => {
     mockPost.mockResolvedValueOnce(tokenResponse);
 
-    await expect(authApi.refreshTokens()).resolves.toEqual({
+    const result = await authApi.refreshTokens();
+
+    expect(result).toEqual({
       accessToken: 'access-token',
       refreshToken: 'refresh-token',
+      accessTokenExpiresAt: expect.any(String),
     });
+    expect(Date.parse(result.accessTokenExpiresAt!)).toBeGreaterThan(Date.now());
     expect(mockPost).toHaveBeenCalledWith('/api/v1/auth/refresh', undefined, { _retry: true });
   });
 
@@ -185,7 +216,6 @@ describe('authApi', () => {
 
     await expect(
       authApi.completePasswordReset({
-        email: 'jane@example.com',
         token: 'reset-token',
         newPassword: 'Password1',
       }),
@@ -193,7 +223,6 @@ describe('authApi', () => {
       message: 'Password reset successfully. You can now log in.',
     });
     expect(mockPost).toHaveBeenCalledWith('/api/v1/auth/reset-password', {
-      email: 'jane@example.com',
       token: 'reset-token',
       new_password: 'Password1',
     });
