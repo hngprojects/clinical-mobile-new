@@ -10,20 +10,19 @@ import { useTheme } from '@/shared/theme';
 
 export default function NewPasswordScreen() {
   const { colors, spacing } = useTheme();
-  const { email, token } = useLocalSearchParams<{ email?: string; token?: string | string[] }>();
+  const { token } = useLocalSearchParams<{ token?: string | string[] }>();
   const completeResetMutation = useCompletePasswordReset();
   const resetToken = (Array.isArray(token) ? (token[0] ?? '') : (token ?? '')).trim();
-  const resetEmail = (Array.isArray(email) ? (email[0] ?? '') : (email ?? '')).trim();
 
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   useEffect(() => {
-    if (!resetToken || !resetEmail) {
+    if (!resetToken) {
       router.replace('/(auth)/reset-password');
     }
-  }, [resetToken, resetEmail]);
+  }, [resetToken]);
 
   useEffect(() => {
     if (completeResetMutation.error) {
@@ -38,7 +37,7 @@ export default function NewPasswordScreen() {
     }
   }, [completeResetMutation.error, completeResetMutation.isSuccess]);
 
-  if (!resetToken || !resetEmail) return null;
+  if (!resetToken) return null;
 
   return (
     <>
@@ -86,7 +85,6 @@ export default function NewPasswordScreen() {
 
         <CompletePasswordResetForm
           mutation={completeResetMutation}
-          email={resetEmail}
           resetToken={resetToken}
         />
 

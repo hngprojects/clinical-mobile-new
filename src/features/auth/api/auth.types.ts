@@ -19,8 +19,17 @@ export interface ResetPasswordResponse {
   message: string;
 }
 
-export interface CompletePasswordResetRequest {
+export interface VerifyResetOtpRequest {
   email: string;
+  code: string;
+}
+
+export interface VerifyResetOtpResponse {
+  resetToken: string;
+  expiresInSeconds: number;
+}
+
+export interface CompletePasswordResetRequest {
   token: string;
   newPassword: string;
 }

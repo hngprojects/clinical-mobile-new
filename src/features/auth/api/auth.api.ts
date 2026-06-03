@@ -16,6 +16,8 @@ import type {
   UpdateProfileRequest,
   UpdateProfileResponse,
   UserProfile,
+  VerifyResetOtpRequest,
+  VerifyResetOtpResponse,
 } from './auth.types';
 
 interface SuccessResponse<T> {
@@ -44,6 +46,11 @@ interface BackendTokenResponse {
   token_type: string;
   expires_in: number;
   user: BackendUserResponse;
+}
+
+interface BackendResetTokenResponse {
+  reset_token: string;
+  expires_in_seconds: number;
 }
 
 interface BackendOtpResponse {
@@ -79,6 +86,13 @@ function mapAuthResponse(data: BackendTokenResponse): AuthResponse {
       accessToken: data.access_token,
       refreshToken: data.refresh_token ?? data.refreshToken ?? null,
     },
+  };
+}
+
+function mapResetTokenResponse(data: BackendResetTokenResponse): VerifyResetOtpResponse {
+  return {
+    resetToken: data.reset_token,
+    expiresInSeconds: data.expires_in_seconds,
   };
 }
 
@@ -144,6 +158,14 @@ async function resendOtp(data: { email: string }): Promise<OtpDispatchResponse> 
   return mapOtpResponse(response.data.data);
 }
 
+async function verifyResetOtp(data: VerifyResetOtpRequest): Promise<VerifyResetOtpResponse> {
+  const response = await client.post<SuccessResponse<BackendResetTokenResponse>>(
+    '/api/v1/auth/verify-reset-otp',
+    { email: data.email, code: data.code },
+  );
+  return mapResetTokenResponse(response.data.data);
+}
+
 async function createGuestSession(
   deviceFingerprint?: string | null,
 ): Promise<GuestSessionResponse> {
@@ -185,7 +207,6 @@ async function completePasswordReset(
   data: CompletePasswordResetRequest,
 ): Promise<CompletePasswordResetResponse> {
   const response = await client.post<SuccessResponse<unknown>>('/api/v1/auth/reset-password', {
-    email: data.email,
     token: data.token,
     new_password: data.newPassword,
   });
@@ -227,6 +248,7 @@ export const authApi = {
   register,
   verifyOtp,
   resendOtp,
+  verifyResetOtp,
   createGuestSession,
   refreshTokens,
   resetPassword,

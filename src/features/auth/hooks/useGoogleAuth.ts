@@ -71,6 +71,26 @@ function getAuthErrorFromUrl(url: string) {
   );
 }
 
+function mapGoogleOAuthError(rawError: string, flow: 'signin' | 'signup'): string {
+  const lower = rawError.toLowerCase();
+  const action = flow === 'signup' ? 'sign-up' : 'sign-in';
+
+  if (lower.includes('already exists')) {
+    return 'An account with this email already exists. Please log in instead.';
+  }
+  if (lower.includes('not verified')) {
+    return 'Your Google account email is not verified. Please verify it with Google first.';
+  }
+  if (
+    lower.includes('exchange') ||
+    lower.includes('user information') ||
+    lower.includes('missing required')
+  ) {
+    return `Google ${action} failed. Please try again.`;
+  }
+  return `Google ${action} failed. Please try again.`;
+}
+
 export function useGoogleAuth(flow: 'signin' | 'signup' = 'signin') {
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,7 +115,7 @@ export function useGoogleAuth(flow: 'signin' | 'signup' = 'signin') {
       if (result.type === 'success' && result.url) {
         const authError = getAuthErrorFromUrl(result.url);
         if (authError) {
-          setError(authError);
+          setError(mapGoogleOAuthError(authError, flow));
           return { success: false };
         }
 

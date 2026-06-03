@@ -21,15 +21,10 @@ interface CompletePasswordResetFormProps {
     mutate: (data: CompletePasswordResetRequest) => void;
     isPending: boolean;
   };
-  email: string;
   resetToken: string;
 }
 
-export function CompletePasswordResetForm({
-  mutation,
-  email,
-  resetToken,
-}: CompletePasswordResetFormProps) {
+export function CompletePasswordResetForm({ mutation, resetToken }: CompletePasswordResetFormProps) {
   const { spacing } = useTheme();
   const { mutate: completeReset, isPending } = mutation;
   const [showPassword, setShowPassword] = useState(false);
@@ -48,7 +43,7 @@ export function CompletePasswordResetForm({
   const isDisabled = isPending || !isPasswordValid || !passwordsMatch;
 
   const onSubmit = (formData: CompletePasswordResetFormData) => {
-    completeReset({ email, token: resetToken, newPassword: formData.password });
+    completeReset({ token: resetToken, newPassword: formData.password });
   };
 
   return (
