@@ -17,6 +17,8 @@ import type {
   UpdateProfileRequest,
   UpdateProfileResponse,
   UserProfile,
+  VerifyResetOtpRequest,
+  VerifyResetOtpResponse,
 } from './auth.types';
 
 interface SuccessResponse<T> {
@@ -43,8 +45,14 @@ interface BackendTokenResponse {
   refresh_token?: string | null;
   refreshToken?: string | null;
   token_type: string;
-  expires_in: number;
+  expires_in?: number | null;
+  expires_at?: string | null;
   user: BackendUserResponse;
+}
+
+interface BackendResetTokenResponse {
+  reset_token: string;
+  expires_in_seconds: number;
 }
 
 interface BackendOtpResponse {
@@ -73,13 +81,34 @@ function mapUser(user: BackendUserResponse): UserProfile {
   };
 }
 
+function getAccessTokenExpiresAt(data: Pick<BackendTokenResponse, 'expires_at' | 'expires_in'>) {
+  if (data.expires_at) return data.expires_at;
+  if (typeof data.expires_in !== 'number' || data.expires_in <= 0) return null;
+  return new Date(Date.now() + data.expires_in * 1000).toISOString();
+}
+
+function mapTokens(
+  data: BackendTokenResponse,
+  fallbackRefreshToken: string | null = null,
+): AuthTokens {
+  return {
+    accessToken: data.access_token,
+    refreshToken: data.refresh_token ?? data.refreshToken ?? fallbackRefreshToken,
+    accessTokenExpiresAt: getAccessTokenExpiresAt(data),
+  };
+}
+
 function mapAuthResponse(data: BackendTokenResponse): AuthResponse {
   return {
     user: mapUser(data.user),
-    tokens: {
-      accessToken: data.access_token,
-      refreshToken: data.refresh_token ?? data.refreshToken ?? null,
-    },
+    tokens: mapTokens(data),
+  };
+}
+
+function mapResetTokenResponse(data: BackendResetTokenResponse): VerifyResetOtpResponse {
+  return {
+    resetToken: data.reset_token,
+    expiresInSeconds: data.expires_in_seconds,
   };
 }
 
@@ -145,6 +174,14 @@ async function resendOtp(data: { email: string }): Promise<OtpDispatchResponse> 
   return mapOtpResponse(response.data.data);
 }
 
+async function verifyResetOtp(data: VerifyResetOtpRequest): Promise<VerifyResetOtpResponse> {
+  const response = await client.post<SuccessResponse<BackendResetTokenResponse>>(
+    '/api/v1/auth/verify-reset-otp',
+    { email: data.email, code: data.code },
+  );
+  return mapResetTokenResponse(response.data.data);
+}
+
 async function createGuestSession(
   deviceFingerprint?: string | null,
 ): Promise<GuestSessionResponse> {
@@ -165,11 +202,7 @@ async function refreshTokens(refreshToken?: string | null): Promise<AuthTokens> 
     refreshToken ? { refresh_token: refreshToken } : undefined,
     { _retry: true } as object,
   );
-  return {
-    accessToken: response.data.data.access_token,
-    refreshToken:
-      response.data.data.refresh_token ?? response.data.data.refreshToken ?? refreshToken ?? null,
-  };
+  return mapTokens(response.data.data, refreshToken ?? null);
 }
 
 async function resetPassword(data: ResetPasswordRequest): Promise<ResetPasswordResponse> {
@@ -186,7 +219,6 @@ async function completePasswordReset(
   data: CompletePasswordResetRequest,
 ): Promise<CompletePasswordResetResponse> {
   const response = await client.post<SuccessResponse<unknown>>('/api/v1/auth/reset-password', {
-    email: data.email,
     token: data.token,
     new_password: data.newPassword,
   });
@@ -234,6 +266,7 @@ export const authApi = {
   register,
   verifyOtp,
   resendOtp,
+  verifyResetOtp,
   createGuestSession,
   refreshTokens,
   resetPassword,
