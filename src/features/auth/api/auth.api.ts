@@ -5,6 +5,7 @@ import type {
   AuthTokens,
   ChangePasswordRequest,
   ChangePasswordResponse,
+  DeleteAccountResponse,
   CompletePasswordResetRequest,
   CompletePasswordResetResponse,
   GuestSessionResponse,
@@ -204,19 +205,25 @@ async function logout(): Promise<void> {
 }
 
 async function updateProfile(data: UpdateProfileRequest): Promise<UpdateProfileResponse> {
-  const response = await client.patch<SuccessResponse<BackendUserResponse>>('/api/v1/auth/me', {
+  const response = await client.patch<SuccessResponse<BackendUserResponse>>('/api/v1/users/me', {
     first_name: data.firstName,
     last_name: data.lastName,
-    email: data.email,
   });
   return { user: mapUser(response.data.data) };
 }
 
 async function changePassword(data: ChangePasswordRequest): Promise<ChangePasswordResponse> {
-  const response = await client.post<SuccessResponse<unknown>>('/api/v1/auth/change-password', {
+  const response = await client.patch<SuccessResponse<unknown>>('/api/v1/users/me/password', {
     current_password: data.currentPassword,
     new_password: data.newPassword,
   });
+  return {
+    message: response.data.message,
+  };
+}
+
+async function deleteAccount(): Promise<DeleteAccountResponse> {
+  const response = await client.delete<SuccessResponse<string>>('/api/v1/users/me');
   return {
     message: response.data.message,
   };
@@ -235,4 +242,5 @@ export const authApi = {
   logout,
   updateProfile,
   changePassword,
+  deleteAccount,
 };

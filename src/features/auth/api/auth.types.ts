@@ -66,7 +66,6 @@ export interface GuestSessionResponse {
 export interface UpdateProfileRequest {
   firstName: string;
   lastName: string;
-  email: string;
 }
 
 export interface UpdateProfileResponse {
@@ -79,5 +78,9 @@ export interface ChangePasswordRequest {
 }
 
 export interface ChangePasswordResponse {
+  message: string;
+}
+
+export interface DeleteAccountResponse {
   message: string;
 }

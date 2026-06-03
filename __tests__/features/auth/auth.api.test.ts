@@ -5,11 +5,15 @@ jest.mock('@/shared/api/client', () => ({
   client: {
     post: jest.fn(),
     get: jest.fn(),
+    patch: jest.fn(),
+    delete: jest.fn(),
   },
 }));
 
 const mockPost = client.post as jest.Mock;
 const mockGet = client.get as jest.Mock;
+const mockPatch = client.patch as jest.Mock;
+const mockDelete = client.delete as jest.Mock;
 
 const backendUser = {
   id: 'user-1',
@@ -42,6 +46,8 @@ describe('authApi', () => {
   beforeEach(() => {
     mockPost.mockReset();
     mockGet.mockReset();
+    mockPatch.mockReset();
+    mockDelete.mockReset();
   });
 
   it('logs in through the backend and maps the user response', async () => {
@@ -199,6 +205,22 @@ describe('authApi', () => {
     });
   });
 
+  it('updates profile via users/me', async () => {
+    mockPatch.mockResolvedValueOnce({
+      data: { status: 'success', message: 'ok', data: backendUser },
+    });
+
+    await expect(
+      authApi.updateProfile({ firstName: 'Jane', lastName: 'Smith' }),
+    ).resolves.toMatchObject({
+      user: { firstName: 'Jane', lastName: 'Doe' },
+    });
+    expect(mockPatch).toHaveBeenCalledWith('/api/v1/users/me', {
+      first_name: 'Jane',
+      last_name: 'Smith',
+    });
+  });
+
   it('restores the current user profile', async () => {
     mockGet.mockResolvedValueOnce({
       data: { status: 'success', message: 'ok', data: backendUser },
@@ -218,5 +240,43 @@ describe('authApi', () => {
     await authApi.logout();
 
     expect(mockPost).toHaveBeenCalledWith('/api/v1/auth/logout');
+  });
+
+  it('updates password via users/me/password', async () => {
+    mockPatch.mockResolvedValueOnce({
+      data: {
+        status: 'success',
+        message: 'Password updated successfully.',
+        data: null,
+      },
+    });
+
+    await expect(
+      authApi.changePassword({
+        currentPassword: 'OldPassword1!',
+        newPassword: 'NewPassword1!',
+      }),
+    ).resolves.toEqual({
+      message: 'Password updated successfully.',
+    });
+    expect(mockPatch).toHaveBeenCalledWith('/api/v1/users/me/password', {
+      current_password: 'OldPassword1!',
+      new_password: 'NewPassword1!',
+    });
+  });
+
+  it('deletes account via users/me', async () => {
+    mockDelete.mockResolvedValueOnce({
+      data: {
+        status: 'success',
+        message: 'Account deleted successfully.',
+        data: 'ok',
+      },
+    });
+
+    await expect(authApi.deleteAccount()).resolves.toEqual({
+      message: 'Account deleted successfully.',
+    });
+    expect(mockDelete).toHaveBeenCalledWith('/api/v1/users/me');
   });
 });
