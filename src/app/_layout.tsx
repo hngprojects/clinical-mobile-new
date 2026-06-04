@@ -24,7 +24,7 @@ SplashScreen.preventAutoHideAsync().catch(() => {
 function RootLayoutNav() {
   const { isReady: isAppReady } = useAppReady();
 
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
@@ -32,7 +32,7 @@ function RootLayoutNav() {
     PlayfairDisplay_500Medium,
   });
 
-  const isReady = isAppReady && fontsLoaded;
+  const isReady = isAppReady && (fontsLoaded || !!fontError);
 
   useEffect(() => {
     if (isReady) {

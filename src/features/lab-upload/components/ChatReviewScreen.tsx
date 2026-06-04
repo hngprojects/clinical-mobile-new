@@ -29,7 +29,13 @@ import { useAiReviewHistory } from '../hooks/useAiReview';
 import { useCaseChat, useCaseChatSocket, useSendChatMessage } from '../hooks/useCaseChat';
 import { useChatLabUpload } from '../hooks/useChatLabUpload';
 
-import { ChatBubble, ChatComposer, ChatInterpretationCard, ChatStateMessage } from './chat';
+import {
+  ChatBubble,
+  ChatComposer,
+  ChatInterpretationCard,
+  ChatStateMessage,
+  GuestLimitModal,
+} from './chat';
 
 type TimelineItem =
   | {
@@ -49,6 +55,7 @@ type TimelineItem =
 
 const LOCAL_ATTACHMENT_STORAGE_KEY_PREFIX = 'case_chat_local_attachments';
 const LOCAL_ATTACHMENT_STORAGE_LIMIT = 5;
+const GUEST_MESSAGE_LIMIT = 3;
 
 export function ChatReviewScreen() {
   const router = useRouter();
@@ -66,11 +73,15 @@ export function ChatReviewScreen() {
   const [localMessages, setLocalMessages] = useState<ChatMessage[]>([]);
   const [pendingAttachment, setPendingAttachment] = useState<UploadedFile | null>(null);
   const [showUploadSheet, setShowUploadSheet] = useState(false);
+  const [guestMessageCount, setGuestMessageCount] = useState(0);
+  const [showGuestLimitModal, setShowGuestLimitModal] = useState(false);
+  const [isGuestAwaitingReply, setIsGuestAwaitingReply] = useState(false);
   const hasConnectedRef = useRef(false);
   const isMockChat = typeof __DEV__ !== 'undefined' && __DEV__ && mock === 'chat';
   const isDemoMode = demo === 'true';
   const effectiveGuestSessionId =
     typeof guestSessionId === 'string' ? guestSessionId : storedGuestSessionId;
+  const isGuest = Boolean(effectiveGuestSessionId);
   const {
     clearUploadError,
     isLabUploading,
@@ -86,12 +97,14 @@ export function ChatReviewScreen() {
     guestSessionId: effectiveGuestSessionId,
   });
   const reviewHistoryQuery = useAiReviewHistory(caseId || '', effectiveGuestSessionId);
-  const chatQuery = useCaseChat(caseId || '', effectiveGuestSessionId);
+  const chatQuery = useCaseChat(caseId || '', effectiveGuestSessionId, {
+    refetchInterval: isGuest && isGuestAwaitingReply ? 3000 : false,
+  });
   const sendMessage = useSendChatMessage(caseId || '', effectiveGuestSessionId);
   const chatSocket = useCaseChatSocket(
     caseId || '',
     effectiveGuestSessionId,
-    !isMockChat && !isDemoMode,
+    !isMockChat && !isDemoMode && !isGuest,
   );
   const displayedReview = isMockChat ? MOCK_REVIEW : review;
   const reviews = useMemo(
@@ -99,16 +112,42 @@ export function ChatReviewScreen() {
       isMockChat ? [MOCK_REVIEW] : getTimelineReviews(reviewHistoryQuery.data, displayedReview),
     [displayedReview, isMockChat, reviewHistoryQuery.data],
   );
-  const messages = useMemo(
-    () => (isMockChat ? mockMessages : [...(chatQuery.data ?? []), ...localMessages]),
-    [chatQuery.data, isMockChat, localMessages, mockMessages],
-  );
+  useEffect(() => {
+    if (!isGuest || !isGuestAwaitingReply) return;
+    if (chatQuery.data?.at(-1)?.senderType === 'ai') {
+      setIsGuestAwaitingReply(false);
+    }
+  }, [chatQuery.data, isGuest, isGuestAwaitingReply]);
+
+  const messages = useMemo(() => {
+    if (isMockChat) return mockMessages;
+    const base = [...(chatQuery.data ?? []), ...localMessages];
+    const hasPendingReply = base.some(
+      (message) =>
+        message.senderType === 'ai' &&
+        message.content &&
+        typeof message.content === 'object' &&
+        'isPendingResponse' in message.content,
+    );
+    if (isGuestAwaitingReply && !hasPendingReply) {
+      base.push({
+        id: 'guest-pending-ai',
+        senderType: 'ai' as const,
+        content: { isPendingResponse: true, message: 'Flo is reading...' },
+        text: 'Flo is reading...',
+        medicalCaseId: caseId || '',
+        userId: null,
+        sentAt: new Date().toISOString(),
+      });
+    }
+    return base;
+  }, [chatQuery.data, caseId, isGuestAwaitingReply, isMockChat, localMessages, mockMessages]);
   const trimmedDraft = draft.trim();
   const { status: socketStatus } = chatSocket;
   if (socketStatus === 'connected') hasConnectedRef.current = true;
-  const showReconnecting = hasConnectedRef.current && socketStatus === 'connecting';
-  const showConnectionLost = hasConnectedRef.current && socketStatus === 'disconnected';
-  const showSessionExpired = socketStatus === 'session_expired';
+  const showReconnecting = !isGuest && hasConnectedRef.current && socketStatus === 'connecting';
+  const showConnectionLost = !isGuest && hasConnectedRef.current && socketStatus === 'disconnected';
+  const showSessionExpired = !isGuest && socketStatus === 'session_expired';
   const isSendingMessage = sendMessage.isPending || chatSocket.isSending || isLabUploading;
   const canSend = Boolean(
     (caseId || isMockChat) &&
@@ -168,6 +207,11 @@ export function ChatReviewScreen() {
   const handleSend = async () => {
     if (!canSend) return;
 
+    if (isGuest && guestMessageCount >= GUEST_MESSAGE_LIMIT) {
+      setShowGuestLimitModal(true);
+      return;
+    }
+
     const message = trimmedDraft;
     const attachment = pendingAttachment;
     clearComposerErrors();
@@ -177,11 +221,28 @@ export function ChatReviewScreen() {
     const sendChatText = async (text: string) => {
       if (!text) return;
 
-      if (chatSocket.isConnected && (await chatSocket.sendLiveMessage(text))) {
-        return;
+      try {
+        if (!isGuest && chatSocket.isConnected && (await chatSocket.sendLiveMessage(text))) {
+          return;
+        }
+      } catch {
+        // socket threw — fall through to REST fallback
       }
 
       await sendMessage.mutateAsync(text);
+    };
+
+    const recordGuestMessage = () => {
+      if (!isGuest) return;
+
+      setIsGuestAwaitingReply(true);
+      setGuestMessageCount((current) => {
+        const nextCount = current + 1;
+        if (nextCount >= GUEST_MESSAGE_LIMIT) {
+          setShowGuestLimitModal(true);
+        }
+        return nextCount;
+      });
     };
 
     if (attachment) {
@@ -223,6 +284,7 @@ export function ChatReviewScreen() {
 
         try {
           await sendChatText(message);
+          recordGuestMessage();
         } catch {
           setDraft(message);
         }
@@ -252,6 +314,7 @@ export function ChatReviewScreen() {
 
     try {
       await sendChatText(message);
+      recordGuestMessage();
     } catch {
       setDraft(message);
       setPendingAttachment(attachment);
@@ -367,6 +430,7 @@ export function ChatReviewScreen() {
               bottomInset={insets.bottom}
               canSend={canSend}
               draft={draft}
+              hideUpload={isGuest}
               isSending={isSendingMessage}
               isUploadProcessing={isLabUploading}
               labUploadStatusMessage={labUploadStatusMessage}
@@ -397,6 +461,15 @@ export function ChatReviewScreen() {
         onUpload={handleUploadFromChat}
         onUploadError={handleUploadPickerError}
       />
+
+      {isGuest && caseId && effectiveGuestSessionId && (
+        <GuestLimitModal
+          caseId={caseId}
+          guestSessionId={effectiveGuestSessionId}
+          onDismiss={() => setShowGuestLimitModal(false)}
+          visible={showGuestLimitModal}
+        />
+      )}
     </>
   );
 }

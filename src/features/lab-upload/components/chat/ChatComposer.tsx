@@ -16,6 +16,7 @@ interface ChatComposerProps {
   bottomInset: number;
   canSend: boolean;
   draft: string;
+  hideUpload?: boolean;
   isSending: boolean;
   isUploadProcessing: boolean;
   labUploadStatusMessage: string | null;
@@ -35,6 +36,7 @@ export function ChatComposer({
   bottomInset,
   canSend,
   draft,
+  hideUpload = false,
   isSending,
   isUploadProcessing,
   labUploadStatusMessage,
@@ -139,15 +141,17 @@ export function ChatComposer({
       ) : null}
       <View style={styles.composerRow}>
         <View style={[styles.inputPill, { height: composerHeight }]}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Upload lab result"
-            disabled={isUploadProcessing}
-            onPress={onOpenUpload}
-            style={[styles.attachButton, isUploadProcessing && styles.disabledButton]}
-          >
-            <Ionicons name="arrow-up-circle-outline" size={24} color="#767676" />
-          </Pressable>
+          {!hideUpload && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Upload lab result"
+              disabled={isUploadProcessing}
+              onPress={onOpenUpload}
+              style={[styles.attachButton, isUploadProcessing && styles.disabledButton]}
+            >
+              <Ionicons name="arrow-up-circle-outline" size={24} color="#767676" />
+            </Pressable>
+          )}
           <View style={[styles.inputWrap, { height: inputHeight }]}>
             <Text
               aria-hidden

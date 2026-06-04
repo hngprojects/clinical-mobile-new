@@ -9,13 +9,17 @@ import { useAuthStore } from '../store/auth.store';
 
 const SUCCESS_REDIRECT_DELAY_MS = 1200;
 
-export function useLogin() {
+export function useLogin({ caseId }: { caseId?: string } = {}) {
   return useApiMutation(authApi.login, {
     onSuccess: async ({ user, tokens }) => {
       useAuthStore.getState().setSession(tokens, user);
       useAuthFeedbackStore.getState().setSuccessMessage('Login successful.');
       await wait(SUCCESS_REDIRECT_DELAY_MS);
-      router.replace('/(main)');
+      if (caseId) {
+        router.replace({ pathname: '/(main)/chat-review', params: { caseId } });
+      } else {
+        router.replace('/(main)');
+      }
     },
   });
 }

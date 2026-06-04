@@ -179,18 +179,11 @@ export function UploadPreviewScreen() {
         title="Upload limit reached"
         message="You've used your free guest upload. Sign up for a free account to upload more lab results and keep your history."
         onClose={handleBack}
-        onRetry={handleBack}
         footer={
           <Button
-            label="Sign Up — It's Free"
+            label="Get started for free"
             onPress={() => router.replace('/(auth)/register')}
-            style={{
-              backgroundColor: '#1565C0',
-              borderRadius: 8,
-              paddingVertical: 12,
-              paddingHorizontal: 24,
-            }}
-            textColor="#FFFFFF"
+            variant="primary"
           />
         }
       />
