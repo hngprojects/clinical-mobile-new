@@ -293,12 +293,6 @@ export function useCaseChatSocket(caseId: string, guestSessionId?: string | null
         streamingRef.current = null;
         removePendingResponse();
 
-        // Guests don't reconnect; REST polling is the silent fallback.
-        if (guestSessionId) {
-          setStatus('disconnected');
-          return;
-        }
-
         const attempts = reconnectAttemptsRef.current;
         if (attempts < RECONNECT_MAX_ATTEMPTS && canUseSocket) {
           const delay = Math.min(1000 * 2 ** attempts, RECONNECT_MAX_DELAY_MS);
