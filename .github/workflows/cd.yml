@@ -151,6 +151,7 @@ jobs:
           npx expo export --platform android --output-dir android/app/src/main/assets
           HBC=$(find android/app/src/main/assets -name '*.hbc' | head -1)
           cp "$HBC" android/app/src/main/assets/index.android.bundle
+          find node_modules/@expo-google-fonts -name '*.ttf' -exec cp {} android/app/src/main/assets/ \;
           cd android && ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK artifact
