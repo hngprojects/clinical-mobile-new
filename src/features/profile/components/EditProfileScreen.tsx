@@ -11,10 +11,10 @@ import { Button, FormField, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 import { useUpdateProfile } from '../hooks/useUpdateProfile';
+import { ProfileMenuRow } from './ProfileMenuRow';
 
 interface EditProfileForm {
   fullName: string;
-  email: string;
 }
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -132,7 +132,6 @@ export function EditProfileScreen() {
 
   const defaultValues: EditProfileForm = {
     fullName: user ? `${user.firstName} ${user.lastName}` : '',
-    email: user?.email ?? '',
   };
 
   const {
@@ -219,15 +218,11 @@ export function EditProfileScreen() {
             autoCapitalize="words"
             returnKeyType="next"
           />
-          <FormField
-            control={control}
-            name="email"
-            label="Email Address"
-            placeholder="Enter your email"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            editable={false}
-            returnKeyType="done"
+          <ProfileMenuRow
+            icon="mail-outline"
+            label="Change Email"
+            onPress={() => router.push('/(main)/change-email')}
+            isLast
           />
         </View>
 

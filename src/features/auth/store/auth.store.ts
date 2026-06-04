@@ -20,6 +20,7 @@ interface AuthState {
 interface AuthActions {
   setSession: (tokens: AuthTokens, user: UserProfile) => void;
   setTokens: (tokens: AuthTokens) => void;
+  patchUser: (partial: Partial<UserProfile>) => void;
   startGuestSession: (guestSessionId?: string | null) => string;
   setGuestSession: (isGuest: boolean, guestSessionId?: string | null) => void;
   clearSession: () => void;
@@ -85,6 +86,11 @@ export const useAuthStore = createStore<AuthState & AuthActions>((set, get) => (
     secureStorage.saveTokens(tokens).catch(console.warn);
     asyncStorage.removeItem(STORAGE_KEYS.GUEST_SESSION).catch(console.warn);
     asyncStorage.removeItem(STORAGE_KEYS.GUEST_SESSION_ID).catch(console.warn);
+  },
+
+  patchUser: (partial) => {
+    const current = get().user;
+    if (current) set({ user: { ...current, ...partial } });
   },
 
   startGuestSession: (providedGuestSessionId) => {

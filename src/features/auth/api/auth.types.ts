@@ -92,3 +92,21 @@ export interface ChangePasswordResponse {
 export interface DeleteAccountResponse {
   message: string;
 }
+
+export interface RequestEmailChangeRequest {
+  email: string;
+  password: string;
+}
+
+export interface RequestEmailChangeResponse {
+  message: string;
+  expiresInSeconds?: number;
+}
+
+export interface VerifyEmailChangeRequest {
+  token: string;
+}
+
+export interface VerifyEmailChangeResponse {
+  message: string;
+}
