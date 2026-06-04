@@ -7,7 +7,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { casesApi } from '@/features/insights/api/cases.api';
 import { useInsightCases } from '@/features/insights/hooks/useInsightCases';
-import { NOTIFICATIONS_KEY, UNREAD_COUNT_KEY } from '@/features/notifications/hooks/useNotifications';
+import {
+  NOTIFICATIONS_KEY,
+  UNREAD_COUNT_KEY,
+} from '@/features/notifications/hooks/useNotifications';
 import { Toast, UploadBottomSheet, UploadedFile, UploadError } from '@/shared/components';
 import { useNotificationStream } from '@/shared/hooks/useNotificationStream';
 import { useTheme } from '@/shared/theme';

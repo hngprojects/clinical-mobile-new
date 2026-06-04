@@ -28,7 +28,14 @@ interface InsightCardProps {
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-export function InsightCard({ insight, onPress, onRename, onView, onDelete, onExportPdf }: InsightCardProps) {
+export function InsightCard({
+  insight,
+  onPress,
+  onRename,
+  onView,
+  onDelete,
+  onExportPdf,
+}: InsightCardProps) {
   const { colors, spacing } = useTheme();
   const [menuVisible, setMenuVisible] = useState(false);
   const [renameVisible, setRenameVisible] = useState(false);
