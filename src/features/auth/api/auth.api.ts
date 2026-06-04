@@ -12,11 +12,15 @@ import type {
   LoginRequest,
   OtpDispatchResponse,
   RegisterRequest,
+  RequestEmailChangeRequest,
+  RequestEmailChangeResponse,
   ResetPasswordRequest,
   ResetPasswordResponse,
   UpdateProfileRequest,
   UpdateProfileResponse,
   UserProfile,
+  VerifyEmailChangeRequest,
+  VerifyEmailChangeResponse,
   VerifyResetOtpRequest,
   VerifyResetOtpResponse,
 } from './auth.types';
@@ -261,6 +265,31 @@ async function deleteAccount(): Promise<DeleteAccountResponse> {
   };
 }
 
+async function requestEmailChange(
+  data: RequestEmailChangeRequest,
+): Promise<RequestEmailChangeResponse> {
+  const response = await client.post<SuccessResponse<{ expires_in_seconds?: number } | null>>(
+    '/api/v1/users/me/email',
+    {
+      email: data.email,
+      password: data.password,
+    },
+  );
+  return {
+    message: response.data.message,
+    expiresInSeconds: response.data.data?.expires_in_seconds,
+  };
+}
+
+async function verifyEmailChange(
+  data: VerifyEmailChangeRequest,
+): Promise<VerifyEmailChangeResponse> {
+  const response = await client.post<SuccessResponse<unknown>>('/api/v1/users/me/email/verify', {
+    token: data.token,
+  });
+  return { message: response.data.message };
+}
+
 export const authApi = {
   login,
   register,
@@ -276,4 +305,6 @@ export const authApi = {
   updateProfile,
   changePassword,
   deleteAccount,
+  requestEmailChange,
+  verifyEmailChange,
 };
