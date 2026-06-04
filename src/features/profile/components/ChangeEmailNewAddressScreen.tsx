@@ -15,10 +15,7 @@ import { PROFILE_HORIZONTAL_PADDING } from '../constants';
 import { ProfileSettingsHeader } from './ProfileSettingsHeader';
 
 const schema = z.object({
-  email: z
-    .string()
-    .email('Enter a valid email address')
-    .min(1, 'Email is required'),
+  email: z.string().email('Enter a valid email address').min(1, 'Email is required'),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -39,9 +36,11 @@ export function ChangeEmailNewAddressScreen() {
     mode: 'onChange',
   });
 
-  useFocusEffect(useCallback(() => {
-    reset({ email: '' });
-  }, [reset]));
+  useFocusEffect(
+    useCallback(() => {
+      reset({ email: '' });
+    }, [reset]),
+  );
 
   const onContinue = (data: FormData) => {
     router.push({

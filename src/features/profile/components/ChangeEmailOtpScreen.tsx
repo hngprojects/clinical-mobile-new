@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useFocusEffect } from 'expo-router';
 import { useVerifyEmailChange } from '@/features/auth/hooks/useVerifyEmailChange';
 import { useAuthStore } from '@/features/auth/store/auth.store';
 import type { ApiError } from '@/shared/api/types';
@@ -37,14 +36,18 @@ function maskEmail(email: string): string {
 
 function formatTimer(seconds: number) {
   const safe = Math.max(0, seconds);
-  return `${Math.floor(safe / 60).toString().padStart(2, '0')}:${(safe % 60).toString().padStart(2, '0')}`;
+  return `${Math.floor(safe / 60)
+    .toString()
+    .padStart(2, '0')}:${(safe % 60).toString().padStart(2, '0')}`;
 }
 
 export function ChangeEmailOtpScreen() {
   const { colors } = useTheme();
   const router = useRouter();
-  const { email, expiresInSeconds: expiresParam } =
-    useLocalSearchParams<{ email: string; expiresInSeconds?: string }>();
+  const { email, expiresInSeconds: expiresParam } = useLocalSearchParams<{
+    email: string;
+    expiresInSeconds?: string;
+  }>();
   const patchUser = useAuthStore((s) => s.patchUser);
   const { mutate: verifyEmailChange, isPending, reset: resetMutation } = useVerifyEmailChange();
 
@@ -244,8 +247,7 @@ export function ChangeEmailOtpScreen() {
         <View style={styles.timerContainer}>
           {!isExpired ? (
             <Typography style={styles.timerText}>
-              Code expires in{' '}
-              <Typography style={styles.boldTimer}>{formatTimer(timer)}</Typography>
+              Code expires in <Typography style={styles.boldTimer}>{formatTimer(timer)}</Typography>
             </Typography>
           ) : (
             <View style={styles.resendRow}>
