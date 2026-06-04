@@ -148,11 +148,7 @@ jobs:
 
       - name: Bundle JS and build APK
         run: |
-          npx expo export --platform android --output-dir android/app/src/main/assets
-          HBC=$(find android/app/src/main/assets -name '*.hbc' | head -1)
-          cp "$HBC" android/app/src/main/assets/index.android.bundle
-          find node_modules/@expo-google-fonts -name '*.ttf' -exec cp {} android/app/src/main/assets/ \;
-          cd android && ./gradlew assembleDebug --no-daemon
+          cd android && ./gradlew assembleDebug --no-daemon -PbundleInDebug=true
 
       - name: Upload APK artifact
         id: artifact
