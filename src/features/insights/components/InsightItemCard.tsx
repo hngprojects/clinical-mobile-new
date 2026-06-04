@@ -19,7 +19,10 @@ import { useTheme } from '@/shared/theme';
 
 import type { InsightItemCardProps } from '../api/types';
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
+const MENU_GAP = 4;
+const MENU_ITEM_HEIGHT = 52;
+const MENU_MARGIN = 16;
+const MENU_WIDTH = 180;
 
 export function InsightItemCard({
   insight,
@@ -39,9 +42,20 @@ export function InsightItemCard({
   const openMenu = (event: GestureResponderEvent) => {
     event.stopPropagation();
     menuButtonRef.current?.measure((_x, _y, width, height, pageX, pageY) => {
+      const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+      const itemCount = onExportPdf ? 4 : 3;
+      const menuHeight = itemCount * MENU_ITEM_HEIGHT + (itemCount - 1) * StyleSheet.hairlineWidth;
+      const belowTop = pageY + height + MENU_GAP;
+      const aboveTop = pageY - menuHeight - MENU_GAP;
+      const top =
+        belowTop + menuHeight <= screenHeight - MENU_MARGIN
+          ? belowTop
+          : Math.max(MENU_MARGIN, aboveTop);
+      const buttonRight = screenWidth - pageX - width;
+
       setMenuPos({
-        top: pageY + height + 4,
-        right: SCREEN_WIDTH - pageX - width,
+        top,
+        right: Math.min(Math.max(MENU_MARGIN, buttonRight), screenWidth - MENU_WIDTH - MENU_MARGIN),
       });
       setMenuVisible(true);
     });
@@ -203,7 +217,7 @@ const styles = StyleSheet.create({
   },
   menuCard: {
     position: 'absolute',
-    minWidth: 180,
+    width: MENU_WIDTH,
     borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },

@@ -74,7 +74,9 @@ export default function MainLayout() {
         name="insights"
         options={{
           title: 'Insights',
-          tabBarIcon: ({ color }) => <InsightsIcon color={color} size={22} />,
+          tabBarIcon: ({ color, focused }) => (
+            <InsightsIcon color={color} size={22} filled={focused} />
+          ),
         }}
       />
       <Tabs.Screen

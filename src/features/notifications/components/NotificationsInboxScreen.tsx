@@ -16,6 +16,7 @@ import {
   UNREAD_COUNT_KEY,
   useMarkRead,
   useNotifications,
+  useUnreadCount,
 } from '../hooks/useNotifications';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -154,13 +155,14 @@ export function NotificationsInboxScreen() {
   const queryClient = useQueryClient();
 
   const { data: notifications, isLoading, isError, refetch } = useNotifications();
+  const { data: unreadCount = 0 } = useUnreadCount();
   const [showToast, setShowToast] = useState(false);
   const [markingAll, setMarkingAll] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const list = notifications ?? [];
-  const hasUnread = list.some((n) => !n.isRead);
+  const hasUnread = unreadCount > 0 || list.some((notification) => !notification.isRead);
   const sections = groupIntoSections(list);
 
   // Refresh list in real-time when new notifications arrive via SSE
@@ -188,20 +190,24 @@ export function NotificationsInboxScreen() {
 
   const handleMarkAllRead = async () => {
     const unread = list.filter((n) => !n.isRead);
-    if (!unread.length) return;
+    if (!hasUnread) return;
 
     setMarkingAll(true);
-    const results = await Promise.allSettled(unread.map((n) => notificationsApi.markRead(n.id)));
-    setMarkingAll(false);
+    try {
+      const result = await notificationsApi.markAllRead(
+        unread.map((notification) => notification.id),
+      );
 
-    queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_KEY });
-    queryClient.invalidateQueries({ queryKey: UNREAD_COUNT_KEY });
+      queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_KEY });
+      queryClient.invalidateQueries({ queryKey: UNREAD_COUNT_KEY });
 
-    const anySucceeded = results.some((r) => r.status === 'fulfilled');
-    if (anySucceeded) {
-      setShowToast(true);
-      if (toastTimer.current) clearTimeout(toastTimer.current);
-      toastTimer.current = setTimeout(() => setShowToast(false), 3000);
+      if (result.markedCount > 0 && result.failedCount === 0) {
+        setShowToast(true);
+        if (toastTimer.current) clearTimeout(toastTimer.current);
+        toastTimer.current = setTimeout(() => setShowToast(false), 3000);
+      }
+    } finally {
+      setMarkingAll(false);
     }
   };
 
@@ -257,7 +263,7 @@ export function NotificationsInboxScreen() {
               {section.title === sections[0]?.title && hasUnread && (
                 <Pressable onPress={handleMarkAllRead} hitSlop={8} disabled={markingAll}>
                   <Typography variant="body2" color={colors.primary} style={styles.markReadText}>
-                    {markingAll ? 'Marking...' : 'Mark as read'}
+                    {markingAll ? 'Marking...' : 'Mark all as read'}
                   </Typography>
                 </Pressable>
               )}

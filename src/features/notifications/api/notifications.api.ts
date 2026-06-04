@@ -31,6 +31,9 @@ interface BackendPreferences {
   notify_on_complete: boolean;
 }
 
+const UNREAD_PAGE_SIZE = 100;
+const MARK_READ_BATCH_SIZE = 20;
+
 function mapNotification(raw: BackendNotification): Notification {
   return {
     id: raw.id,
@@ -90,6 +93,33 @@ async function markRead(notificationId: string): Promise<Notification> {
   return mapNotification(data.data);
 }
 
+async function markAllRead(knownUnreadIds: string[] = []) {
+  const unreadIds = new Set(knownUnreadIds);
+  let offset = 0;
+
+  while (true) {
+    const page = await list({ unreadOnly: true, offset, limit: UNREAD_PAGE_SIZE });
+    const previousSize = unreadIds.size;
+    page.forEach((notification) => unreadIds.add(notification.id));
+
+    if (page.length < UNREAD_PAGE_SIZE || unreadIds.size === previousSize) break;
+    offset += page.length;
+  }
+
+  const ids = [...unreadIds];
+  const results: PromiseSettledResult<Notification>[] = [];
+
+  for (let index = 0; index < ids.length; index += MARK_READ_BATCH_SIZE) {
+    const batch = ids.slice(index, index + MARK_READ_BATCH_SIZE);
+    results.push(...(await Promise.allSettled(batch.map(markRead))));
+  }
+
+  return {
+    markedCount: results.filter((result) => result.status === 'fulfilled').length,
+    failedCount: results.filter((result) => result.status === 'rejected').length,
+  };
+}
+
 async function getPreferences(): Promise<NotificationPreferences> {
   const { data } = await client.get<ApiSuccessResponse<BackendPreferences>>(
     '/api/v1/notifications/preferences',
@@ -111,6 +141,7 @@ export const notificationsApi = {
   list,
   getUnreadCount,
   markRead,
+  markAllRead,
   getPreferences,
   updatePreferences,
 };
