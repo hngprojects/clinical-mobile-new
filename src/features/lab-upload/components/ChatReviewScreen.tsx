@@ -98,13 +98,13 @@ export function ChatReviewScreen() {
   });
   const reviewHistoryQuery = useAiReviewHistory(caseId || '', effectiveGuestSessionId);
   const chatQuery = useCaseChat(caseId || '', effectiveGuestSessionId, {
-    refetchInterval: isGuest && isGuestAwaitingReply ? 3000 : false,
+    refetchInterval: false,
   });
   const sendMessage = useSendChatMessage(caseId || '', effectiveGuestSessionId);
   const chatSocket = useCaseChatSocket(
     caseId || '',
     effectiveGuestSessionId,
-    !isMockChat && !isDemoMode && !isGuest,
+    !isMockChat && !isDemoMode,
   );
   const displayedReview = isMockChat ? MOCK_REVIEW : review;
   const reviews = useMemo(
@@ -114,7 +114,8 @@ export function ChatReviewScreen() {
   );
   useEffect(() => {
     if (!isGuest || !isGuestAwaitingReply) return;
-    if (chatQuery.data?.at(-1)?.senderType === 'ai') {
+    const hasAiReply = chatQuery.data?.some((m) => m.senderType === 'ai');
+    if (hasAiReply) {
       setIsGuestAwaitingReply(false);
     }
   }, [chatQuery.data, isGuest, isGuestAwaitingReply]);
@@ -145,9 +146,9 @@ export function ChatReviewScreen() {
   const trimmedDraft = draft.trim();
   const { status: socketStatus } = chatSocket;
   if (socketStatus === 'connected') hasConnectedRef.current = true;
-  const showReconnecting = !isGuest && hasConnectedRef.current && socketStatus === 'connecting';
-  const showConnectionLost = !isGuest && hasConnectedRef.current && socketStatus === 'disconnected';
-  const showSessionExpired = !isGuest && socketStatus === 'session_expired';
+  const showReconnecting = hasConnectedRef.current && socketStatus === 'connecting';
+  const showConnectionLost = hasConnectedRef.current && socketStatus === 'disconnected';
+  const showSessionExpired = socketStatus === 'session_expired';
   const isSendingMessage = sendMessage.isPending || chatSocket.isSending || isLabUploading;
   const canSend = Boolean(
     (caseId || isMockChat) &&
@@ -222,7 +223,7 @@ export function ChatReviewScreen() {
       if (!text) return;
 
       try {
-        if (!isGuest && chatSocket.isConnected && (await chatSocket.sendLiveMessage(text))) {
+        if (chatSocket.isConnected && (await chatSocket.sendLiveMessage(text))) {
           return;
         }
       } catch {
@@ -282,10 +283,11 @@ export function ChatReviewScreen() {
           return next;
         });
 
+        recordGuestMessage();
         try {
           await sendChatText(message);
-          recordGuestMessage();
         } catch {
+          setIsGuestAwaitingReply(false);
           setDraft(message);
         }
       } catch {
@@ -312,10 +314,11 @@ export function ChatReviewScreen() {
       return;
     }
 
+    recordGuestMessage();
     try {
       await sendChatText(message);
-      recordGuestMessage();
     } catch {
+      setIsGuestAwaitingReply(false);
       setDraft(message);
       setPendingAttachment(attachment);
     }
