@@ -1,6 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useRef, useState } from 'react';
-import { Dimensions, Modal, Pressable, StyleSheet, View } from 'react-native';
+import {
+  Dimensions,
+  GestureResponderEvent,
+  Modal,
+  Pressable,
+  StyleSheet,
+  View,
+} from 'react-native';
 
 import { Typography } from '@/shared/components';
 import { ChevronRightIcon } from '@/shared/components/icons/ChevronRightIcon';
@@ -43,7 +50,8 @@ export function InsightCard({
   const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
   const menuButtonRef = useRef<View>(null);
 
-  const openMenu = () => {
+  const openMenu = (event: GestureResponderEvent) => {
+    event.stopPropagation();
     menuButtonRef.current?.measure((_x, _y, width, height, pageX, pageY) => {
       setMenuPos({
         top: pageY + height + 4,
@@ -140,12 +148,16 @@ export function InsightCard({
 
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-            <Pressable style={styles.menuItem} onPress={handleExportPdf}>
-              <Typography variant="body1">Export as PDF</Typography>
-              <Ionicons name="document-text-outline" size={18} color={colors.text} />
-            </Pressable>
+            {onExportPdf ? (
+              <>
+                <Pressable style={styles.menuItem} onPress={handleExportPdf}>
+                  <Typography variant="body1">Export as PDF</Typography>
+                  <Ionicons name="document-text-outline" size={18} color={colors.text} />
+                </Pressable>
 
-            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                <View style={[styles.divider, { backgroundColor: colors.border }]} />
+              </>
+            ) : null}
 
             <Pressable style={styles.menuItem} onPress={handleDelete}>
               <Typography variant="body1" color="#EF4444">

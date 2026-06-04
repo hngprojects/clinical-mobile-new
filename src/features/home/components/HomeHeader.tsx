@@ -3,7 +3,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { useNotifications, useUnreadCount } from '@/features/notifications/hooks/useNotifications';
+import { useUnreadCount } from '@/features/notifications/hooks/useNotifications';
 import { Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
@@ -15,16 +15,12 @@ export function HomeHeader({ name = 'User' }: HomeHeaderProps) {
   const { colors, spacing } = useTheme();
   const router = useRouter();
   const { data: unreadCount = 0, refetch: refetchUnreadCount } = useUnreadCount();
-  const { data: notifications = [], refetch: refetchNotifications } = useNotifications();
-  const listUnreadCount = notifications.filter((notification) => !notification.isRead).length;
-  const displayedUnreadCount = Math.max(unreadCount, listUnreadCount);
-  const hasUnread = displayedUnreadCount > 0;
+  const hasUnread = unreadCount > 0;
 
   useFocusEffect(
     useCallback(() => {
       void refetchUnreadCount();
-      void refetchNotifications();
-    }, [refetchNotifications, refetchUnreadCount]),
+    }, [refetchUnreadCount]),
   );
 
   return (
@@ -46,9 +42,7 @@ export function HomeHeader({ name = 'User' }: HomeHeaderProps) {
           styles.bellButton,
           { backgroundColor: colors.surfaceMuted, borderColor: colors.borderSubtle },
         ]}
-        accessibilityLabel={
-          hasUnread ? `${displayedUnreadCount} unread notifications` : 'Notifications'
-        }
+        accessibilityLabel={hasUnread ? `${unreadCount} unread notifications` : 'Notifications'}
       >
         <Ionicons
           name={hasUnread ? 'notifications' : 'notifications-outline'}

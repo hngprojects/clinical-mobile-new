@@ -35,8 +35,18 @@ function relativeTime(iso: string): string {
 function sectionKey(iso: string): string {
   const ms = new Date(iso).getTime();
   if (Number.isNaN(ms)) return 'Older';
-  const days = Math.floor((Date.now() - ms) / 86_400_000);
-  if (days === 0) return 'Today';
+
+  const now = new Date();
+  const notificationDate = new Date(ms);
+  const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  const notificationDay = Date.UTC(
+    notificationDate.getFullYear(),
+    notificationDate.getMonth(),
+    notificationDate.getDate(),
+  );
+  const days = Math.round((today - notificationDay) / 86_400_000);
+
+  if (days <= 0) return 'Today';
   if (days === 1) return 'Yesterday';
   if (days <= 7) return 'This Week';
   if (days <= 14) return 'Last Week';
@@ -143,9 +153,10 @@ export function NotificationsInboxScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const { data: notifications, isLoading, isRefetching, isError, refetch } = useNotifications();
+  const { data: notifications, isLoading, isError, refetch } = useNotifications();
   const [showToast, setShowToast] = useState(false);
   const [markingAll, setMarkingAll] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const list = notifications ?? [];
@@ -165,6 +176,15 @@ export function NotificationsInboxScreen() {
       void refetch();
     }, [refetch]),
   );
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refetch]);
 
   const handleMarkAllRead = async () => {
     const unread = list.filter((n) => !n.isRead);
@@ -234,7 +254,7 @@ export function NotificationsInboxScreen() {
               <Typography variant="body1" style={styles.sectionLabel}>
                 {section.title}
               </Typography>
-              {section.title === 'Today' && hasUnread && (
+              {section.title === sections[0]?.title && hasUnread && (
                 <Pressable onPress={handleMarkAllRead} hitSlop={8} disabled={markingAll}>
                   <Typography variant="body2" color={colors.primary} style={styles.markReadText}>
                     {markingAll ? 'Marking...' : 'Mark as read'}
@@ -246,9 +266,9 @@ export function NotificationsInboxScreen() {
           renderItem={({ item }) => <NotificationItem item={item} />}
           showsVerticalScrollIndicator={false}
           stickySectionHeadersEnabled={false}
-          refreshing={isRefetching}
+          refreshing={isRefreshing}
           onRefresh={() => {
-            void refetch();
+            void handleRefresh();
           }}
         />
       )}

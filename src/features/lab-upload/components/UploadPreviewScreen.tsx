@@ -156,7 +156,6 @@ export function UploadPreviewScreen() {
     }
 
     lastUploadUriRef.current = null;
-    setIsUploading(true);
     uploadMutate({
       file: {
         name: fileName,
