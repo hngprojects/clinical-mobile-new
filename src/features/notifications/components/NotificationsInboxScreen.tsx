@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, SectionList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -122,7 +122,7 @@ function NotificationItem({ item }: { item: Notification }) {
         </Typography>
         {canViewResult && (
           <>
-            <View style={[styles.itemDivider, { backgroundColor: colors.borderSubtle }]} />
+            <View style={styles.itemDivider} />
             <View style={styles.itemActionRow}>
               <Typography variant="body2" color={colors.primary} style={styles.viewResult}>
                 View result
@@ -143,7 +143,7 @@ export function NotificationsInboxScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const { data: notifications, isLoading, isError } = useNotifications();
+  const { data: notifications, isLoading, isRefetching, isError, refetch } = useNotifications();
   const [showToast, setShowToast] = useState(false);
   const [markingAll, setMarkingAll] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -159,6 +159,12 @@ export function NotificationsInboxScreen() {
       queryClient.invalidateQueries({ queryKey: UNREAD_COUNT_KEY });
     },
   });
+
+  useFocusEffect(
+    useCallback(() => {
+      void refetch();
+    }, [refetch]),
+  );
 
   const handleMarkAllRead = async () => {
     const unread = list.filter((n) => !n.isRead);
@@ -240,6 +246,10 @@ export function NotificationsInboxScreen() {
           renderItem={({ item }) => <NotificationItem item={item} />}
           showsVerticalScrollIndicator={false}
           stickySectionHeadersEnabled={false}
+          refreshing={isRefetching}
+          onRefresh={() => {
+            void refetch();
+          }}
         />
       )}
     </SafeAreaView>
@@ -286,7 +296,6 @@ const styles = StyleSheet.create({
   },
 
   item: {
-    height: 147,
     borderRadius: 12,
     marginBottom: 12,
     paddingTop: 10,
@@ -296,11 +305,11 @@ const styles = StyleSheet.create({
   },
   unreadDot: {
     position: 'absolute',
-    top: 32,
-    right: 28,
-    width: 14,
-    height: 14,
-    borderRadius: 7,
+    top: 28,
+    right: 24,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   itemContent: {
     flex: 1,
@@ -323,7 +332,8 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   itemDivider: {
-    height: StyleSheet.hairlineWidth,
+    height: 1,
+    backgroundColor: '#F0F0F0',
   },
   itemActionRow: {
     flexDirection: 'row',

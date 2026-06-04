@@ -51,6 +51,16 @@ function mapPreferences(raw: BackendPreferences): NotificationPreferences {
   return { notifyOnComplete: raw.notify_on_complete };
 }
 
+export function sortNotificationsNewestFirst(notifications: Notification[]): Notification[] {
+  return [...notifications].sort((a, b) => {
+    const aCreatedAt = Date.parse(a.createdAt);
+    const bCreatedAt = Date.parse(b.createdAt);
+    const aTimestamp = Number.isNaN(aCreatedAt) ? 0 : aCreatedAt;
+    const bTimestamp = Number.isNaN(bCreatedAt) ? 0 : bCreatedAt;
+    return bTimestamp - aTimestamp;
+  });
+}
+
 async function list(params?: ListNotificationsParams): Promise<Notification[]> {
   const { data } = await client.get<ApiSuccessResponse<BackendNotification[]>>(
     '/api/v1/notifications',
@@ -62,7 +72,7 @@ async function list(params?: ListNotificationsParams): Promise<Notification[]> {
       },
     },
   );
-  return (data.data ?? []).map(mapNotification);
+  return sortNotificationsNewestFirst((data.data ?? []).map(mapNotification));
 }
 
 async function getUnreadCount(): Promise<number> {
