@@ -57,8 +57,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Clinsight needs access to your photos to upload images.",
-          "cameraPermission": "Clinsight needs access to your camera to take photos."
+          "photosPermission": "Clinsight needs access to your photos so you can upload lab result images.",
+          "cameraPermission": "Clinsight needs access to your camera so you can take a photo of your lab result."
         }
       ]
     ],

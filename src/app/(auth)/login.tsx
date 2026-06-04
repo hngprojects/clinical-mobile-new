@@ -1,4 +1,4 @@
-import { Href, router, Stack } from 'expo-router';
+import { Href, router, Stack, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -15,15 +15,16 @@ function getLoginErrorMessage(error: { message?: string; status?: number } | nul
   if (error.status === 0 || msg.includes('timeout') || msg.includes('network')) {
     return 'Connection failed. Please check your network and try again.';
   }
-  if (msg.includes('verify') || msg.includes('verified')) {
-    return 'Please verify your email before logging in.';
+  if (msg.includes('disabled')) {
+    return 'Your account has been disabled. Please contact support.';
   }
   return error.message || 'Invalid email or password.';
 }
 
 export default function LoginScreen() {
   const { spacing, colors } = useTheme();
-  const loginMutation = useLogin();
+  const { caseId } = useLocalSearchParams<{ caseId?: string }>();
+  const loginMutation = useLogin({ caseId });
   const { handleUpload, handleUploadError } = useGuestUploadSession();
   const [showUploadSheet, setShowUploadSheet] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);

@@ -53,6 +53,7 @@ export function LoginForm({
 
   const passwordValue = useWatch({ control, name: 'password', defaultValue: '' }) ?? '';
   const onSubmit = (data: LoginFormData) => login(data);
+  const isAuthBusy = isPending || isGooglePending;
 
   const handleSocialPress = async (provider: string) => {
     if (provider === 'Google') {
@@ -103,7 +104,7 @@ export function LoginForm({
           loadingLabel="Signing in"
           onPress={handleSubmit(onSubmit)}
           isLoading={isPending}
-          disabled={isPending || passwordValue.length === 0}
+          disabled={isAuthBusy || passwordValue.length === 0}
           style={{ marginTop: 32 }}
         />
 
@@ -120,7 +121,7 @@ export function LoginForm({
             variant="outline"
             onPress={() => handleSocialPress('Google')}
             isLoading={isGooglePending}
-            style={styles.socialIconButton}
+            disabled={isPending}
             leftIcon={
               !isGooglePending && (
                 <Image
@@ -133,10 +134,10 @@ export function LoginForm({
           />
 
           <Button
-            label="Continue as guest"
+            label="Continue as Guest"
             variant="outline"
             onPress={onContinueAsGuest}
-            style={styles.socialIconButton}
+            disabled={isAuthBusy || !onContinueAsGuest}
             textColor={colors.textSecondary}
           />
         </View>
@@ -174,13 +175,5 @@ const styles = StyleSheet.create({
     letterSpacing: -0.14,
     lineHeight: 21,
     paddingHorizontal: 16,
-  },
-  socialIconButton: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#D0D0D0',
-    borderRadius: 12,
-    borderWidth: 1,
-    paddingHorizontal: 24,
-    paddingVertical: 15,
   },
 });

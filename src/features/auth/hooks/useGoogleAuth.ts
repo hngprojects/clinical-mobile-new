@@ -57,7 +57,7 @@ function getTokensFromUrl(url: string) {
     getParamValue(fragmentParams, REFRESH_TOKEN_KEYS) ||
     null;
 
-  return { accessToken, refreshToken };
+  return { accessToken, refreshToken, accessTokenExpiresAt: null };
 }
 
 function getAuthErrorFromUrl(url: string) {
@@ -69,6 +69,26 @@ function getAuthErrorFromUrl(url: string) {
     getParamValue(parsed.queryParams, ['error_description', 'error', 'message']) ||
     getParamValue(fragmentParams, ['error_description', 'error', 'message'])
   );
+}
+
+function mapGoogleOAuthError(rawError: string, flow: 'signin' | 'signup'): string {
+  const lower = rawError.toLowerCase();
+  const action = flow === 'signup' ? 'sign-up' : 'sign-in';
+
+  if (lower.includes('already exists')) {
+    return 'An account with this email already exists. Please log in instead.';
+  }
+  if (lower.includes('not verified')) {
+    return 'Your Google account email is not verified. Please verify it with Google first.';
+  }
+  if (
+    lower.includes('exchange') ||
+    lower.includes('user information') ||
+    lower.includes('missing required')
+  ) {
+    return `Google ${action} failed. Please try again.`;
+  }
+  return `Google ${action} failed. Please try again.`;
 }
 
 export function useGoogleAuth(flow: 'signin' | 'signup' = 'signin') {
@@ -95,7 +115,7 @@ export function useGoogleAuth(flow: 'signin' | 'signup' = 'signin') {
       if (result.type === 'success' && result.url) {
         const authError = getAuthErrorFromUrl(result.url);
         if (authError) {
-          setError(authError);
+          setError(mapGoogleOAuthError(authError, flow));
           return { success: false };
         }
 

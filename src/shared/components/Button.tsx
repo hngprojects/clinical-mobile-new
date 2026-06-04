@@ -113,12 +113,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
+    maxWidth: '100%',
   },
   iconContainer: {
     marginRight: 0,
   },
   label: {
+    flexShrink: 1,
     fontWeight: '600',
+    textAlign: 'center',
   },
   outlineLabel: {
     fontWeight: '500',

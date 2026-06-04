@@ -101,6 +101,30 @@ export default function MainLayout() {
         }}
       />
       <Tabs.Screen
+        name="change-email"
+        options={{
+          href: null,
+          headerShown: false,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
+      <Tabs.Screen
+        name="change-email-password"
+        options={{
+          href: null,
+          headerShown: false,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
+      <Tabs.Screen
+        name="change-email-otp"
+        options={{
+          href: null,
+          headerShown: false,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
+      <Tabs.Screen
         name="notifications"
         options={{
           href: null,

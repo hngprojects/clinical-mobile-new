@@ -1,7 +1,9 @@
-import { useQueryClient } from '@tanstack/react-query';
+import { UseQueryOptions, useQueryClient } from '@tanstack/react-query';
 
 import { useApiMutation, useApiQuery } from '@/shared/api/hooks';
+import { ApiError } from '@/shared/api/types';
 
+import type { ChatMessage } from '../api/chat.types';
 import { chatApi } from '../api/chat.api';
 
 import { getCaseChatQueryKey } from './chatQueryKeys';
@@ -17,13 +19,18 @@ export {
 export type { SocketPayload } from './chatSocket.utils';
 export { useCaseChatSocket } from './useCaseChatSocket';
 
-export function useCaseChat(caseId: string, guestSessionId?: string | null) {
+export function useCaseChat(
+  caseId: string,
+  guestSessionId?: string | null,
+  options?: Pick<UseQueryOptions<ChatMessage[], ApiError>, 'refetchInterval'>,
+) {
   return useApiQuery(
     getCaseChatQueryKey(caseId, guestSessionId),
     () => chatApi.listMessages(caseId, guestSessionId),
     {
       enabled: Boolean(caseId),
       retry: false,
+      ...options,
     },
   );
 }

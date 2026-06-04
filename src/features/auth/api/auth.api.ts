@@ -5,17 +5,24 @@ import type {
   AuthTokens,
   ChangePasswordRequest,
   ChangePasswordResponse,
+  DeleteAccountResponse,
   CompletePasswordResetRequest,
   CompletePasswordResetResponse,
   GuestSessionResponse,
   LoginRequest,
   OtpDispatchResponse,
   RegisterRequest,
+  RequestEmailChangeRequest,
+  RequestEmailChangeResponse,
   ResetPasswordRequest,
   ResetPasswordResponse,
   UpdateProfileRequest,
   UpdateProfileResponse,
   UserProfile,
+  VerifyEmailChangeRequest,
+  VerifyEmailChangeResponse,
+  VerifyResetOtpRequest,
+  VerifyResetOtpResponse,
 } from './auth.types';
 
 interface SuccessResponse<T> {
@@ -42,8 +49,14 @@ interface BackendTokenResponse {
   refresh_token?: string | null;
   refreshToken?: string | null;
   token_type: string;
-  expires_in: number;
+  expires_in?: number | null;
+  expires_at?: string | null;
   user: BackendUserResponse;
+}
+
+interface BackendResetTokenResponse {
+  reset_token: string;
+  expires_in_seconds: number;
 }
 
 interface BackendOtpResponse {
@@ -72,13 +85,34 @@ function mapUser(user: BackendUserResponse): UserProfile {
   };
 }
 
+function getAccessTokenExpiresAt(data: Pick<BackendTokenResponse, 'expires_at' | 'expires_in'>) {
+  if (data.expires_at) return data.expires_at;
+  if (typeof data.expires_in !== 'number' || data.expires_in <= 0) return null;
+  return new Date(Date.now() + data.expires_in * 1000).toISOString();
+}
+
+function mapTokens(
+  data: BackendTokenResponse,
+  fallbackRefreshToken: string | null = null,
+): AuthTokens {
+  return {
+    accessToken: data.access_token,
+    refreshToken: data.refresh_token ?? data.refreshToken ?? fallbackRefreshToken,
+    accessTokenExpiresAt: getAccessTokenExpiresAt(data),
+  };
+}
+
 function mapAuthResponse(data: BackendTokenResponse): AuthResponse {
   return {
     user: mapUser(data.user),
-    tokens: {
-      accessToken: data.access_token,
-      refreshToken: data.refresh_token ?? data.refreshToken ?? null,
-    },
+    tokens: mapTokens(data),
+  };
+}
+
+function mapResetTokenResponse(data: BackendResetTokenResponse): VerifyResetOtpResponse {
+  return {
+    resetToken: data.reset_token,
+    expiresInSeconds: data.expires_in_seconds,
   };
 }
 
@@ -144,6 +178,14 @@ async function resendOtp(data: { email: string }): Promise<OtpDispatchResponse> 
   return mapOtpResponse(response.data.data);
 }
 
+async function verifyResetOtp(data: VerifyResetOtpRequest): Promise<VerifyResetOtpResponse> {
+  const response = await client.post<SuccessResponse<BackendResetTokenResponse>>(
+    '/api/v1/auth/verify-reset-otp',
+    { email: data.email, code: data.code },
+  );
+  return mapResetTokenResponse(response.data.data);
+}
+
 async function createGuestSession(
   deviceFingerprint?: string | null,
 ): Promise<GuestSessionResponse> {
@@ -164,11 +206,7 @@ async function refreshTokens(refreshToken?: string | null): Promise<AuthTokens> 
     refreshToken ? { refresh_token: refreshToken } : undefined,
     { _retry: true } as object,
   );
-  return {
-    accessToken: response.data.data.access_token,
-    refreshToken:
-      response.data.data.refresh_token ?? response.data.data.refreshToken ?? refreshToken ?? null,
-  };
+  return mapTokens(response.data.data, refreshToken ?? null);
 }
 
 async function resetPassword(data: ResetPasswordRequest): Promise<ResetPasswordResponse> {
@@ -185,7 +223,6 @@ async function completePasswordReset(
   data: CompletePasswordResetRequest,
 ): Promise<CompletePasswordResetResponse> {
   const response = await client.post<SuccessResponse<unknown>>('/api/v1/auth/reset-password', {
-    email: data.email,
     token: data.token,
     new_password: data.newPassword,
   });
@@ -204,16 +241,15 @@ async function logout(): Promise<void> {
 }
 
 async function updateProfile(data: UpdateProfileRequest): Promise<UpdateProfileResponse> {
-  const response = await client.patch<SuccessResponse<BackendUserResponse>>('/api/v1/auth/me', {
+  const response = await client.patch<SuccessResponse<BackendUserResponse>>('/api/v1/users/me', {
     first_name: data.firstName,
     last_name: data.lastName,
-    email: data.email,
   });
   return { user: mapUser(response.data.data) };
 }
 
 async function changePassword(data: ChangePasswordRequest): Promise<ChangePasswordResponse> {
-  const response = await client.post<SuccessResponse<unknown>>('/api/v1/auth/change-password', {
+  const response = await client.patch<SuccessResponse<unknown>>('/api/v1/users/me/password', {
     current_password: data.currentPassword,
     new_password: data.newPassword,
   });
@@ -222,11 +258,44 @@ async function changePassword(data: ChangePasswordRequest): Promise<ChangePasswo
   };
 }
 
+async function deleteAccount(): Promise<DeleteAccountResponse> {
+  const response = await client.delete<SuccessResponse<string>>('/api/v1/users/me');
+  return {
+    message: response.data.message,
+  };
+}
+
+async function requestEmailChange(
+  data: RequestEmailChangeRequest,
+): Promise<RequestEmailChangeResponse> {
+  const response = await client.post<SuccessResponse<{ expires_in_seconds?: number } | null>>(
+    '/api/v1/users/me/email',
+    {
+      email: data.email,
+      password: data.password,
+    },
+  );
+  return {
+    message: response.data.message,
+    expiresInSeconds: response.data.data?.expires_in_seconds,
+  };
+}
+
+async function verifyEmailChange(
+  data: VerifyEmailChangeRequest,
+): Promise<VerifyEmailChangeResponse> {
+  const response = await client.post<SuccessResponse<unknown>>('/api/v1/users/me/email/verify', {
+    token: data.token,
+  });
+  return { message: response.data.message };
+}
+
 export const authApi = {
   login,
   register,
   verifyOtp,
   resendOtp,
+  verifyResetOtp,
   createGuestSession,
   refreshTokens,
   resetPassword,
@@ -235,4 +304,7 @@ export const authApi = {
   logout,
   updateProfile,
   changePassword,
+  deleteAccount,
+  requestEmailChange,
+  verifyEmailChange,
 };

@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Keyboard,
+  Platform,
   Pressable,
   TextInput as RNTextInput,
   StyleSheet,
@@ -13,6 +14,7 @@ import {
 import { useResendOtp } from '@/features/auth/hooks/useResendOtp';
 import { useResetPassword } from '@/features/auth/hooks/useResetPassword';
 import { useVerifyOtp } from '@/features/auth/hooks/useVerifyOtp';
+import { useVerifyResetOtp } from '@/features/auth/hooks/useVerifyResetOtp';
 import { useAuthStore } from '@/features/auth/store/auth.store';
 import type { ApiError } from '@/shared/api/types';
 import { Toast, Typography } from '@/shared/components';
@@ -46,13 +48,18 @@ export function VerifyOtp({
   email,
   expiresInSeconds,
   type = 'signup',
+  caseId,
 }: {
   email?: string;
   expiresInSeconds?: number;
   type?: 'signup' | 'reset-password';
+  caseId?: string;
 }) {
+  const guestSessionId = useAuthStore((state) => state.guestSessionId);
   const verifyOtpMutation = useVerifyOtp();
   const { reset: resetVerifyOtp } = verifyOtpMutation;
+  const verifyResetOtpMutation = useVerifyResetOtp();
+  const { reset: resetVerifyResetOtp } = verifyResetOtpMutation;
   const resendOtpMutation = useResendOtp();
   const resetPasswordMutation = useResetPassword();
 
@@ -63,6 +70,9 @@ export function VerifyOtp({
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [hasOtpError, setHasOtpError] = useState(false);
+  const [otpErrorMessage, setOtpErrorMessage] = useState(
+    'The code you entered is incorrect. Check again.',
+  );
   const [hasNetworkError, setHasNetworkError] = useState(false);
   const [resendToastVisible, setResendToastVisible] = useState(false);
   const [resendToastMessage, setResendToastMessage] = useState('');
@@ -89,11 +99,17 @@ export function VerifyOtp({
   }, [timer]);
 
   useEffect(() => {
-    if (verifyOtpMutation.isError) {
-      const errStatus = (verifyOtpMutation.error as ApiError)?.status;
-      const errMsg = verifyOtpMutation.error?.message?.toLowerCase() || '';
+    const activeError =
+      type === 'reset-password' ? verifyResetOtpMutation.isError : verifyOtpMutation.isError;
+    const activeErr =
+      type === 'reset-password' ? verifyResetOtpMutation.error : verifyOtpMutation.error;
 
-      if (errStatus === 400 || errMsg.includes('incorrect') || errMsg.includes('invalid')) {
+    if (activeError) {
+      const errStatus = (activeErr as ApiError)?.status;
+      const rawMsg = activeErr?.message || '';
+
+      if (errStatus === 400 || errStatus === 401) {
+        setOtpErrorMessage(rawMsg || 'The code you entered is incorrect. Check again.');
         setHasOtpError(true);
         setHasNetworkError(false);
       } else {
@@ -102,17 +118,35 @@ export function VerifyOtp({
         const t = setTimeout(() => {
           setHasNetworkError(false);
           resetVerifyOtp();
+          resetVerifyResetOtp();
         }, 5000);
         return () => clearTimeout(t);
       }
     }
-  }, [verifyOtpMutation.isError, verifyOtpMutation.error, resetVerifyOtp]);
+  }, [
+    type,
+    verifyOtpMutation.isError,
+    verifyOtpMutation.error,
+    verifyResetOtpMutation.isError,
+    verifyResetOtpMutation.error,
+    resetVerifyOtp,
+    resetVerifyResetOtp,
+  ]);
 
   useEffect(() => {
-    if (verifyOtpMutation.isSuccess) {
+    if (verifyOtpMutation.isSuccess && type !== 'reset-password') {
       setShowSuccessModal(true);
     }
-  }, [verifyOtpMutation.isSuccess]);
+  }, [verifyOtpMutation.isSuccess, type]);
+
+  useEffect(() => {
+    if (verifyResetOtpMutation.isSuccess && type === 'reset-password') {
+      router.replace({
+        pathname: '/(auth)/new-password',
+        params: { token: verifyResetOtpMutation.data.resetToken },
+      });
+    }
+  }, [verifyResetOtpMutation.isSuccess, verifyResetOtpMutation.data, type]);
 
   useEffect(
     () => () => {
@@ -154,13 +188,14 @@ export function VerifyOtp({
     if (code.length !== CODE_LENGTH) return;
     Keyboard.dismiss();
     if (type === 'reset-password') {
-      router.replace({
-        pathname: '/(auth)/new-password',
-        params: { email: email || '', token: code },
-      });
+      verifyResetOtpMutation.mutate({ email: email || '', code });
       return;
     }
-    verifyOtpMutation.mutate({ email: email || '', code });
+    verifyOtpMutation.mutate({
+      email: email || '',
+      code,
+      ...(guestSessionId ? { guestSessionId } : {}),
+    });
   };
 
   const handleResend = () => {
@@ -171,6 +206,7 @@ export function VerifyOtp({
     setExpiredToastVisible(false);
     setCode('');
     resetVerifyOtp();
+    resetVerifyResetOtp();
     if (type === 'reset-password') {
       resetPasswordMutation.mutate({ email: email || '' });
     } else {
@@ -185,7 +221,9 @@ export function VerifyOtp({
     if (hasOtpError || hasNetworkError) {
       setHasOtpError(false);
       setHasNetworkError(false);
+      setOtpErrorMessage('The code you entered is incorrect. Check again.');
       resetVerifyOtp();
+      verifyResetOtpMutation.reset();
     }
   };
 
@@ -199,18 +237,24 @@ export function VerifyOtp({
 
     setShowSuccessModal(false);
     useAuthStore.getState().setSession(result.tokens, result.user);
-    router.replace('/(main)');
+
+    if (caseId) {
+      router.replace({ pathname: '/(main)/chat-review', params: { caseId } });
+    } else {
+      router.replace('/(main)');
+    }
   };
 
   const isCodeComplete = code.length === CODE_LENGTH;
   const isExpired = timer === 0;
-  const isLoading = verifyOtpMutation.isPending;
+  const isLoading =
+    type === 'reset-password' ? verifyResetOtpMutation.isPending : verifyOtpMutation.isPending;
 
   return (
     <>
       <Toast
         visible={hasNetworkError}
-        message="We couldn’t verify you right now. Please check your connection and try again."
+        message="We couldn't verify you right now. Please check your connection and try again."
         variant="error"
       />
       <Toast
@@ -264,6 +308,8 @@ export function VerifyOtp({
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         textContentType="oneTimeCode"
+        autoComplete={Platform.OS === 'android' ? 'sms-otp' : 'one-time-code'}
+        importantForAutofill="yes"
         autoFocus
       />
 
@@ -287,11 +333,7 @@ export function VerifyOtp({
       </Pressable>
 
       {/* Red Error Message if Code is Incorrect */}
-      {hasOtpError && (
-        <Typography style={styles.errorText}>
-          The code you entered was incorrect, check again.
-        </Typography>
-      )}
+      {hasOtpError && <Typography style={styles.errorText}>{otpErrorMessage}</Typography>}
 
       {/* Verify Button matching all states */}
       <Pressable

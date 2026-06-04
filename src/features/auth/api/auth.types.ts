@@ -1,3 +1,5 @@
+import type { AuthTokens as SharedAuthTokens } from '@/shared/auth/authTokens';
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -19,8 +21,17 @@ export interface ResetPasswordResponse {
   message: string;
 }
 
-export interface CompletePasswordResetRequest {
+export interface VerifyResetOtpRequest {
   email: string;
+  code: string;
+}
+
+export interface VerifyResetOtpResponse {
+  resetToken: string;
+  expiresInSeconds: number;
+}
+
+export interface CompletePasswordResetRequest {
   token: string;
   newPassword: string;
 }
@@ -29,10 +40,7 @@ export interface CompletePasswordResetResponse {
   message: string;
 }
 
-export interface AuthTokens {
-  accessToken: string;
-  refreshToken: string | null;
-}
+export type AuthTokens = SharedAuthTokens;
 
 export interface UserProfile {
   id: string;
@@ -66,7 +74,6 @@ export interface GuestSessionResponse {
 export interface UpdateProfileRequest {
   firstName: string;
   lastName: string;
-  email: string;
 }
 
 export interface UpdateProfileResponse {
@@ -79,5 +86,27 @@ export interface ChangePasswordRequest {
 }
 
 export interface ChangePasswordResponse {
+  message: string;
+}
+
+export interface DeleteAccountResponse {
+  message: string;
+}
+
+export interface RequestEmailChangeRequest {
+  email: string;
+  password: string;
+}
+
+export interface RequestEmailChangeResponse {
+  message: string;
+  expiresInSeconds?: number;
+}
+
+export interface VerifyEmailChangeRequest {
+  token: string;
+}
+
+export interface VerifyEmailChangeResponse {
   message: string;
 }
