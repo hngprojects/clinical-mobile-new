@@ -146,16 +146,15 @@ jobs:
           restore-keys: |
             android-gradle-${{ runner.os }}-
 
-      - name: Bundle JS and build APK
-        run: |
-          cd android && ./gradlew assembleDebug --no-daemon -PbundleInDebug=true
+      - name: Build APK
+        run: cd android && ./gradlew assembleRelease --no-daemon
 
       - name: Upload APK artifact
         id: artifact
         uses: actions/upload-artifact@v7
         with:
-          name: android-${{ github.ref_name }}-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: android-${{ github.ref_name }}-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 7
 
       - name: Upload to Appetize
@@ -164,7 +163,7 @@ jobs:
         uses: appetizeio/github-action-appetize@v1.0.5
         with:
           apiToken: ${{ secrets.APPETIZE_API_TOKEN }}
-          appFile: android/app/build/outputs/apk/debug/app-debug.apk
+          appFile: android/app/build/outputs/apk/release/app-release.apk
           platform: android
 
       - name: Generate Appetize Links
