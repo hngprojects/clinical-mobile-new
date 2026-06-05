@@ -84,12 +84,16 @@ jobs:
           fi
 
   deploy:
-    name: Build and Deploy Android APK
+    name: Build and Deploy Android
     runs-on: ubuntu-latest
     env:
       APPETIZE_API_TOKEN: ${{ secrets.APPETIZE_API_TOKEN }}
       API_BASE_URL: ${{ github.ref_name == 'main' && vars.API_BASE_URL_PROD || vars.API_BASE_URL_STAGING }}
       APP_ENV: ${{ github.ref_name == 'main' && 'production' || github.ref_name == 'staging' && 'staging' || 'development' }}
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      UPLOAD_KEYSTORE_BASE64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
+      GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
 
     steps:
       - name: Checkout
@@ -138,6 +142,40 @@ jobs:
           VERSION_CODE=${{ github.run_number }}
           sed -i "s/versionCode [0-9]\+/versionCode $VERSION_CODE/" android/app/build.gradle
 
+      - name: Decode upload keystore
+        if: env.UPLOAD_KEYSTORE_BASE64 != ''
+        run: echo "${{ secrets.UPLOAD_KEYSTORE_BASE64 }}" | base64 -d > android/app/upload.keystore
+
+      - name: Configure release signing
+        if: env.UPLOAD_KEYSTORE_BASE64 != ''
+        run: |
+          python3 << 'PYEOF'
+          with open('android/app/build.gradle', 'r') as f:
+              content = f.read()
+
+          upload_block = '''        upload {
+                  storeFile file("upload.keystore")
+                  storePassword System.getenv("KEYSTORE_PASSWORD") ?: ""
+                  keyAlias "upload"
+                  keyPassword System.getenv("KEY_PASSWORD") ?: ""
+              }'''
+
+          content = content.replace(
+              "    signingConfigs {\n        debug {",
+              "    signingConfigs {\n" + upload_block + "\n        debug {"
+          )
+
+          release_start = content.find("release {")
+          if release_start != -1:
+              target = "signingConfig signingConfigs.debug"
+              pos = content.find(target, release_start)
+              if pos != -1:
+                  content = content[:pos] + "signingConfig signingConfigs.upload" + content[pos + len(target):]
+
+          with open('android/app/build.gradle', 'w') as f:
+              f.write(content)
+          PYEOF
+
       - name: Cache Android Gradle
         uses: actions/cache@v5
         with:
@@ -146,8 +184,19 @@ jobs:
           restore-keys: |
             android-gradle-${{ runner.os }}-
 
+      - name: Build AAB
+        run: cd android && ./gradlew bundleRelease --no-daemon
+
       - name: Build APK
         run: cd android && ./gradlew assembleRelease --no-daemon
+
+      - name: Upload AAB artifact
+        id: aab-artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-${{ github.ref_name }}-aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 30
 
       - name: Upload APK artifact
         id: artifact
@@ -156,6 +205,16 @@ jobs:
           name: android-${{ github.ref_name }}-apk
           path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 7
+
+      - name: Upload to Google Play (internal track)
+        if: env.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON != '' && github.ref_name == 'main'
+        uses: r0adkll/upload-google-play@v1.1.0
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.clinsight
+          releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
+          track: internal
+          status: completed
 
       - name: Upload to Appetize
         id: appetize
@@ -178,17 +237,18 @@ jobs:
 
       - name: Write job summary
         run: |
-          echo "## 📱 CD Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## CD Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| | |" >> $GITHUB_STEP_SUMMARY
           echo "|---|---|" >> $GITHUB_STEP_SUMMARY
           echo "| Environment | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| Branch | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| Commit | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Artifact | [Download APK](${{ steps.artifact.outputs.artifact-url }}) |" >> $GITHUB_STEP_SUMMARY
+          echo "| AAB | [Download AAB](${{ steps.aab-artifact.outputs.artifact-url }}) |" >> $GITHUB_STEP_SUMMARY
+          echo "| APK | [Download APK](${{ steps.artifact.outputs.artifact-url }}) |" >> $GITHUB_STEP_SUMMARY
           if [ -n "${{ steps.appetize.outputs.publicKey }}" ]; then
-            echo "| 🔗 Appetize | [Open in Appetize](${{ steps.appetize-links.outputs.appUrl }}) |" >> $GITHUB_STEP_SUMMARY
-            echo "| 🖼️ Embed | [Embed View](${{ steps.appetize-links.outputs.embedUrl }}) |" >> $GITHUB_STEP_SUMMARY
+            echo "| Appetize | [Open in Appetize](${{ steps.appetize-links.outputs.appUrl }}) |" >> $GITHUB_STEP_SUMMARY
+            echo "| Embed | [Embed View](${{ steps.appetize-links.outputs.embedUrl }}) |" >> $GITHUB_STEP_SUMMARY
           else
-            echo "| ⚠️ Appetize | Upload failed or \`APPETIZE_API_TOKEN\` not set |" >> $GITHUB_STEP_SUMMARY
+            echo "| Appetize | Upload failed or \`APPETIZE_API_TOKEN\` not set |" >> $GITHUB_STEP_SUMMARY
           fi
