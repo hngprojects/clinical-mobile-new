@@ -92,6 +92,8 @@ jobs:
       APP_ENV: ${{ github.ref_name == 'main' && 'production' || github.ref_name == 'staging' && 'staging' || 'development' }}
       KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
       KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      UPLOAD_KEYSTORE_BASE64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
+      GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
 
     steps:
       - name: Checkout
@@ -141,11 +143,11 @@ jobs:
           sed -i "s/versionCode [0-9]\+/versionCode $VERSION_CODE/" android/app/build.gradle
 
       - name: Decode upload keystore
-        if: ${{ secrets.UPLOAD_KEYSTORE_BASE64 != '' }}
+        if: env.UPLOAD_KEYSTORE_BASE64 != ''
         run: echo "${{ secrets.UPLOAD_KEYSTORE_BASE64 }}" | base64 -d > android/app/upload.keystore
 
       - name: Configure release signing
-        if: ${{ secrets.UPLOAD_KEYSTORE_BASE64 != '' }}
+        if: env.UPLOAD_KEYSTORE_BASE64 != ''
         run: |
           python3 << 'PYEOF'
           with open('android/app/build.gradle', 'r') as f:
@@ -205,8 +207,8 @@ jobs:
           retention-days: 7
 
       - name: Upload to Google Play (internal track)
-        if: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON != '' && github.ref_name == 'main' }}
-        uses: r0adkll/upload-google-play@v1
+        if: env.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON != '' && github.ref_name == 'main'
+        uses: r0adkll/upload-google-play@v1.1.0
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.clinsight
