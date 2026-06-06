@@ -6,12 +6,13 @@ import { DUMMY_INSIGHT_LIST } from '../data/dummyInsights';
 const SEARCH_DEBOUNCE_MS = 420;
 
 interface UseInsightListOptions {
+  onDelete?: (id: string) => Promise<void> | void;
   onRename?: (id: string, title: string) => Promise<void> | void;
 }
 
 export function useInsightList(
   initialItems: InsightListItem[] = DUMMY_INSIGHT_LIST,
-  { onRename }: UseInsightListOptions = {},
+  { onDelete, onRename }: UseInsightListOptions = {},
 ) {
   const [query, setQuery] = useState('');
   const [items, setItems] = useState<InsightListItem[]>(() => [...initialItems]);
@@ -67,9 +68,22 @@ export function useInsightList(
     [onRename],
   );
 
-  const deleteInsight = useCallback((id: string) => {
-    setItems((prev) => prev.filter((row) => row.id !== id));
-  }, []);
+  const deleteInsight = useCallback(
+    async (id: string) => {
+      setItems((prev) => {
+        previousItemsRef.current = prev;
+        return prev.filter((row) => row.id !== id);
+      });
+
+      try {
+        await onDelete?.(id);
+      } catch (error) {
+        setItems(previousItemsRef.current);
+        console.error('[Insights] Failed to delete case', error);
+      }
+    },
+    [onDelete],
+  );
 
   return {
     query,
