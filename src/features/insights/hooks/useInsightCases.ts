@@ -63,6 +63,39 @@ export function useInsightCases(offset = 0, limit = 50) {
     [queryClient],
   );
 
+  const deleteCase = useCallback(
+    async (caseId: string) => {
+      await queryClient.cancelQueries({ queryKey: ['insight-cases'] });
+
+      const previousQueries = queryClient.getQueriesData<CasesListResponse>({
+        queryKey: ['insight-cases'],
+      });
+
+      queryClient.setQueriesData<CasesListResponse>(
+        { queryKey: ['insight-cases'] },
+        (current: CasesListResponse | undefined) => {
+          if (!current) return current;
+
+          return {
+            ...current,
+            data: current.data.filter((item: CaseListItem) => item.id !== caseId),
+          };
+        },
+      );
+
+      try {
+        await casesApi.deleteCase(caseId);
+        await queryClient.invalidateQueries({ queryKey: ['insight-cases'] });
+      } catch (error) {
+        previousQueries.forEach(([key, value]) => {
+          queryClient.setQueryData(key, value);
+        });
+        throw error;
+      }
+    },
+    [queryClient],
+  );
+
   const [updateTrigger, setUpdateTrigger] = useState(0);
 
   useEffect(() => {
@@ -82,6 +115,7 @@ export function useInsightCases(offset = 0, limit = 50) {
   return {
     ...query,
     insightItems,
+    deleteCase,
     renameCase,
     refetch: query.refetch,
   };

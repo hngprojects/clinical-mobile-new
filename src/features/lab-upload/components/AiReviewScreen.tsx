@@ -172,7 +172,6 @@ export function AiReviewScreen() {
           setHasShownAllSteps(true);
           return current;
         }
-
         return current + 1;
       });
     }, STEP_INTERVAL_MS);
