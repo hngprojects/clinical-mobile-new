@@ -55,8 +55,9 @@ export function UploadPreviewScreen() {
   const hasSelectedFile = Boolean(fileUri);
   const isImagePreview =
     hasSelectedFile &&
-    (fileMimeType?.startsWith('image/') ||
-      ['JPG', 'JPEG', 'PNG', 'HEIC', 'WEBP'].includes(fileType));
+    (fileMimeType === 'image/jpeg' ||
+      fileMimeType === 'image/png' ||
+      ['JPG', 'JPEG', 'PNG'].includes(fileType));
   const isPdfPreview = fileMimeType === 'application/pdf' || fileType === 'PDF';
   const isUploadProcessing = isUploading || (hasSelectedFile && uploadMutation.isPending);
   const canRequestAiReview = hasSelectedFile && uploadMutation.isSuccess;
