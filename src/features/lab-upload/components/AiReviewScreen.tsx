@@ -16,7 +16,7 @@ const STEPS = [
   'Preparing your report',
 ];
 
-const STEP_INTERVAL_MS = 1400;
+const STEP_INTERVAL_MS = 3500;
 
 type StepState = 'pending' | 'active' | 'done';
 
