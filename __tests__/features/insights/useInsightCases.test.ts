@@ -8,7 +8,7 @@ describe('mapCasesToInsightItems', () => {
         created_at: 'not-a-date',
         guest_session_id: null,
         id: 'case-123',
-        status: 'completed',
+        status: 'complete',
         title: 'CBC Review',
         user_id: 'user-1',
       },
