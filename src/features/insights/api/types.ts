@@ -14,6 +14,7 @@ export interface InsightItemCardProps {
   onRename?: (id: string, newTitle: string) => void;
   onView?: (id: string) => void;
   onDelete?: (id: string) => void;
+  onExportPdf?: (id: string) => void;
 }
 
 export interface InsightRenameModalProps {

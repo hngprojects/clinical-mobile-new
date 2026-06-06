@@ -53,11 +53,11 @@ export function ProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.fill, { backgroundColor: '#FFFFFE' }]} edges={['top']}>
+    <SafeAreaView style={[styles.fill, { backgroundColor: colors.surface }]} edges={['top']}>
       <ProfileSettingsHeader title="Account Settings" onBack={() => router.back()} />
 
       <ScrollView
-        style={[styles.fill, { backgroundColor: colors.background }]}
+        style={[styles.fill, { backgroundColor: colors.surface }]}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >

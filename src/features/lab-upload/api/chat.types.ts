@@ -1,4 +1,6 @@
-export type ChatSenderType = 'patient' | 'ai';
+import type { FileObject } from './upload.types';
+
+export type ChatSenderType = 'patient' | 'ai' | 'file';
 
 export interface ChatContent {
   message?: string;
@@ -13,6 +15,7 @@ export interface ChatResponse {
   medical_case_id: string;
   id: string;
   user_id: string | null;
+  file?: FileObject | null;
   sent_at: string;
 }
 
@@ -30,5 +33,6 @@ export interface ChatMessage {
   text: string;
   medicalCaseId: string;
   userId: string | null;
+  file?: FileObject | null;
   sentAt: string;
 }

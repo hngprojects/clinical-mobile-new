@@ -6,6 +6,7 @@ import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { Button, FormField, Toast, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
+import type { AuthResponse } from '../api/auth.types';
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { LoginFormData, loginSchema } from '../schemas/auth.schemas';
 
@@ -18,6 +19,7 @@ interface LoginFormProps {
   };
   onForgotPassword?: () => void;
   onContinueAsGuest?: () => void;
+  onGoogleSuccess?: (auth: AuthResponse) => void;
   onInteract?: () => void;
 }
 
@@ -25,6 +27,7 @@ export function LoginForm({
   mutation,
   onForgotPassword,
   onContinueAsGuest,
+  onGoogleSuccess,
   onInteract,
 }: LoginFormProps) {
   const { colors, spacing } = useTheme();
@@ -57,7 +60,8 @@ export function LoginForm({
 
   const handleSocialPress = async (provider: string) => {
     if (provider === 'Google') {
-      await startGoogleAuth();
+      const result = await startGoogleAuth();
+      if (result.success) onGoogleSuccess?.(result.auth);
     } else {
       alert(`${provider} login is coming soon!`);
     }

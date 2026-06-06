@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Typography, UploadedFile } from '@/shared/components';
@@ -52,8 +52,6 @@ export function ChatComposer({
   showSessionExpired,
 }: ChatComposerProps) {
   const [inputHeight, setInputHeight] = useState(COMPOSER_INPUT_MIN_HEIGHT);
-  const [voiceNoticeVisible, setVoiceNoticeVisible] = useState(false);
-  const voiceNoticeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const composerHeight = Math.max(COMPOSER_MIN_HEIGHT, inputHeight + COMPOSER_VERTICAL_PADDING);
 
   useEffect(() => {
@@ -62,15 +60,6 @@ export function ChatComposer({
     }
   }, [draft]);
 
-  useEffect(
-    () => () => {
-      if (voiceNoticeTimerRef.current !== null) {
-        clearTimeout(voiceNoticeTimerRef.current);
-      }
-    },
-    [],
-  );
-
   const updateInputHeight = useCallback((height: number) => {
     const nextHeight = Math.min(
       Math.max(Math.ceil(height), COMPOSER_INPUT_MIN_HEIGHT),
@@ -78,19 +67,6 @@ export function ChatComposer({
     );
 
     setInputHeight((currentHeight) => (currentHeight === nextHeight ? currentHeight : nextHeight));
-  }, []);
-
-  const showVoiceNotice = useCallback(() => {
-    setVoiceNoticeVisible(true);
-
-    if (voiceNoticeTimerRef.current !== null) {
-      clearTimeout(voiceNoticeTimerRef.current);
-    }
-
-    voiceNoticeTimerRef.current = setTimeout(() => {
-      setVoiceNoticeVisible(false);
-      voiceNoticeTimerRef.current = null;
-    }, 1800);
   }, []);
 
   return (
@@ -180,21 +156,6 @@ export function ChatComposer({
             />
           </View>
         </View>
-        <View style={styles.micButtonWrap}>
-          {voiceNoticeVisible ? (
-            <View pointerEvents="none" style={styles.voiceTooltip}>
-              <Typography style={styles.voiceTooltipText}>Voice coming soon</Typography>
-            </View>
-          ) : null}
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Voice input coming soon"
-            onPress={showVoiceNotice}
-            style={[styles.iconButton, styles.disabledButton]}
-          >
-            <Ionicons name="mic-outline" size={28} color="#767676" />
-          </Pressable>
-        </View>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Send message"
@@ -252,12 +213,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 14,
   },
-  iconButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-    paddingVertical: 12,
-  },
   input: {
     color: '#1B1B1B',
     fontFamily: 'Inter_400Regular',
@@ -309,9 +264,6 @@ const styles = StyleSheet.create({
     flex: 1,
     flexShrink: 1,
     minHeight: COMPOSER_INPUT_MIN_HEIGHT,
-  },
-  micButtonWrap: {
-    position: 'relative',
   },
   pendingAttachment: {
     alignItems: 'center',
@@ -398,24 +350,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
     marginBottom: 6,
-    textAlign: 'center',
-  },
-  voiceTooltip: {
-    alignItems: 'center',
-    backgroundColor: '#1B1B1B',
-    borderRadius: 999,
-    bottom: 48,
-    left: -46,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    position: 'absolute',
-    width: 128,
-  },
-  voiceTooltipText: {
-    color: '#FFFFFF',
-    fontFamily: 'Inter_500Medium',
-    fontSize: 12,
-    lineHeight: 16,
     textAlign: 'center',
   },
 });

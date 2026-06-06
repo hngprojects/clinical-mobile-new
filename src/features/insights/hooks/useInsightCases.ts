@@ -67,12 +67,6 @@ export function useInsightCases(offset = 0, limit = 50) {
     [query.data?.data, updateTrigger],
   );
 
-  useEffect(() => {
-    if (__DEV__ && query.data) {
-      console.log('[Insights cases]', query.data);
-    }
-  }, [query.data]);
-
   return {
     ...query,
     insightItems,
@@ -81,9 +75,10 @@ export function useInsightCases(offset = 0, limit = 50) {
   };
 }
 
-function mapCasesToInsightItems(cases: CaseListItem[]): InsightListItem[] {
+export function mapCasesToInsightItems(cases: CaseListItem[]): InsightListItem[] {
   return cases.map((item) => ({
     id: item.id,
+    caseId: item.id,
     title: item.title,
     subtitle: formatCaseSubtitle(item),
   }));

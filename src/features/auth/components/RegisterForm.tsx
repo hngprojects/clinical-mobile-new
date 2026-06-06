@@ -6,6 +6,7 @@ import { Image, StyleSheet, TextInput as RNTextInput, View } from 'react-native'
 import { Button, FormField, Toast, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
+import type { AuthResponse } from '../api/auth.types';
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { RegisterFormData, registerSchema } from '../schemas/auth.schemas';
 
@@ -18,9 +19,10 @@ interface RegisterFormProps {
     isPending: boolean;
   };
   onContinueAsGuest?: () => void;
+  onGoogleSuccess?: (auth: AuthResponse) => void;
 }
 
-export function RegisterForm({ mutation, onContinueAsGuest }: RegisterFormProps) {
+export function RegisterForm({ mutation, onContinueAsGuest, onGoogleSuccess }: RegisterFormProps) {
   const { spacing, colors } = useTheme();
   const { mutate: register, isPending } = mutation;
   const {
@@ -61,7 +63,8 @@ export function RegisterForm({ mutation, onContinueAsGuest }: RegisterFormProps)
 
   const handleSocialPress = async (provider: string) => {
     if (provider === 'Google') {
-      await startGoogleAuth();
+      const result = await startGoogleAuth();
+      if (result.success) onGoogleSuccess?.(result.auth);
     } else {
       alert(`${provider} registration is coming soon!`);
     }

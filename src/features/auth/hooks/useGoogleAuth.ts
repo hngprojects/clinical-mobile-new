@@ -1,22 +1,19 @@
 import * as Linking from 'expo-linking';
-import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useCallback, useState } from 'react';
 
 import { env } from '@/shared/constants/env';
-import { wait } from '@/shared/utils/wait';
 
 import { authApi } from '../api/auth.api';
-import { useAuthFeedbackStore } from '../store/authFeedback.store';
-import { useAuthStore } from '../store/auth.store';
+import type { AuthResponse } from '../api/auth.types';
 
 const GOOGLE_AUTH_PATH = '/api/v1/auth/google';
 const GOOGLE_AUTH_REDIRECT_URL = 'clinsight://auth/google';
 const ACCESS_TOKEN_KEYS = ['access_token', 'token', 'accessToken'];
 const REFRESH_TOKEN_KEYS = ['refresh_token', 'refreshToken'];
-const SUCCESS_REDIRECT_DELAY_MS = 1200;
 
 type UrlQueryParams = NonNullable<ReturnType<typeof Linking.parse>['queryParams']>;
+type GoogleAuthResult = { success: true; auth: AuthResponse } | { success: false };
 
 function buildGoogleAuthUrl(redirectUrl: string) {
   const baseUrl = env.API_BASE_URL.replace(/\/$/, '');
@@ -97,7 +94,7 @@ export function useGoogleAuth(flow: 'signin' | 'signup' = 'signin') {
 
   const action = flow === 'signup' ? 'sign-up' : 'login';
 
-  const startGoogleAuth = async () => {
+  const startGoogleAuth = async (): Promise<GoogleAuthResult> => {
     if (isPending) return { success: false };
     setIsPending(true);
     setError(null);
@@ -126,20 +123,10 @@ export function useGoogleAuth(flow: 'signin' | 'signup' = 'signin') {
           return { success: false };
         }
 
-        useAuthStore.getState().setTokens(tokens);
         try {
-          const userProfile = await authApi.getMe();
-          useAuthStore.getState().setSession(tokens, userProfile);
-          useAuthFeedbackStore
-            .getState()
-            .setSuccessMessage(
-              flow === 'signup' ? 'Google sign-up successful.' : 'Google login successful.',
-            );
-          await wait(SUCCESS_REDIRECT_DELAY_MS);
-          router.replace('/(main)');
-          return { success: true };
+          const userProfile = await authApi.getMeWithAccessToken(tokens.accessToken);
+          return { success: true, auth: { tokens, user: userProfile } };
         } catch {
-          useAuthStore.getState().clearSession();
           setError(
             `${flow === 'signup' ? 'Signed up' : 'Logged in'} but couldn't load your profile. Please try again.`,
           );

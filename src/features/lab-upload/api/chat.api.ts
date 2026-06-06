@@ -11,18 +11,22 @@ export function getChatText(content: ChatResponse['content']) {
   if (typeof content.message === 'string') return content.message;
   if (typeof content.text === 'string') return content.text;
   if (typeof content.body === 'string') return content.body;
+  if (Object.keys(content).length === 0) return '';
 
   return JSON.stringify(content);
 }
 
 export function mapChatMessage(message: ChatResponse): ChatMessage {
+  const text = getChatText(message.content) || message.file?.name || '';
+
   return {
     id: message.id,
     senderType: message.sender_type,
     content: message.content,
-    text: getChatText(message.content),
+    text,
     medicalCaseId: message.medical_case_id,
     userId: message.user_id,
+    file: message.file ?? null,
     sentAt: message.sent_at,
   };
 }

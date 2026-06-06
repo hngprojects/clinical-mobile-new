@@ -18,6 +18,7 @@ export type SocketPayload = {
   case_id?: unknown;
   medical_case_id?: unknown;
   user_id?: unknown;
+  file?: unknown;
   sent_at?: unknown;
 };
 
@@ -133,7 +134,9 @@ export function isChatResponse(value: unknown): value is ChatResponse {
     typeof message.id === 'string' &&
     typeof message.medical_case_id === 'string' &&
     typeof message.sent_at === 'string' &&
-    (message.sender_type === 'patient' || message.sender_type === 'ai') &&
+    (message.sender_type === 'patient' ||
+      message.sender_type === 'ai' ||
+      message.sender_type === 'file') &&
     typeof message.content === 'object' &&
     message.content !== null
   );
@@ -154,7 +157,7 @@ export function getSocketText(payload: SocketPayload) {
 
 export function getSocketSenderType(payload: SocketPayload): ChatSenderType {
   const senderType = payload.sender_type ?? payload.senderType;
-  if (senderType === 'patient' || senderType === 'ai') return senderType;
+  if (senderType === 'patient' || senderType === 'ai' || senderType === 'file') return senderType;
 
   if (payload.role === 'user' || payload.role === 'patient') return 'patient';
 

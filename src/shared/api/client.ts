@@ -1,6 +1,7 @@
 import { create, isAxiosError } from 'axios';
 
 import type { AuthTokens } from '@/features/auth/api/auth.types';
+import { isAccessTokenExpiring } from '@/shared/auth/authTokens';
 import { env } from '@/shared/constants/env';
 
 import { ApiError } from './types';
@@ -36,15 +37,6 @@ async function refreshAccessToken(refreshToken?: string | null) {
   return authApi.refreshTokens(refreshToken);
 }
 
-function isAccessTokenExpiring(expiresAt: string | null) {
-  if (!expiresAt) return true;
-
-  const expiresAtMs = Date.parse(expiresAt);
-  if (Number.isNaN(expiresAtMs)) return true;
-
-  return expiresAtMs - Date.now() <= ACCESS_TOKEN_REFRESH_BUFFER_MS;
-}
-
 function isRefreshAuthFailure(error: unknown) {
   if (error instanceof ApiError)
     return error.status === 400 || error.status === 401 || error.status === 403;
@@ -70,7 +62,10 @@ export async function ensureFreshAccessToken(options: { force?: boolean } = {}) 
   const state = getAuthState?.();
   if (!state?.accessToken || state.isGuest) return state?.accessToken ?? null;
 
-  if (!options.force && !isAccessTokenExpiring(state.accessTokenExpiresAt)) {
+  if (
+    !options.force &&
+    !isAccessTokenExpiring(state.accessTokenExpiresAt, ACCESS_TOKEN_REFRESH_BUFFER_MS)
+  ) {
     return state.accessToken;
   }
 

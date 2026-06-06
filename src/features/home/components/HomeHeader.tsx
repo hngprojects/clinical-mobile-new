@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import React from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { useUnreadCount } from '@/features/notifications/hooks/useNotifications';
 import { Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
@@ -13,6 +14,14 @@ interface HomeHeaderProps {
 export function HomeHeader({ name = 'User' }: HomeHeaderProps) {
   const { colors, spacing } = useTheme();
   const router = useRouter();
+  const { data: unreadCount = 0, refetch: refetchUnreadCount } = useUnreadCount();
+  const hasUnread = unreadCount > 0;
+
+  useFocusEffect(
+    useCallback(() => {
+      void refetchUnreadCount();
+    }, [refetchUnreadCount]),
+  );
 
   return (
     <View
@@ -33,8 +42,13 @@ export function HomeHeader({ name = 'User' }: HomeHeaderProps) {
           styles.bellButton,
           { backgroundColor: colors.surfaceMuted, borderColor: colors.borderSubtle },
         ]}
+        accessibilityLabel={hasUnread ? `${unreadCount} unread notifications` : 'Notifications'}
       >
-        <Ionicons name="notifications-outline" size={22} color={colors.text} />
+        <Ionicons
+          name={hasUnread ? 'notifications' : 'notifications-outline'}
+          size={22}
+          color={hasUnread ? colors.primary : colors.text}
+        />
       </Pressable>
     </View>
   );

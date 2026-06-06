@@ -2,7 +2,13 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { RegisterForm, useGuestUploadSession } from '@/features/auth';
+import {
+  AuthSuccessModal,
+  RegisterForm,
+  type AuthResponse,
+  useAuthStore,
+  useGuestUploadSession,
+} from '@/features/auth';
 import { useRegister } from '@/features/auth/hooks/useRegister';
 import { Screen, Toast, Typography, UploadBottomSheet } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
@@ -31,8 +37,11 @@ export default function RegisterScreen() {
   const { caseId } = useLocalSearchParams<{ caseId?: string }>();
   const registerMutation = useRegister({ caseId });
   const { handleUpload, handleUploadError } = useGuestUploadSession();
+  const setSession = useAuthStore((state) => state.setSession);
   const [showUploadSheet, setShowUploadSheet] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [pendingAuth, setPendingAuth] = useState<AuthResponse | null>(null);
 
   const handleContinueAsGuest = () => {
     setShowUploadSheet(true);
@@ -46,6 +55,24 @@ export default function RegisterScreen() {
     }
     setToastVisible(false);
   }, [registerMutation.error]);
+
+  const handleGoogleSuccess = (auth: AuthResponse) => {
+    setPendingAuth(auth);
+    setShowSuccessModal(true);
+  };
+
+  const handleSuccessModalAction = () => {
+    if (!pendingAuth) return;
+
+    setShowSuccessModal(false);
+    setSession(pendingAuth.tokens, pendingAuth.user);
+
+    if (caseId) {
+      router.replace({ pathname: '/(main)/chat-review', params: { caseId } });
+    } else {
+      router.replace('/(main)');
+    }
+  };
 
   const errorMessage = getRegisterErrorMessage(registerMutation.error);
 
@@ -71,7 +98,11 @@ export default function RegisterScreen() {
           </Typography>
         </View>
 
-        <RegisterForm mutation={registerMutation} onContinueAsGuest={handleContinueAsGuest} />
+        <RegisterForm
+          mutation={registerMutation}
+          onContinueAsGuest={handleContinueAsGuest}
+          onGoogleSuccess={handleGoogleSuccess}
+        />
 
         <View style={styles.footer}>
           <Typography style={styles.footerText}>Already have an account? </Typography>
@@ -101,6 +132,14 @@ export default function RegisterScreen() {
         onClose={() => setShowUploadSheet(false)}
         onUpload={handleUpload}
         onUploadError={handleUploadError}
+      />
+
+      <AuthSuccessModal
+        visible={showSuccessModal}
+        title="Sign-up successful"
+        message={`Your account has been created.\nYou can now proceed to uploading\nyour lab results.`}
+        actionLabel="Go to Home Page"
+        onAction={handleSuccessModalAction}
       />
     </>
   );

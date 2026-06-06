@@ -236,6 +236,13 @@ async function getMe(): Promise<UserProfile> {
   return mapUser(response.data.data);
 }
 
+async function getMeWithAccessToken(accessToken: string): Promise<UserProfile> {
+  const response = await client.get<SuccessResponse<BackendUserResponse>>('/api/v1/auth/me', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  return mapUser(response.data.data);
+}
+
 async function logout(): Promise<void> {
   await client.post('/api/v1/auth/logout');
 }
@@ -301,6 +308,7 @@ export const authApi = {
   resetPassword,
   completePasswordReset,
   getMe,
+  getMeWithAccessToken,
   logout,
   updateProfile,
   changePassword,

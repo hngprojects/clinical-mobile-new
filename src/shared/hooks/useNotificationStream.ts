@@ -4,6 +4,7 @@ import { useAuthStore } from '@/features/auth/store/auth.store';
 import { env } from '@/shared/constants/env';
 
 const STREAM_URL = `${env.API_BASE_URL}/api/v1/notifications/stream`;
+const RECONNECT_DELAY_MS = 3_000;
 
 export interface NotificationEvent {
   event: string;
@@ -27,6 +28,16 @@ export function useNotificationStream({ enabled = true, guestSessionId, onEvent 
     let destroyed = false;
     let lastLength = 0;
     let buffer = '';
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+    function scheduleReconnect() {
+      if (destroyed || reconnectTimer) return;
+
+      reconnectTimer = setTimeout(() => {
+        reconnectTimer = null;
+        connect();
+      }, RECONNECT_DELAY_MS);
+    }
 
     function connect() {
       if (destroyed) return;
@@ -84,11 +95,11 @@ export function useNotificationStream({ enabled = true, guestSessionId, onEvent 
       };
 
       xhr.onerror = () => {
-        // polling fallback in useAiReview handles recovery
+        scheduleReconnect();
       };
 
       xhr.onloadend = () => {
-        // connection closed — polling fallback handles recovery
+        scheduleReconnect();
       };
 
       xhr.send();
@@ -98,6 +109,7 @@ export function useNotificationStream({ enabled = true, guestSessionId, onEvent 
 
     return () => {
       destroyed = true;
+      if (reconnectTimer) clearTimeout(reconnectTimer);
       xhr?.abort();
       xhr = null;
     };

@@ -1,6 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useRef, useState } from 'react';
-import { Dimensions, Modal, Pressable, StyleSheet, View } from 'react-native';
+import {
+  Dimensions,
+  GestureResponderEvent,
+  Modal,
+  Pressable,
+  StyleSheet,
+  View,
+} from 'react-native';
 
 import { Typography } from '@/shared/components';
 import { ChevronRightIcon } from '@/shared/components/icons/ChevronRightIcon';
@@ -19,14 +26,23 @@ export interface Insight {
 
 interface InsightCardProps {
   insight: Insight;
+  onPress?: (id: string) => void;
   onRename?: (id: string, newTitle: string) => void;
   onView?: (id: string) => void;
   onDelete?: (id: string) => void;
+  onExportPdf?: (id: string) => void;
 }
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-export function InsightCard({ insight, onRename, onView, onDelete }: InsightCardProps) {
+export function InsightCard({
+  insight,
+  onPress,
+  onRename,
+  onView,
+  onDelete,
+  onExportPdf,
+}: InsightCardProps) {
   const { colors, spacing } = useTheme();
   const [menuVisible, setMenuVisible] = useState(false);
   const [renameVisible, setRenameVisible] = useState(false);
@@ -34,7 +50,8 @@ export function InsightCard({ insight, onRename, onView, onDelete }: InsightCard
   const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
   const menuButtonRef = useRef<View>(null);
 
-  const openMenu = () => {
+  const openMenu = (event: GestureResponderEvent) => {
+    event.stopPropagation();
     menuButtonRef.current?.measure((_x, _y, width, height, pageX, pageY) => {
       setMenuPos({
         top: pageY + height + 4,
@@ -61,6 +78,11 @@ export function InsightCard({ insight, onRename, onView, onDelete }: InsightCard
     setDeleteVisible(true);
   };
 
+  const handleExportPdf = () => {
+    closeMenu();
+    onExportPdf?.(insight.id);
+  };
+
   const handleDeleteConfirm = () => {
     setDeleteVisible(false);
     onDelete?.(insight.id);
@@ -73,7 +95,11 @@ export function InsightCard({ insight, onRename, onView, onDelete }: InsightCard
 
   return (
     <>
-      <View
+      <Pressable
+        accessibilityRole={onPress ? 'button' : undefined}
+        accessibilityLabel={onPress ? `Open ${insight.title}` : undefined}
+        disabled={!onPress}
+        onPress={() => onPress?.(insight.id)}
         style={[
           styles.card,
           {
@@ -97,7 +123,7 @@ export function InsightCard({ insight, onRename, onView, onDelete }: InsightCard
             <Ionicons name="ellipsis-vertical" size={18} color={colors.textSecondary} />
           </Pressable>
         </View>
-      </View>
+      </Pressable>
 
       {/* Three-dot dropdown menu */}
       <Modal visible={menuVisible} transparent animationType="none" onRequestClose={closeMenu}>
@@ -121,6 +147,17 @@ export function InsightCard({ insight, onRename, onView, onDelete }: InsightCard
             </Pressable>
 
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+            {onExportPdf ? (
+              <>
+                <Pressable style={styles.menuItem} onPress={handleExportPdf}>
+                  <Typography variant="body1">Export as PDF</Typography>
+                  <Ionicons name="document-text-outline" size={18} color={colors.text} />
+                </Pressable>
+
+                <View style={[styles.divider, { backgroundColor: colors.border }]} />
+              </>
+            ) : null}
 
             <Pressable style={styles.menuItem} onPress={handleDelete}>
               <Typography variant="body1" color="#EF4444">
