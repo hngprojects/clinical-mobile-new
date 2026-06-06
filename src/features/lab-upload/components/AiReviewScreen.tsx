@@ -260,6 +260,7 @@ export function AiReviewScreen() {
           <Typography variant="h2" color={colors.textSecondary} style={styles.headerTitle}>
             AI Review
           </Typography>
+          <View style={styles.headerSpacer} />
         </View>
 
         <View style={styles.body}>
@@ -321,6 +322,9 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     letterSpacing: -0.16,
     lineHeight: 24,
+  },
+  headerSpacer: {
+    width: 24,
   },
   body: {
     flex: 1,
