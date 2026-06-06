@@ -51,7 +51,7 @@ export function ChangeEmailPasswordScreen() {
       {
         onSuccess: (response) => {
           router.push({
-            pathname: '/(main)/change-email-otp',
+            pathname: '/(profile)/change-email-otp',
             params: {
               email: email ?? '',
               expiresInSeconds: String(response.expiresInSeconds ?? 120),
