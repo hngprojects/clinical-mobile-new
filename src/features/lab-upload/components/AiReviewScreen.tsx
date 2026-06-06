@@ -128,6 +128,13 @@ export function AiReviewScreen() {
   const [stepIndex, setStepIndex] = useState(0);
   const [hasShownAllSteps, setHasShownAllSteps] = useState(false);
   const [runKey, setRunKey] = useState(0);
+
+  useEffect(() => {
+    setStepIndex(0);
+    setHasShownAllSteps(false);
+    setRunKey((k) => k + 1);
+  }, [caseId]);
+
   const reviewQuery = useAiReview(caseId || '', guestSessionId);
   const review = reviewQuery.data;
   const isComplete = review?.status === 'complete' && hasShownAllSteps;
