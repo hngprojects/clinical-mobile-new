@@ -61,7 +61,12 @@ export function ProfileScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <ProfileUserCard displayName={displayName} email={email} initials={initials} />
+        <ProfileUserCard
+          displayName={displayName}
+          email={email}
+          initials={initials}
+          avatarUrl={user?.avatarUrl}
+        />
 
         <ProfileMenuSection title="Account">
           <ProfileMenuRow

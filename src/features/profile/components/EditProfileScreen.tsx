@@ -11,6 +11,7 @@ import { Button, FormField, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 import { useUpdateProfile } from '../hooks/useUpdateProfile';
+import { useUploadAvatar } from '../hooks/useUploadAvatar';
 import { ProfileMenuRow } from './ProfileMenuRow';
 
 interface EditProfileForm {
@@ -125,7 +126,9 @@ export function EditProfileScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
-  const { mutate: updateProfile, isPending } = useUpdateProfile();
+  const { mutate: updateProfile, isPending: isUpdating } = useUpdateProfile();
+  const { mutate: uploadAvatar, isPending: isUploading } = useUploadAvatar();
+  const isPending = isUpdating || isUploading;
 
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [showAvatarSheet, setShowAvatarSheet] = useState(false);
@@ -167,10 +170,27 @@ export function EditProfileScreen() {
     const parts = data.fullName.trim().split(/\s+/);
     const firstName = parts[0] ?? '';
     const lastName = parts.slice(1).join(' ') || firstName;
-    updateProfile({ firstName, lastName }, { onSuccess: () => router.back() });
+
+    const finish = () => router.back();
+
+    if (avatarUri) {
+      uploadAvatar(avatarUri, {
+        onSuccess: () => {
+          if (isDirty) {
+            updateProfile({ firstName, lastName }, { onSuccess: finish });
+          } else {
+            finish();
+          }
+        },
+      });
+    } else {
+      updateProfile({ firstName, lastName }, { onSuccess: finish });
+    }
   };
 
   const initials = user ? `${user.firstName[0] ?? ''}${user.lastName[0] ?? ''}`.toUpperCase() : 'G';
+  const existingAvatarUrl = user?.avatarUrl ?? null;
+  const displayAvatarUri = avatarUri ?? existingAvatarUrl;
 
   const canSave = isDirty || avatarUri !== null;
 
@@ -191,8 +211,8 @@ export function EditProfileScreen() {
         {/* Tappable avatar */}
         <Pressable onPress={() => setShowAvatarSheet(true)} style={styles.avatarWrapper}>
           <View style={[styles.avatarCircle, { backgroundColor: colors.primarySubtle }]}>
-            {avatarUri ? (
-              <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
+            {displayAvatarUri ? (
+              <Image source={{ uri: displayAvatarUri }} style={styles.avatarImage} />
             ) : (
               <Typography variant="h2" color={colors.primary}>
                 {initials}
