@@ -20,15 +20,7 @@ const STEP_INTERVAL_MS = 3500;
 
 type StepState = 'pending' | 'active' | 'done';
 
-function StepRow({
-  label,
-  state,
-  index,
-}: {
-  label: string;
-  state: StepState;
-  index: number;
-}) {
+function StepRow({ label, state, index }: { label: string; state: StepState; index: number }) {
   const { colors } = useTheme();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(12)).current;
@@ -73,7 +65,8 @@ function StepRow({
 
   const spin = spinAnim.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
 
-  const iconColor = state === 'done' ? colors.primary : state === 'active' ? colors.primary : colors.border;
+  const iconColor =
+    state === 'done' ? colors.primary : state === 'active' ? colors.primary : colors.border;
 
   return (
     <Animated.View
@@ -103,7 +96,9 @@ function StepRow({
 
       <Typography
         variant="body2"
-        color={state === 'done' ? colors.text : state === 'active' ? colors.text : colors.textSecondary}
+        color={
+          state === 'done' ? colors.text : state === 'active' ? colors.text : colors.textSecondary
+        }
         style={state === 'active' ? styles.activeLabel : undefined}
       >
         {label}
@@ -264,7 +259,12 @@ export function AiReviewScreen() {
         </View>
 
         <View style={styles.body}>
-          <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.borderSubtle }]}>
+          <View
+            style={[
+              styles.card,
+              { backgroundColor: colors.cardBackground, borderColor: colors.borderSubtle },
+            ]}
+          >
             <View style={styles.cardHeader}>
               <Typography variant="body1" style={styles.cardTitle}>
                 Analysing your results
@@ -276,7 +276,10 @@ export function AiReviewScreen() {
 
             <View style={[styles.progressTrack, { backgroundColor: colors.primarySubtle }]}>
               <Animated.View
-                style={[styles.progressFill, { backgroundColor: colors.primary, width: progressWidth }]}
+                style={[
+                  styles.progressFill,
+                  { backgroundColor: colors.primary, width: progressWidth },
+                ]}
               />
             </View>
 
