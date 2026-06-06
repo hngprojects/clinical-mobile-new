@@ -23,6 +23,7 @@ export interface UploadRequest {
 export interface UploadChatLabResultRequest {
   caseId: string;
   file: UploadFile;
+  note?: string | null;
 }
 
 export type OcrStatus = 'pending' | 'processing' | 'complete' | 'failed';

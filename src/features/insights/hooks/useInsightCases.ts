@@ -67,12 +67,6 @@ export function useInsightCases(offset = 0, limit = 50) {
     [query.data?.data, updateTrigger],
   );
 
-  useEffect(() => {
-    if (__DEV__ && query.data) {
-      console.log('[Insights cases]', query.data);
-    }
-  }, [query.data]);
-
   return {
     ...query,
     insightItems,

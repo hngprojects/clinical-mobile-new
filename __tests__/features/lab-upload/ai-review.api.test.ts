@@ -27,6 +27,8 @@ describe('aiReviewApi', () => {
           summary: 'Review summary',
           value_breakdown: null,
           suggested_questions: ['What should I ask next?'],
+          markers_within_range: 4,
+          markers_needing_attention: 2,
           risk_level: 'low',
           confidence: 'high',
           generated_at: '2026-05-19T20:00:00.000Z',
@@ -38,6 +40,8 @@ describe('aiReviewApi', () => {
       status: 'complete',
       summary: 'Review summary',
       medicalCaseId: 'case-1',
+      markersWithinRange: 4,
+      markersNeedingAttention: 2,
     });
     expect(mockGet).toHaveBeenCalledWith('/api/v1/cases/case-1/interpretations/latest', {
       headers: { 'x-guest-session-id': 'guest-1' },

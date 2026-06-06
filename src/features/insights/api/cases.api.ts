@@ -28,14 +28,17 @@ async function listCases(offset = 0, limit = 50): Promise<CasesListResponse> {
   return data;
 }
 
-async function updateCaseTitle(caseId: string, title: string): Promise<void> {
-  const response = await client.patch(`/api/v1/cases/${caseId}`, { title });
-
-  if (__DEV__) {
-    console.log('[Insights rename response]', response.data);
+async function getCaseById(caseId: string): Promise<CaseListItem | null> {
+  try {
+    const { data } = await client.get<{ data: CaseListItem }>(`/api/v1/cases/${caseId}`);
+    return data.data ?? null;
+  } catch {
+    return null;
   }
+}
 
-  return;
+async function updateCaseTitle(caseId: string, title: string): Promise<void> {
+  await client.patch(`/api/v1/cases/${caseId}`, { title });
 }
 
 async function exportCasePdf(caseId: string): Promise<string> {
@@ -55,6 +58,7 @@ async function exportCasePdf(caseId: string): Promise<string> {
 }
 
 export const casesApi = {
+  getCaseById,
   listCases,
   updateCaseTitle,
   exportCasePdf,

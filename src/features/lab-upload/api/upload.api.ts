@@ -58,6 +58,9 @@ async function uploadLabResultToCase(
     name: request.file.name,
     type: request.file.mimeType ?? inferMimeType(request.file.name),
   } as unknown as Blob);
+  if (request.note?.trim()) {
+    formData.append('note', request.note.trim());
+  }
 
   const { data } = await client.post<ApiSuccessResponse<LabResultResponse>>(
     `/api/v1/cases/${request.caseId}/lab-results`,

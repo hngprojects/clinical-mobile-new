@@ -43,6 +43,7 @@ describe('chatApi', () => {
         text: 'Review summary',
         medicalCaseId: 'case-1',
         userId: null,
+        file: null,
         sentAt: '2026-05-20T06:30:00.000Z',
       },
     ]);
@@ -106,6 +107,45 @@ describe('chatApi', () => {
 
     await expect(chatApi.listMessages('case-1')).resolves.toMatchObject([
       { id: 'chat-3', text: 'Fallback text' },
+    ]);
+  });
+
+  it('maps backend file chat messages', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: {
+        status: 'success',
+        message: 'ok',
+        data: [
+          {
+            id: 'chat-file-1',
+            sender_type: 'file',
+            content: {},
+            medical_case_id: 'case-1',
+            user_id: 'user-1',
+            file: {
+              name: 'Blood panel.pdf',
+              url: 'https://cdn.example.com/blood-panel.pdf',
+            },
+            sent_at: '2026-05-20T06:33:00.000Z',
+          },
+        ],
+      },
+    });
+
+    await expect(chatApi.listMessages('case-1')).resolves.toEqual([
+      {
+        id: 'chat-file-1',
+        senderType: 'file',
+        content: {},
+        text: 'Blood panel.pdf',
+        medicalCaseId: 'case-1',
+        userId: 'user-1',
+        file: {
+          name: 'Blood panel.pdf',
+          url: 'https://cdn.example.com/blood-panel.pdf',
+        },
+        sentAt: '2026-05-20T06:33:00.000Z',
+      },
     ]);
   });
 });

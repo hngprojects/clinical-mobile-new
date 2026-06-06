@@ -58,6 +58,17 @@ describe('isChatResponse', () => {
     expect(isChatResponse({ ...VALID_CHAT_RESPONSE, sender_type: 'bot' })).toBe(false);
   });
 
+  it('returns true for backend file chat responses', () => {
+    expect(
+      isChatResponse({
+        ...VALID_CHAT_RESPONSE,
+        sender_type: 'file',
+        content: {},
+        file: { name: 'Blood panel.pdf', url: 'https://cdn.example.com/blood-panel.pdf' },
+      }),
+    ).toBe(true);
+  });
+
   it('returns false when content is null', () => {
     expect(isChatResponse({ ...VALID_CHAT_RESPONSE, content: null })).toBe(false);
   });
@@ -116,6 +127,10 @@ describe('getSocketSenderType', () => {
     expect(getSocketSenderType({ sender_type: 'ai' })).toBe('ai');
   });
 
+  it('returns file for sender_type file', () => {
+    expect(getSocketSenderType({ sender_type: 'file' })).toBe('file');
+  });
+
   it('maps role user to patient', () => {
     expect(getSocketSenderType({ role: 'user' })).toBe('patient');
   });
@@ -141,6 +156,27 @@ describe('normalizeSocketPayload', () => {
       medicalCaseId: CASE_ID,
       userId: null,
       sentAt: '2026-05-20T10:00:00.000Z',
+    });
+  });
+
+  it('maps a backend file ChatResponse to a ChatMessage', () => {
+    const result = normalizeSocketPayload(
+      {
+        ...VALID_CHAT_RESPONSE,
+        id: 'msg-file-1',
+        sender_type: 'file',
+        content: {},
+        file: { name: 'Blood panel.pdf', url: 'https://cdn.example.com/blood-panel.pdf' },
+      },
+      CASE_ID,
+    );
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      id: 'msg-file-1',
+      senderType: 'file',
+      text: 'Blood panel.pdf',
+      file: { name: 'Blood panel.pdf', url: 'https://cdn.example.com/blood-panel.pdf' },
     });
   });
 
