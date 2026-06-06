@@ -40,6 +40,7 @@ interface BackendUserResponse {
   is_email_verified: boolean;
   is_active: boolean;
   google_id: string | null;
+  avatar_url?: string | null;
   created_at: string;
   last_login_at: string | null;
 }
@@ -80,6 +81,7 @@ function mapUser(user: BackendUserResponse): UserProfile {
     isEmailVerified: user.is_email_verified,
     isActive: user.is_active,
     googleId: user.google_id,
+    avatarUrl: user.avatar_url,
     createdAt: user.created_at,
     lastLoginAt: user.last_login_at,
   };
@@ -297,6 +299,20 @@ async function verifyEmailChange(
   return { message: response.data.message };
 }
 
+async function uploadAvatar(uri: string): Promise<UserProfile> {
+  const form = new FormData();
+  const filename = uri.split('/').pop() ?? 'avatar.jpg';
+  const ext = filename.split('.').pop()?.toLowerCase();
+  const mimeType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+  form.append('file', { uri, name: filename, type: mimeType } as unknown as Blob);
+  const response = await client.patch<SuccessResponse<BackendUserResponse>>(
+    '/api/v1/users/me/avatar',
+    form,
+    { headers: { 'Content-Type': 'multipart/form-data' } },
+  );
+  return mapUser(response.data.data);
+}
+
 export const authApi = {
   login,
   register,
@@ -315,4 +331,5 @@ export const authApi = {
   deleteAccount,
   requestEmailChange,
   verifyEmailChange,
+  uploadAvatar,
 };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 
 import { Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
@@ -10,9 +10,10 @@ interface ProfileUserCardProps {
   displayName: string;
   email: string;
   initials: string;
+  avatarUrl?: string | null;
 }
 
-export function ProfileUserCard({ displayName, email, initials }: ProfileUserCardProps) {
+export function ProfileUserCard({ displayName, email, initials, avatarUrl }: ProfileUserCardProps) {
   const { colors } = useTheme();
 
   return (
@@ -23,9 +24,13 @@ export function ProfileUserCard({ displayName, email, initials }: ProfileUserCar
       ]}
     >
       <View style={[styles.avatar, { backgroundColor: colors.primarySubtle }]}>
-        <Typography variant="body1" color={colors.primary} style={styles.avatarInitials}>
-          {initials}
-        </Typography>
+        {avatarUrl ? (
+          <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
+        ) : (
+          <Typography variant="body1" color={colors.primary} style={styles.avatarInitials}>
+            {initials}
+          </Typography>
+        )}
       </View>
       <View style={styles.userInfo}>
         <Typography variant="body1" style={styles.userName}>
@@ -54,6 +59,11 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: 64,
+    height: 64,
   },
   avatarInitials: {
     fontWeight: '600',

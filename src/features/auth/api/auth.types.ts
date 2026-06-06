@@ -51,6 +51,7 @@ export interface UserProfile {
   isEmailVerified?: boolean;
   isActive?: boolean;
   googleId?: string | null;
+  avatarUrl?: string | null;
   createdAt?: string;
   lastLoginAt?: string | null;
 }

@@ -25,14 +25,8 @@ interface UploadBottomSheetProps {
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const MAX_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024;
-const ACCEPTED_DOCUMENT_TYPES = [
-  'application/pdf',
-  'image/heic',
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-];
-const ACCEPTED_EXTENSIONS = ['PDF', 'HEIC', 'JPG', 'JPEG', 'PNG', 'WEBP'];
+const ACCEPTED_DOCUMENT_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
+const ACCEPTED_EXTENSIONS = ['PDF', 'JPG', 'JPEG', 'PNG'];
 
 export interface UploadedFile {
   name: string;
@@ -419,7 +413,7 @@ export function UploadBottomSheet({
                   </Typography>
 
                   <Typography style={styles.sheetFormat}>
-                    JPEG, PDF, PNG, HEIC and WEBP formats up to 5-10 MB
+                    JPEG, PDF and PNG formats up to 5-10 MB
                   </Typography>
                 </View>
 

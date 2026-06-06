@@ -466,11 +466,7 @@ function getTimelineReviews(history: AiReviewResult[] | undefined, latest?: AiRe
   const seen = new Set<string>();
 
   return source
-    .filter(
-      (review) =>
-        review.status === 'complete' &&
-        (review.summary || review.valueBreakdown?.length || review.suggestedQuestions?.length),
-    )
+    .filter(hasRenderableReviewContent)
     .filter((review) => {
       const identity = getReviewIdentity(review);
       if (!identity || seen.has(identity)) return false;
@@ -479,6 +475,28 @@ function getTimelineReviews(history: AiReviewResult[] | undefined, latest?: AiRe
       return true;
     })
     .sort((a, b) => getTimestamp(a.generatedAt) - getTimestamp(b.generatedAt));
+}
+
+function hasRenderableReviewContent(review: AiReviewResult) {
+  if (review.status !== 'complete') return false;
+
+  const hasSummary = typeof review.summary === 'string' && review.summary.trim().length > 0;
+  const hasValues =
+    Array.isArray(review.valueBreakdown) &&
+    review.valueBreakdown.some((item) => {
+      const hasMetric = typeof item.metric === 'string' && item.metric.trim().length > 0;
+      const hasValue =
+        item.value !== null &&
+        item.value !== undefined &&
+        (typeof item.value !== 'string' || item.value.trim().length > 0);
+
+      return hasMetric || hasValue;
+    });
+  const hasMarkerCounts =
+    typeof review.markersWithinRange === 'number' ||
+    typeof review.markersNeedingAttention === 'number';
+
+  return hasSummary || hasValues || hasMarkerCounts;
 }
 
 function getReviewIdentity(review?: AiReviewResult | null) {

@@ -14,7 +14,7 @@ import { InsightSearchBar } from './InsightSearchBar';
 
 export function InsightScreen() {
   const { spacing, colors } = useTheme();
-  const { insightItems, isLoading, isError, refetch, renameCase } = useInsightCases();
+  const { insightItems, isLoading, isError, refetch, deleteCase, renameCase } = useInsightCases();
   const {
     query,
     setQuery,
@@ -24,7 +24,7 @@ export function InsightScreen() {
     addDemoInsight,
     renameInsight,
     deleteInsight,
-  } = useInsightList(insightItems, { onRename: renameCase });
+  } = useInsightList(insightItems, { onDelete: deleteCase, onRename: renameCase });
 
   const hasActiveQuery = query.trim().length > 0;
   const isSearchActive = hasActiveQuery && items.length > 0;

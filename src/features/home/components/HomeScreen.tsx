@@ -25,7 +25,7 @@ export function HomeScreen() {
   const { colors, spacing } = useTheme();
   const { user, isGuest } = useHome();
   const router = useRouter();
-  const { insightItems, renameCase } = useInsightCases(0, 3);
+  const { insightItems, deleteCase, renameCase } = useInsightCases(0, 3);
   const [showUploadSheet, setShowUploadSheet] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
@@ -37,13 +37,12 @@ export function HomeScreen() {
       queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_KEY });
       queryClient.invalidateQueries({ queryKey: UNREAD_COUNT_KEY });
 
+      if (event.event === 'interpretation_ready' || event.event === 'interpretation_failed') {
+        queryClient.invalidateQueries({ queryKey: ['insight-cases'] });
+      }
+
       if (event.event === 'interpretation_ready') {
         setToastMessage('Your lab results are ready to view.');
-        setShowToast(true);
-        if (toastTimer.current) clearTimeout(toastTimer.current);
-        toastTimer.current = setTimeout(() => setShowToast(false), 4000);
-      } else if (event.event === 'interpretation_failed') {
-        setToastMessage('Unable to process your lab results. Please try again.');
         setShowToast(true);
         if (toastTimer.current) clearTimeout(toastTimer.current);
         toastTimer.current = setTimeout(() => setShowToast(false), 4000);
@@ -96,7 +95,16 @@ export function HomeScreen() {
   };
 
   const handleDelete = (id: string) => {
-    void id;
+    deleteCase(id).catch((error) => {
+      setToastMessage('Unable to delete insight. Please try again.');
+      setShowToast(true);
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+      toastTimer.current = setTimeout(() => setShowToast(false), 4000);
+
+      if (__DEV__) {
+        console.error('[HomeScreen] Delete failed', error);
+      }
+    });
   };
 
   const handleExportPdf = useCallback(
