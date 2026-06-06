@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 
 import { Screen, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
@@ -9,11 +9,108 @@ import { useTheme } from '@/shared/theme';
 import { useAiReview } from '../hooks/useAiReview';
 import { FlowErrorScreen } from './FlowErrorScreen';
 
-const processingSteps = [
-  'Extracting data from your file...',
-  'Interpreting lab values...',
-  'Preparing your results...',
+const STEPS = [
+  'Extracting lab values from your file',
+  'Checking reference ranges',
+  'Generating your interpretation',
+  'Preparing your report',
 ];
+
+const STEP_INTERVAL_MS = 1400;
+
+type StepState = 'pending' | 'active' | 'done';
+
+function StepRow({
+  label,
+  state,
+  index,
+}: {
+  label: string;
+  state: StepState;
+  index: number;
+}) {
+  const { colors } = useTheme();
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(12)).current;
+  const spinAnim = useRef(new Animated.Value(0)).current;
+  const spinLoop = useRef<Animated.CompositeAnimation | null>(null);
+
+  useEffect(() => {
+    if (state === 'pending') return;
+
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 320,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 320,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [fadeAnim, slideAnim, state]);
+
+  useEffect(() => {
+    if (state === 'active') {
+      spinLoop.current = Animated.loop(
+        Animated.timing(spinAnim, {
+          toValue: 1,
+          duration: 900,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        }),
+      );
+      spinLoop.current.start();
+    } else {
+      spinLoop.current?.stop();
+      spinAnim.setValue(0);
+    }
+    return () => spinLoop.current?.stop();
+  }, [spinAnim, state]);
+
+  const spin = spinAnim.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
+
+  const iconColor = state === 'done' ? colors.primary : state === 'active' ? colors.primary : colors.border;
+
+  return (
+    <Animated.View
+      style={[
+        styles.stepRow,
+        { opacity: state === 'pending' ? 0 : fadeAnim, transform: [{ translateY: slideAnim }] },
+      ]}
+    >
+      <View
+        style={[
+          styles.iconWrap,
+          {
+            backgroundColor: state === 'done' ? colors.primarySubtle : 'transparent',
+            borderColor: iconColor,
+            borderWidth: state === 'done' ? 0 : 1.5,
+          },
+        ]}
+      >
+        {state === 'done' ? (
+          <Ionicons name="checkmark" size={14} color={colors.primary} />
+        ) : state === 'active' ? (
+          <Animated.View style={{ transform: [{ rotate: spin }] }}>
+            <Ionicons name="reload-outline" size={14} color={colors.primary} />
+          </Animated.View>
+        ) : null}
+      </View>
+
+      <Typography
+        variant="body2"
+        color={state === 'done' ? colors.text : state === 'active' ? colors.text : colors.textSecondary}
+        style={state === 'active' ? styles.activeLabel : undefined}
+      >
+        {label}
+      </Typography>
+    </Animated.View>
+  );
+}
 
 export function AiReviewScreen() {
   const { colors, spacing } = useTheme();
@@ -27,11 +124,13 @@ export function AiReviewScreen() {
     mimeType?: string;
     errorType?: string;
   }>();
+
   const [stepIndex, setStepIndex] = useState(0);
   const [hasShownAllSteps, setHasShownAllSteps] = useState(false);
   const reviewQuery = useAiReview(caseId || '', guestSessionId);
   const review = reviewQuery.data;
   const isComplete = review?.status === 'complete' && hasShownAllSteps;
+
   const missingCaseErrorType = !caseId ? 'system' : undefined;
   const configuredErrorType =
     errorType === 'network' || errorType === 'system' ? errorType : undefined;
@@ -41,17 +140,27 @@ export function AiReviewScreen() {
     ? missingCaseErrorType || configuredErrorType || processingErrorType || queryErrorType
     : undefined;
 
+  const progressAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(progressAnim, {
+      toValue: (stepIndex + 1) / STEPS.length,
+      duration: 400,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
+  }, [progressAnim, stepIndex]);
+
   useEffect(() => {
     const id = setInterval(() => {
       setStepIndex((current) => {
-        if (current >= processingSteps.length - 1) {
+        if (current >= STEPS.length - 1) {
           setHasShownAllSteps(true);
-          return 0;
+          return current;
         }
-
         return current + 1;
       });
-    }, 1200);
+    }, STEP_INTERVAL_MS);
 
     return () => clearInterval(id);
   }, []);
@@ -80,14 +189,7 @@ export function AiReviewScreen() {
     if (configuredErrorType) {
       router.replace({
         pathname: '/(main)/ai-review',
-        params: {
-          caseId,
-          guestSessionId,
-          name,
-          size,
-          uri,
-          mimeType,
-        },
+        params: { caseId, guestSessionId, name, size, uri, mimeType },
       });
     }
   };
@@ -96,14 +198,7 @@ export function AiReviewScreen() {
     if (isComplete) {
       router.replace({
         pathname: '/(main)/chat-review',
-        params: {
-          caseId,
-          guestSessionId,
-          name,
-          size,
-          uri,
-          mimeType,
-        },
+        params: { caseId, guestSessionId, name, size, uri, mimeType },
       });
     }
   }, [caseId, guestSessionId, isComplete, mimeType, name, router, size, uri]);
@@ -135,6 +230,11 @@ export function AiReviewScreen() {
     );
   }
 
+  const progressWidth = progressAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0%', '100%'],
+  });
+
   return (
     <Screen edges={['top', 'bottom']}>
       <View style={[styles.root, { paddingHorizontal: spacing.lg }]}>
@@ -153,10 +253,34 @@ export function AiReviewScreen() {
           </Typography>
         </View>
 
-        <View style={styles.processingBody}>
-          <ActivityIndicator color={colors.primary} size="small" />
-          <Typography variant="h2" align="center" style={styles.processingText}>
-            {processingSteps[stepIndex]}
+        <View style={styles.body}>
+          <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.borderSubtle }]}>
+            <View style={styles.cardHeader}>
+              <Typography variant="body1" style={styles.cardTitle}>
+                Analysing your results
+              </Typography>
+              <Typography variant="label" color={colors.textSecondary}>
+                {stepIndex + 1} of {STEPS.length}
+              </Typography>
+            </View>
+
+            <View style={[styles.progressTrack, { backgroundColor: colors.primarySubtle }]}>
+              <Animated.View
+                style={[styles.progressFill, { backgroundColor: colors.primary, width: progressWidth }]}
+              />
+            </View>
+
+            <View style={styles.stepList}>
+              {STEPS.map((label, i) => {
+                const state: StepState =
+                  i < stepIndex ? 'done' : i === stepIndex ? 'active' : 'pending';
+                return <StepRow key={label} label={label} state={state} index={i} />;
+              })}
+            </View>
+          </View>
+
+          <Typography variant="body2" color={colors.textSecondary} style={styles.hint}>
+            This usually takes less than a minute
           </Typography>
         </View>
       </View>
@@ -189,20 +313,61 @@ const styles = StyleSheet.create({
     letterSpacing: -0.16,
     lineHeight: 24,
   },
-  processingBody: {
+  body: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
-    paddingBottom: 96,
+    paddingBottom: 80,
+    gap: 16,
+  },
+  card: {
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 20,
+    gap: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  cardTitle: {
+    fontFamily: 'Inter_600SemiBold',
+    fontWeight: '600',
+  },
+  progressTrack: {
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: 4,
+    borderRadius: 2,
+  },
+  stepList: {
+    gap: 14,
+  },
+  stepRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
   },
-  processingText: {
-    color: '#767676',
-    fontFamily: 'Inter_400Regular',
-    fontSize: 14,
-    fontWeight: '400',
-    letterSpacing: -0.14,
-    lineHeight: 21,
+  iconWrap: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activeLabel: {
+    fontFamily: 'Inter_500Medium',
+    fontWeight: '500',
+  },
+  hint: {
     textAlign: 'center',
   },
 });
