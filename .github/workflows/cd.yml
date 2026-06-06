@@ -83,6 +83,49 @@ jobs:
             echo "| Update Group | \`$GROUP_ID\` |" >> $GITHUB_STEP_SUMMARY
           fi
 
+  eas-update-production:
+    name: Publish EAS Update (Production)
+    runs-on: ubuntu-latest
+    if: github.ref_name == 'dev'
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      API_BASE_URL: ${{ vars.API_BASE_URL_PROD || 'https://api.clinsight.hng14.com' }}
+      APP_ENV: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Create .env file
+        run: |
+          echo "EXPO_PUBLIC_API_BASE_URL=${{ env.API_BASE_URL }}" >> .env
+          echo "EXPO_PUBLIC_APP_ENV=${{ env.APP_ENV }}" >> .env
+
+      - name: Publish EAS Update
+        id: eas-update
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          SAFE_MESSAGE="$(printf '%s' "$COMMIT_MESSAGE" | tr '\n' ' ')"
+          npx eas-cli update \
+            --branch production \
+            --message "[prod] $SAFE_MESSAGE" \
+            --non-interactive
+
   deploy:
     name: Build and Deploy Android
     runs-on: ubuntu-latest

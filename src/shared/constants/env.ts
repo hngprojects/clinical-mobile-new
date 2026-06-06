@@ -6,7 +6,11 @@ export const env = {
   APP_ENV:
     process.env.EXPO_PUBLIC_APP_ENV ??
     (typeof __DEV__ !== 'undefined' && __DEV__ ? 'development' : 'production'),
-  API_BASE_URL: process.env.EXPO_PUBLIC_API_BASE_URL ?? 'https://api.staging.clinsight.hng14.com',
+  API_BASE_URL:
+    process.env.EXPO_PUBLIC_API_BASE_URL ??
+    (typeof __DEV__ !== 'undefined' && __DEV__
+      ? 'https://api.staging.clinsight.hng14.com'
+      : 'https://api.clinsight.hng14.com'),
 } as const;
 
 export const shouldPersistOnboarding = env.APP_ENV === 'production';

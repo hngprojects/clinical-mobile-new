@@ -8,6 +8,7 @@ import {
 import { PlayfairDisplay_500Medium } from '@expo-google-fonts/playfair-display';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import * as Updates from 'expo-updates';
 import React, { useEffect } from 'react';
 
 import { AppProviders } from '@/providers/AppProviders';
@@ -54,7 +55,27 @@ function RootLayoutNav() {
   );
 }
 
+function useOTAUpdates() {
+  useEffect(() => {
+    if (__DEV__) return;
+
+    async function check() {
+      try {
+        const update = await Updates.checkForUpdateAsync();
+        if (update.isAvailable) {
+          await Updates.fetchUpdateAsync();
+          await Updates.reloadAsync();
+        }
+      } catch {}
+    }
+
+    check();
+  }, []);
+}
+
 export default function RootLayout() {
+  useOTAUpdates();
+
   return (
     <AppProviders>
       <RootLayoutNav />
