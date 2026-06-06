@@ -127,6 +127,7 @@ export function AiReviewScreen() {
 
   const [stepIndex, setStepIndex] = useState(0);
   const [hasShownAllSteps, setHasShownAllSteps] = useState(false);
+  const [runKey, setRunKey] = useState(0);
   const reviewQuery = useAiReview(caseId || '', guestSessionId);
   const review = reviewQuery.data;
   const isComplete = review?.status === 'complete' && hasShownAllSteps;
@@ -175,6 +176,7 @@ export function AiReviewScreen() {
   const handleRetry = () => {
     setStepIndex(0);
     setHasShownAllSteps(false);
+    setRunKey((k) => k + 1);
 
     if (processingErrorType) {
       handleBackToPreview();
@@ -274,7 +276,7 @@ export function AiReviewScreen() {
               {STEPS.map((label, i) => {
                 const state: StepState =
                   i < stepIndex ? 'done' : i === stepIndex ? 'active' : 'pending';
-                return <StepRow key={label} label={label} state={state} index={i} />;
+                return <StepRow key={`${runKey}-${label}`} label={label} state={state} index={i} />;
               })}
             </View>
           </View>
