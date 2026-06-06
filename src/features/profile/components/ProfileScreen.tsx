@@ -1,9 +1,11 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Linking, ScrollView, StyleSheet } from 'react-native';
+import { Alert, Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAuthStore } from '@/features/auth/store/auth.store';
+import { Typography } from '@/shared/components';
+import { env } from '@/shared/constants/env';
 import { useTheme } from '@/shared/theme';
 
 import { PROFILE_HORIZONTAL_PADDING } from '../constants';
@@ -121,6 +123,12 @@ export function ProfileScreen() {
         </ProfileMenuSection>
 
         <ProfileDangerZone onDeleteAccount={() => setDeleteModalVisible(true)} />
+
+        <View style={styles.versionRow}>
+          <Typography variant="body2" color={colors.textSecondary} style={styles.versionText}>
+            v1.0.0 (build 5) — {env.APP_ENV}
+          </Typography>
+        </View>
       </ScrollView>
 
       <LogoutConfirmModal
@@ -146,5 +154,12 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 24,
     paddingHorizontal: PROFILE_HORIZONTAL_PADDING,
+  },
+  versionRow: {
+    alignItems: 'center',
+    paddingTop: 8,
+  },
+  versionText: {
+    fontSize: 12,
   },
 });
