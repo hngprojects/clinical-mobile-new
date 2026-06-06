@@ -11,11 +11,9 @@ export function useCaseName(caseId: string | undefined): string | undefined {
 
   const cachedTitle = isAuthenticated ? getCachedCaseTitle(queryClient, caseId) : undefined;
 
-  const query = useApiQuery(
-    ['case', caseId],
-    () => casesApi.getCaseById(caseId!),
-    { enabled: isAuthenticated && !!caseId && cachedTitle === undefined },
-  );
+  const query = useApiQuery(['case', caseId], () => casesApi.getCaseById(caseId!), {
+    enabled: isAuthenticated && !!caseId && cachedTitle === undefined,
+  });
 
   if (!isAuthenticated) return undefined;
 

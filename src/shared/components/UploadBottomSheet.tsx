@@ -335,7 +335,12 @@ export function UploadBottomSheet({
   return (
     <>
       {/* Primary Bottom Sheet: Original Upload Design */}
-      <Modal visible={visible} transparent animationType="fade" onRequestClose={() => handleDismiss()}>
+      <Modal
+        visible={visible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => handleDismiss()}
+      >
         <View style={styles.container}>
           <Pressable style={styles.backdrop} onPress={handleBackdropPress} />
 
