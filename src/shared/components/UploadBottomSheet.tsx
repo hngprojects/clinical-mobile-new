@@ -173,10 +173,15 @@ export function UploadBottomSheet({
 
   const isSupportedFileType = (fileName: string, mimeType?: string) => {
     const extension = fileName.split('.').pop()?.toUpperCase();
-    return (
-      (mimeType ? ACCEPTED_DOCUMENT_TYPES.includes(mimeType) : false) ||
-      (extension ? ACCEPTED_EXTENSIONS.includes(extension) : false)
-    );
+    const hasAcceptedExtension = extension ? ACCEPTED_EXTENSIONS.includes(extension) : false;
+    const hasAcceptedMimeType = mimeType ? ACCEPTED_DOCUMENT_TYPES.includes(mimeType) : false;
+    const isGenericMimeType = mimeType === 'application/octet-stream';
+
+    if (mimeType && !isGenericMimeType && !hasAcceptedMimeType) {
+      return false;
+    }
+
+    return hasAcceptedMimeType || hasAcceptedExtension;
   };
 
   const handleTakePhoto = async () => {
@@ -202,6 +207,12 @@ export function UploadBottomSheet({
         const asset = result.assets[0];
         const fileName = asset.fileName || 'camera_photo.jpg';
         const fileSize = formatFileSize(asset.fileSize, '1.2MB');
+        const mimeType = asset.mimeType || 'image/jpeg';
+
+        if (!isSupportedFileType(fileName, mimeType)) {
+          dismissAllAndError({ type: 'file-type', fileName, fileSize });
+          return;
+        }
 
         if (isOversized(asset.fileSize)) {
           dismissAllAndError({ type: 'file-size', fileName, fileSize });
@@ -213,7 +224,7 @@ export function UploadBottomSheet({
           size: fileSize,
           sizeBytes: asset.fileSize,
           uri: asset.uri,
-          mimeType: asset.mimeType || 'image/jpeg',
+          mimeType,
         });
       }
     } catch (err) {
@@ -245,6 +256,12 @@ export function UploadBottomSheet({
         const asset = result.assets[0];
         const fileName = asset.fileName || 'gallery_photo.jpg';
         const fileSize = formatFileSize(asset.fileSize, '1.5MB');
+        const mimeType = asset.mimeType || 'image/jpeg';
+
+        if (!isSupportedFileType(fileName, mimeType)) {
+          dismissAllAndError({ type: 'file-type', fileName, fileSize });
+          return;
+        }
 
         if (isOversized(asset.fileSize)) {
           dismissAllAndError({ type: 'file-size', fileName, fileSize });
@@ -256,7 +273,7 @@ export function UploadBottomSheet({
           size: fileSize,
           sizeBytes: asset.fileSize,
           uri: asset.uri,
-          mimeType: asset.mimeType || 'image/jpeg',
+          mimeType,
         });
       }
     } catch (err) {

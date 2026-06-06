@@ -1,4 +1,4 @@
-export type AiReviewStatus = 'pending' | 'processing' | 'complete' | 'failed';
+export type AiReviewStatus = 'pending' | 'processing' | 'complete' | 'completed' | 'failed';
 
 export interface AiReviewResult {
   status: AiReviewStatus;

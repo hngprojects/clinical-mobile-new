@@ -48,6 +48,29 @@ describe('aiReviewApi', () => {
     });
   });
 
+  it('normalizes backend completed status to complete', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: {
+        status: 'success',
+        message: 'OK',
+        data: {
+          id: 'interpretation-1',
+          medical_case_id: 'case-1',
+          status: 'completed',
+          summary: 'Review summary',
+          value_breakdown: null,
+          suggested_questions: [],
+          generated_at: '2026-05-19T20:00:00.000Z',
+        },
+      },
+    });
+
+    await expect(aiReviewApi.getLatestInterpretation('case-1')).resolves.toMatchObject({
+      status: 'complete',
+      summary: 'Review summary',
+    });
+  });
+
   it('maps interpretation history responses', async () => {
     mockGet.mockResolvedValueOnce({
       data: {
@@ -123,6 +146,25 @@ describe('aiReviewApi', () => {
     });
     expect(mockGet).toHaveBeenNthCalledWith(2, '/api/v1/cases/case-1/full', {
       headers: { 'x-guest-session-id': 'guest-1' },
+    });
+  });
+
+  it('treats a missing interpretation on a completed case as complete', async () => {
+    mockGet
+      .mockRejectedValueOnce(new ApiError('No interpretation found for this case.', 404))
+      .mockResolvedValueOnce({
+        data: {
+          status: 'success',
+          message: 'OK',
+          data: {
+            case: { status: 'completed' },
+            interpretation: null,
+          },
+        },
+      });
+
+    await expect(aiReviewApi.getLatestInterpretation('case-1')).resolves.toEqual({
+      status: 'complete',
     });
   });
 

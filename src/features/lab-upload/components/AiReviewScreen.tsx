@@ -17,10 +17,11 @@ const STEPS = [
 ];
 
 const STEP_INTERVAL_MS = 3500;
+const AI_REVIEW_TIMEOUT_MS = 120_000;
 
 type StepState = 'pending' | 'active' | 'done';
 
-function StepRow({ label, state, index }: { label: string; state: StepState; index: number }) {
+function StepRow({ label, state }: { label: string; state: StepState }) {
   const { colors } = useTheme();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(12)).current;
@@ -122,25 +123,33 @@ export function AiReviewScreen() {
 
   const [stepIndex, setStepIndex] = useState(0);
   const [hasShownAllSteps, setHasShownAllSteps] = useState(false);
+  const [hasTimedOut, setHasTimedOut] = useState(false);
   const [runKey, setRunKey] = useState(0);
 
   useEffect(() => {
     setStepIndex(0);
     setHasShownAllSteps(false);
+    setHasTimedOut(false);
     setRunKey((k) => k + 1);
   }, [caseId]);
 
   const reviewQuery = useAiReview(caseId || '', guestSessionId);
   const review = reviewQuery.data;
-  const isComplete = review?.status === 'complete' && hasShownAllSteps;
+  const isComplete =
+    (review?.status === 'complete' || review?.status === 'completed') && hasShownAllSteps;
 
   const missingCaseErrorType = !caseId ? 'system' : undefined;
   const configuredErrorType =
     errorType === 'network' || errorType === 'system' ? errorType : undefined;
   const processingErrorType = review?.status === 'failed' ? 'processing' : undefined;
   const queryErrorType = reviewQuery.isError ? 'network' : undefined;
+  const timeoutErrorType = hasTimedOut ? 'network' : undefined;
   const visibleErrorType = hasShownAllSteps
-    ? missingCaseErrorType || configuredErrorType || processingErrorType || queryErrorType
+    ? missingCaseErrorType ||
+      configuredErrorType ||
+      processingErrorType ||
+      queryErrorType ||
+      timeoutErrorType
     : undefined;
 
   const progressAnim = useRef(new Animated.Value(0)).current;
@@ -155,6 +164,8 @@ export function AiReviewScreen() {
   }, [progressAnim, stepIndex]);
 
   useEffect(() => {
+    if (hasShownAllSteps) return;
+
     const id = setInterval(() => {
       setStepIndex((current) => {
         if (current >= STEPS.length - 1) {
@@ -166,7 +177,17 @@ export function AiReviewScreen() {
     }, STEP_INTERVAL_MS);
 
     return () => clearInterval(id);
-  }, []);
+  }, [hasShownAllSteps, runKey]);
+
+  useEffect(() => {
+    if (!caseId || isComplete || review?.status === 'failed') return;
+
+    const id = setTimeout(() => {
+      setHasTimedOut(true);
+    }, AI_REVIEW_TIMEOUT_MS);
+
+    return () => clearTimeout(id);
+  }, [caseId, isComplete, review?.status, runKey]);
 
   const handleBackToPreview = () => {
     router.replace({
@@ -178,6 +199,7 @@ export function AiReviewScreen() {
   const handleRetry = () => {
     setStepIndex(0);
     setHasShownAllSteps(false);
+    setHasTimedOut(false);
     setRunKey((k) => k + 1);
 
     if (processingErrorType) {
@@ -287,7 +309,7 @@ export function AiReviewScreen() {
               {STEPS.map((label, i) => {
                 const state: StepState =
                   i < stepIndex ? 'done' : i === stepIndex ? 'active' : 'pending';
-                return <StepRow key={`${runKey}-${label}`} label={label} state={state} index={i} />;
+                return <StepRow key={`${runKey}-${label}`} label={label} state={state} />;
               })}
             </View>
           </View>

@@ -30,14 +30,17 @@ export function useAiReview(
 
         const status = q.state.data?.status;
         if (keepStreamOpen) return status === 'failed' ? false : 10_000;
-        if (status === 'complete' || status === 'failed') return false;
+        if (status === 'complete' || status === 'completed' || status === 'failed') return false;
 
         return 10_000;
       },
     },
   );
 
-  const isSettled = query.data?.status === 'complete' || query.data?.status === 'failed';
+  const isSettled =
+    query.data?.status === 'complete' ||
+    query.data?.status === 'completed' ||
+    query.data?.status === 'failed';
 
   useNotificationStream({
     enabled: Boolean(caseId) && (keepStreamOpen || !isSettled),

@@ -279,7 +279,7 @@ export function ChatReviewScreen() {
     }
 
     if (error.type === 'file-type') {
-      showUploadError('Please upload a PDF, JPG, JPEG, PNG, HEIC, or WEBP file.');
+      showUploadError('Please upload a PDF, JPG, JPEG, or PNG file.');
       return;
     }
 
