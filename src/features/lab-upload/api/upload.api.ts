@@ -8,6 +8,8 @@ import type {
   UploadResponse,
 } from './upload.types';
 
+const UPLOAD_REQUEST_TIMEOUT_MS = 120_000;
+
 function inferMimeType(fileName: string) {
   const extension = fileName.split('.').pop()?.toLowerCase();
 
@@ -39,7 +41,10 @@ async function uploadLabResult(request: UploadRequest): Promise<UploadResponse> 
   const { data } = await client.post<ApiSuccessResponse<UploadResponse>>(
     '/api/v1/upload',
     formData,
-    { headers: { ...headers, 'Content-Type': 'multipart/form-data' } },
+    {
+      headers: { ...headers, 'Content-Type': 'multipart/form-data' },
+      timeout: UPLOAD_REQUEST_TIMEOUT_MS,
+    },
   );
 
   if (!data.data) {
@@ -65,7 +70,10 @@ async function uploadLabResultToCase(
   const { data } = await client.post<ApiSuccessResponse<LabResultResponse>>(
     `/api/v1/cases/${request.caseId}/lab-results`,
     formData,
-    { headers: { 'Content-Type': 'multipart/form-data' } },
+    {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: UPLOAD_REQUEST_TIMEOUT_MS,
+    },
   );
 
   if (!data.data) {

@@ -57,7 +57,7 @@ describe('uploadApi', () => {
     expect(mockPost).toHaveBeenCalledWith(
       '/api/v1/cases/case-1/lab-results',
       expect.any(MockFormData),
-      { headers: { 'Content-Type': 'multipart/form-data' } },
+      { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 120_000 },
     );
     expect(formData.parts).toEqual(
       expect.arrayContaining([['note', 'Please explain the cholesterol result']]),
