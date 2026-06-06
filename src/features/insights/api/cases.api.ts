@@ -9,8 +9,8 @@ export interface CaseListItem {
   created_at: string;
   guest_session_id: string | null;
   id: string;
-  status: 'pending' | 'completed' | 'failed';
-  title: string;
+  status: 'pending' | 'processing' | 'complete' | 'failed';
+  title: string | null;
   user_id: string | null;
 }
 
@@ -41,6 +41,10 @@ async function updateCaseTitle(caseId: string, title: string): Promise<void> {
   await client.patch(`/api/v1/cases/${caseId}`, { title });
 }
 
+async function deleteCase(caseId: string): Promise<void> {
+  await client.delete(`/api/v1/cases/${caseId}`);
+}
+
 async function exportCasePdf(caseId: string): Promise<string> {
   const token = useAuthStore.getState().accessToken;
   const headers: Record<string, string> = {};
@@ -58,6 +62,7 @@ async function exportCasePdf(caseId: string): Promise<string> {
 }
 
 export const casesApi = {
+  deleteCase,
   getCaseById,
   listCases,
   updateCaseTitle,

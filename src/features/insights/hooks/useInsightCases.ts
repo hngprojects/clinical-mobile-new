@@ -17,6 +17,37 @@ export function useInsightCases(offset = 0, limit = 50) {
     },
   );
 
+  const deleteCase = useCallback(
+    async (caseId: string) => {
+      await queryClient.cancelQueries({ queryKey: ['insight-cases'] });
+
+      const previousQueries = queryClient.getQueriesData<CasesListResponse>({
+        queryKey: ['insight-cases'],
+      });
+
+      queryClient.setQueriesData<CasesListResponse>(
+        { queryKey: ['insight-cases'] },
+        (current: CasesListResponse | undefined) => {
+          if (!current) return current;
+          return {
+            ...current,
+            data: current.data.filter((item: CaseListItem) => item.id !== caseId),
+          };
+        },
+      );
+
+      try {
+        await casesApi.deleteCase(caseId);
+      } catch (error) {
+        previousQueries.forEach(([key, value]) => {
+          queryClient.setQueryData(key, value);
+        });
+        throw error;
+      }
+    },
+    [queryClient],
+  );
+
   const renameCase = useCallback(
     async (caseId: string, title: string) => {
       await queryClient.cancelQueries({ queryKey: ['insight-cases'] });
@@ -70,18 +101,21 @@ export function useInsightCases(offset = 0, limit = 50) {
   return {
     ...query,
     insightItems,
+    deleteCase,
     renameCase,
     refetch: query.refetch,
   };
 }
 
 export function mapCasesToInsightItems(cases: CaseListItem[]): InsightListItem[] {
-  return cases.map((item) => ({
-    id: item.id,
-    caseId: item.id,
-    title: item.title,
-    subtitle: formatCaseSubtitle(item),
-  }));
+  return cases
+    .filter((item) => item.status === 'complete')
+    .map((item) => ({
+      id: item.id,
+      caseId: item.id,
+      title: item.title ?? 'Lab Interpretation',
+      subtitle: formatCaseSubtitle(item),
+    }));
 }
 
 function formatCaseSubtitle(item: CaseListItem) {

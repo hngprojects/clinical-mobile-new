@@ -1,6 +1,7 @@
 import * as Crypto from 'expo-crypto';
 
 import { registerAuthStore } from '@/shared/api/client';
+import { queryClient } from '@/shared/api/queryClient';
 import { STORAGE_KEYS } from '@/shared/constants/keys';
 import { asyncStorage } from '@/shared/storage/asyncStorage';
 import { secureStorage } from '@/shared/storage/secureStorage';
@@ -104,6 +105,7 @@ export const useAuthStore = createStore<AuthState & AuthActions>((set, get) => (
       isGuest: true,
       guestSessionId: nextGuestSessionId,
     });
+    queryClient.clear();
     secureStorage.clearTokens().catch(console.warn);
     asyncStorage.setItem(STORAGE_KEYS.GUEST_SESSION, true).catch(console.warn);
     asyncStorage.setItem(STORAGE_KEYS.GUEST_SESSION_ID, nextGuestSessionId).catch(console.warn);
@@ -144,6 +146,7 @@ export const useAuthStore = createStore<AuthState & AuthActions>((set, get) => (
       isGuest: false,
       guestSessionId: null,
     });
+    queryClient.clear();
     secureStorage.clearTokens().catch(console.warn);
     asyncStorage.removeItem(STORAGE_KEYS.GUEST_SESSION).catch(console.warn);
     asyncStorage.removeItem(STORAGE_KEYS.GUEST_SESSION_ID).catch(console.warn);

@@ -19,7 +19,7 @@ export function useCaseName(caseId: string | undefined): string | undefined {
 
   if (!isAuthenticated) return undefined;
 
-  return cachedTitle ?? query.data?.title ?? undefined;
+  return cachedTitle ?? query.data?.title ?? 'Lab Interpretation';
 }
 
 function getCachedCaseTitle(

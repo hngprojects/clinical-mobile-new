@@ -39,7 +39,7 @@ export function InsightUploadEmptyState({ onUploadPress }: InsightUploadEmptySta
           },
         ]}
       >
-        <Ionicons name="cloud-upload-outline" size={22} color="#FFFFFF" />
+        <Ionicons name="arrow-up-circle-outline" size={22} color="#FFFFFF" />
         <Typography variant="body1" style={styles.uploadLabel}>
           Upload Result
         </Typography>
