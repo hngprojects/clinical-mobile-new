@@ -178,11 +178,7 @@ export function EditProfileScreen() {
     <SafeAreaView style={[styles.fill, { backgroundColor: colors.surface }]} edges={['top']}>
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: colors.borderSubtle }]}>
-        <Pressable
-          onPress={() => router.push('/(main)/profile')}
-          style={styles.backButton}
-          hitSlop={8}
-        >
+        <Pressable onPress={() => router.back()} style={styles.backButton} hitSlop={8}>
           <Ionicons name="chevron-back" size={24} color={colors.text} />
         </Pressable>
         <Typography variant="body1" style={styles.headerTitle}>
@@ -221,7 +217,7 @@ export function EditProfileScreen() {
           <ProfileMenuRow
             icon="mail-outline"
             label="Change Email"
-            onPress={() => router.push('/(main)/change-email')}
+            onPress={() => router.push('/(profile)/change-email')}
             isLast
           />
         </View>

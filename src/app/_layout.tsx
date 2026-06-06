@@ -47,6 +47,7 @@ function RootLayoutNav() {
       <Stack.Screen name="(onboarding)" options={{ animation: 'fade' }} />
       <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
       <Stack.Screen name="(main)" options={{ animation: 'fade' }} />
+      <Stack.Screen name="(profile)" options={{ animation: 'slide_from_right' }} />
       <Stack.Screen name="(legal)" options={{ animation: 'slide_from_right' }} />
       <Stack.Screen name="+not-found" />
     </Stack>
