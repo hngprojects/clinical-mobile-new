@@ -32,9 +32,13 @@ interface AIInterpretationListResponse {
   results?: AIInterpretationResponse[] | null;
 }
 
+function normalizeReviewStatus(status?: AiReviewStatus): AiReviewResult['status'] {
+  return status === 'completed' ? 'complete' : (status ?? 'processing');
+}
+
 function mapInterpretation(interpretation: AIInterpretationResponse): AiReviewResult {
   return {
-    status: interpretation.status,
+    status: normalizeReviewStatus(interpretation.status),
     summary: interpretation.summary ?? undefined,
     valueBreakdown: interpretation.value_breakdown,
     suggestedQuestions: interpretation.suggested_questions,
@@ -76,11 +80,17 @@ async function getCaseProcessingStatus(
     return mapInterpretation(caseDetail.interpretation);
   }
 
-  if (caseDetail?.case.status === 'failed') {
+  const caseStatus = normalizeReviewStatus(caseDetail?.case.status);
+
+  if (caseStatus === 'complete') {
+    return { status: 'complete' };
+  }
+
+  if (caseStatus === 'failed') {
     return { status: 'failed' };
   }
 
-  if (caseDetail?.case.status === 'pending') {
+  if (caseStatus === 'pending') {
     return { status: 'pending' };
   }
 

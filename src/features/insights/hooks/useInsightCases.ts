@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { useAuthStore } from '@/features/auth/store/auth.store';
 import { useApiQuery } from '@/shared/api/hooks';
 
 import type { InsightListItem } from '../api/types';
@@ -9,10 +10,21 @@ import { casesApi, type CaseListItem, type CasesListResponse } from '../api/case
 
 export function useInsightCases(offset = 0, limit = 50) {
   const queryClient = useQueryClient();
+  const userId = useAuthStore((state) => state.user?.id);
+  const isGuest = useAuthStore((state) => state.isGuest);
+  const guestSessionId = useAuthStore((state) => state.guestSessionId);
+  const caseOwnerKey = isGuest
+    ? guestSessionId
+      ? `guest:${guestSessionId}`
+      : null
+    : userId
+      ? `user:${userId}`
+      : null;
   const query = useApiQuery(
-    ['insight-cases', offset, limit],
+    ['insight-cases', caseOwnerKey, offset, limit],
     () => casesApi.listCases(offset, limit),
     {
+      enabled: Boolean(caseOwnerKey),
       retry: false,
     },
   );

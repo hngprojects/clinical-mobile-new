@@ -17,6 +17,7 @@ const STEPS = [
 ];
 
 const STEP_INTERVAL_MS = 3500;
+const AI_REVIEW_TIMEOUT_MS = 120_000;
 
 type StepState = 'pending' | 'active' | 'done';
 
@@ -122,25 +123,33 @@ export function AiReviewScreen() {
 
   const [stepIndex, setStepIndex] = useState(0);
   const [hasShownAllSteps, setHasShownAllSteps] = useState(false);
+  const [hasTimedOut, setHasTimedOut] = useState(false);
   const [runKey, setRunKey] = useState(0);
 
   useEffect(() => {
     setStepIndex(0);
     setHasShownAllSteps(false);
+    setHasTimedOut(false);
     setRunKey((k) => k + 1);
   }, [caseId]);
 
   const reviewQuery = useAiReview(caseId || '', guestSessionId);
   const review = reviewQuery.data;
-  const isComplete = review?.status === 'complete' && hasShownAllSteps;
+  const isComplete =
+    (review?.status === 'complete' || review?.status === 'completed') && hasShownAllSteps;
 
   const missingCaseErrorType = !caseId ? 'system' : undefined;
   const configuredErrorType =
     errorType === 'network' || errorType === 'system' ? errorType : undefined;
   const processingErrorType = review?.status === 'failed' ? 'processing' : undefined;
   const queryErrorType = reviewQuery.isError ? 'network' : undefined;
+  const timeoutErrorType = hasTimedOut ? 'network' : undefined;
   const visibleErrorType = hasShownAllSteps
-    ? missingCaseErrorType || configuredErrorType || processingErrorType || queryErrorType
+    ? missingCaseErrorType ||
+      configuredErrorType ||
+      processingErrorType ||
+      queryErrorType ||
+      timeoutErrorType
     : undefined;
 
   const progressAnim = useRef(new Animated.Value(0)).current;
@@ -171,6 +180,16 @@ export function AiReviewScreen() {
     return () => clearInterval(id);
   }, [hasShownAllSteps, runKey]);
 
+  useEffect(() => {
+    if (!caseId || isComplete || review?.status === 'failed') return;
+
+    const id = setTimeout(() => {
+      setHasTimedOut(true);
+    }, AI_REVIEW_TIMEOUT_MS);
+
+    return () => clearTimeout(id);
+  }, [caseId, isComplete, review?.status, runKey]);
+
   const handleBackToPreview = () => {
     router.replace({
       pathname: '/(main)/preview-upload',
@@ -181,6 +200,7 @@ export function AiReviewScreen() {
   const handleRetry = () => {
     setStepIndex(0);
     setHasShownAllSteps(false);
+    setHasTimedOut(false);
     setRunKey((k) => k + 1);
 
     if (processingErrorType) {
@@ -258,6 +278,7 @@ export function AiReviewScreen() {
           <Typography variant="h2" color={colors.textSecondary} style={styles.headerTitle}>
             AI Review
           </Typography>
+          <View style={styles.headerSpacer} />
         </View>
 
         <View style={styles.body}>
@@ -327,6 +348,9 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     letterSpacing: -0.16,
     lineHeight: 24,
+  },
+  headerSpacer: {
+    width: 24,
   },
   body: {
     flex: 1,
