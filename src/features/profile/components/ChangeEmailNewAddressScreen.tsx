@@ -44,7 +44,7 @@ export function ChangeEmailNewAddressScreen() {
 
   const onContinue = (data: FormData) => {
     router.push({
-      pathname: '/(main)/change-email-password',
+      pathname: '/(profile)/change-email-password',
       params: { email: data.email },
     });
   };

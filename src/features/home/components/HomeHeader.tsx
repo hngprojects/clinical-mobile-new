@@ -28,7 +28,7 @@ export function HomeHeader({ name = 'User' }: HomeHeaderProps) {
         </Typography>
       </View>
       <Pressable
-        onPress={() => router.push('/(main)/notification-inbox')}
+        onPress={() => router.push('/(profile)/notification-inbox')}
         style={[
           styles.bellButton,
           { backgroundColor: colors.surfaceMuted, borderColor: colors.borderSubtle },
