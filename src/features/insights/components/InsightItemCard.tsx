@@ -1,6 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useRef, useState } from 'react';
-import { Dimensions, Modal, Pressable, StyleSheet, View } from 'react-native';
+import {
+  Dimensions,
+  GestureResponderEvent,
+  Modal,
+  Pressable,
+  StyleSheet,
+  View,
+} from 'react-native';
 
 import { DeleteModal } from '@/features/home/components/DeleteModal';
 import { RenameModal } from '@/features/home/components/RenameModal';
@@ -12,7 +19,10 @@ import { useTheme } from '@/shared/theme';
 
 import type { InsightItemCardProps } from '../api/types';
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
+const MENU_GAP = 4;
+const MENU_ITEM_HEIGHT = 52;
+const MENU_MARGIN = 16;
+const MENU_WIDTH = 180;
 
 export function InsightItemCard({
   insight,
@@ -20,6 +30,7 @@ export function InsightItemCard({
   onRename,
   onView,
   onDelete,
+  onExportPdf,
 }: InsightItemCardProps) {
   const { colors, spacing } = useTheme();
   const [menuVisible, setMenuVisible] = useState(false);
@@ -28,11 +39,23 @@ export function InsightItemCard({
   const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
   const menuButtonRef = useRef<View>(null);
 
-  const openMenu = () => {
+  const openMenu = (event: GestureResponderEvent) => {
+    event.stopPropagation();
     menuButtonRef.current?.measure((_x, _y, width, height, pageX, pageY) => {
+      const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+      const itemCount = onExportPdf ? 4 : 3;
+      const menuHeight = itemCount * MENU_ITEM_HEIGHT + (itemCount - 1) * StyleSheet.hairlineWidth;
+      const belowTop = pageY + height + MENU_GAP;
+      const aboveTop = pageY - menuHeight - MENU_GAP;
+      const top =
+        belowTop + menuHeight <= screenHeight - MENU_MARGIN
+          ? belowTop
+          : Math.max(MENU_MARGIN, aboveTop);
+      const buttonRight = screenWidth - pageX - width;
+
       setMenuPos({
-        top: pageY + height + 4,
-        right: SCREEN_WIDTH - pageX - width,
+        top,
+        right: Math.min(Math.max(MENU_MARGIN, buttonRight), screenWidth - MENU_WIDTH - MENU_MARGIN),
       });
       setMenuVisible(true);
     });
@@ -53,6 +76,11 @@ export function InsightItemCard({
   const handleDelete = () => {
     closeMenu();
     setDeleteVisible(true);
+  };
+
+  const handleExportPdf = () => {
+    closeMenu();
+    onExportPdf?.(insight.id);
   };
 
   const handleDeleteConfirm = () => {
@@ -120,6 +148,17 @@ export function InsightItemCard({
 
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
+            {onExportPdf ? (
+              <>
+                <Pressable style={styles.menuItem} onPress={handleExportPdf}>
+                  <Typography variant="body1">Export as PDF</Typography>
+                  <Ionicons name="document-text-outline" size={18} color={colors.text} />
+                </Pressable>
+
+                <View style={[styles.divider, { backgroundColor: colors.border }]} />
+              </>
+            ) : null}
+
             <Pressable style={styles.menuItem} onPress={handleDelete}>
               <Typography variant="body1" color="#EF4444">
                 Delete
@@ -178,7 +217,7 @@ const styles = StyleSheet.create({
   },
   menuCard: {
     position: 'absolute',
-    minWidth: 180,
+    width: MENU_WIDTH,
     borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },

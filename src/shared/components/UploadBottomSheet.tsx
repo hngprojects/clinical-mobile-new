@@ -58,6 +58,18 @@ export function UploadBottomSheet({
 }: UploadBottomSheetProps) {
   const { colors } = useTheme();
   const [showSourceSheet, setShowSourceSheet] = useState(false);
+  const [cameraGranted, setCameraGranted] = useState(false);
+  const [libraryGranted, setLibraryGranted] = useState(false);
+
+  useEffect(() => {
+    if (!visible) return;
+    ImagePicker.getCameraPermissionsAsync().then(({ status }) =>
+      setCameraGranted(status === 'granted'),
+    );
+    ImagePicker.getMediaLibraryPermissionsAsync().then(({ status }) =>
+      setLibraryGranted(status === 'granted'),
+    );
+  }, [visible]);
 
   // Primary Sheet State & Animation
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
@@ -175,8 +187,13 @@ export function UploadBottomSheet({
 
   const handleTakePhoto = async () => {
     try {
-      const { status } = await ImagePicker.requestCameraPermissionsAsync();
-      if (status !== 'granted') {
+      let granted = cameraGranted;
+      if (!granted) {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        granted = status === 'granted';
+        setCameraGranted(granted);
+      }
+      if (!granted) {
         alert('Permission to access camera was denied');
         return;
       }
@@ -213,8 +230,13 @@ export function UploadBottomSheet({
 
   const handlePhotoLibrary = async () => {
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
+      let granted = libraryGranted;
+      if (!granted) {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        granted = status === 'granted';
+        setLibraryGranted(granted);
+      }
+      if (!granted) {
         alert('Permission to access photos was denied');
         return;
       }
@@ -313,7 +335,12 @@ export function UploadBottomSheet({
   return (
     <>
       {/* Primary Bottom Sheet: Original Upload Design */}
-      <Modal visible={visible} transparent animationType="fade" onRequestClose={handleDismiss}>
+      <Modal
+        visible={visible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => handleDismiss()}
+      >
         <View style={styles.container}>
           <Pressable style={styles.backdrop} onPress={handleBackdropPress} />
 

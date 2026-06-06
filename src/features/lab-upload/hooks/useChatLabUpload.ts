@@ -6,6 +6,13 @@ import type { UploadFile } from '../api/upload.types';
 import { useAiReview } from './useAiReview';
 import { useUploadChatLabResult } from './useUploadChatLabResult';
 
+const INTERPRET_MESSAGES = [
+  'Reading your lab values...',
+  'Checking reference ranges...',
+  'Looking up what the numbers mean...',
+  'Preparing your summary...',
+];
+
 const LAB_UPLOAD_INTERPRETATION_TIMEOUT_MS = 120_000;
 const CHAT_UPLOAD_FAILED_MESSAGE =
   'Upload could not be completed. If this chat already has 3 lab results uploaded, start a new chat or try again later.';
@@ -29,6 +36,7 @@ export function useChatLabUpload({
   const baselineReviewRef = useRef<string | null>(null);
   const [uploadErrorMessage, setUploadErrorMessage] = useState<string | null>(null);
   const [isInterpretingUpload, setIsInterpretingUpload] = useState(false);
+  const [interpretMsgIndex, setInterpretMsgIndex] = useState(0);
   const uploadMutation = useUploadChatLabResult();
 
   const reviewQuery = useAiReview(caseId, guestSessionId, {
@@ -93,14 +101,14 @@ export function useChatLabUpload({
   );
 
   const uploadLabResult = useCallback(
-    async (file: UploadFile) => {
+    async (file: UploadFile, note?: string | null) => {
       clearUploadError();
       baselineReviewRef.current = getReviewIdentity(review);
       uploadStartedAtRef.current = Date.now();
       setIsInterpretingUpload(true);
 
       try {
-        return await uploadMutation.mutateAsync({ caseId, file });
+        return await uploadMutation.mutateAsync({ caseId, file, note });
       } catch (error) {
         uploadStartedAtRef.current = null;
         baselineReviewRef.current = null;
@@ -112,10 +120,23 @@ export function useChatLabUpload({
     [caseId, clearUploadError, review, uploadMutation],
   );
 
+  useEffect(() => {
+    if (!isInterpretingUpload) {
+      setInterpretMsgIndex(0);
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setInterpretMsgIndex((i) => (i + 1) % INTERPRET_MESSAGES.length);
+    }, 2500);
+
+    return () => clearInterval(timer);
+  }, [isInterpretingUpload]);
+
   const labUploadStatusMessage = uploadMutation.isPending
     ? 'Uploading lab result...'
     : isInterpretingUpload
-      ? 'Interpreting uploaded lab result...'
+      ? INTERPRET_MESSAGES[interpretMsgIndex]
       : null;
 
   return {

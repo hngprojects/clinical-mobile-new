@@ -14,6 +14,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuthStore } from '@/features/auth/store/auth.store';
+import { useCaseName } from '@/features/insights/hooks/useCaseName';
 import {
   Screen,
   Typography,
@@ -21,7 +22,6 @@ import {
   UploadedFile,
   UploadError,
 } from '@/shared/components';
-import { asyncStorage } from '@/shared/storage/asyncStorage';
 
 import type { AiReviewResult } from '../api/ai-review.types';
 import type { ChatMessage } from '../api/chat.types';
@@ -53,8 +53,6 @@ type TimelineItem =
       message: ChatMessage;
     };
 
-const LOCAL_ATTACHMENT_STORAGE_KEY_PREFIX = 'case_chat_local_attachments';
-const LOCAL_ATTACHMENT_STORAGE_LIMIT = 5;
 const GUEST_MESSAGE_LIMIT = 3;
 
 export function ChatReviewScreen() {
@@ -62,15 +60,16 @@ export function ChatReviewScreen() {
   const scrollRef = useRef<ScrollView | null>(null);
   const insets = useSafeAreaInsets();
   const storedGuestSessionId = useAuthStore((state) => state.guestSessionId);
-  const { caseId, guestSessionId, mock, demo } = useLocalSearchParams<{
+  const { caseId, guestSessionId, mock, demo, returnTo } = useLocalSearchParams<{
     caseId?: string;
     guestSessionId?: string;
     mock?: string;
     demo?: string;
+    returnTo?: string;
   }>();
+  const caseName = useCaseName(caseId);
   const [draft, setDraft] = useState('');
   const [mockMessages, setMockMessages] = useState<ChatMessage[]>(MOCK_CHAT_MESSAGES);
-  const [localMessages, setLocalMessages] = useState<ChatMessage[]>([]);
   const [pendingAttachment, setPendingAttachment] = useState<UploadedFile | null>(null);
   const [showUploadSheet, setShowUploadSheet] = useState(false);
   const [guestMessageCount, setGuestMessageCount] = useState(0);
@@ -122,7 +121,7 @@ export function ChatReviewScreen() {
 
   const messages = useMemo(() => {
     if (isMockChat) return mockMessages;
-    const base = [...(chatQuery.data ?? []), ...localMessages];
+    const base = [...(chatQuery.data ?? [])];
     const hasPendingReply = base.some(
       (message) =>
         message.senderType === 'ai' &&
@@ -142,7 +141,7 @@ export function ChatReviewScreen() {
       });
     }
     return base;
-  }, [chatQuery.data, caseId, isGuestAwaitingReply, isMockChat, localMessages, mockMessages]);
+  }, [chatQuery.data, caseId, isGuestAwaitingReply, isMockChat, mockMessages]);
   const trimmedDraft = draft.trim();
   const { status: socketStatus } = chatSocket;
   if (socketStatus === 'connected') hasConnectedRef.current = true;
@@ -165,33 +164,6 @@ export function ChatReviewScreen() {
       requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
     }
   }, [timelineItems.length]);
-
-  useEffect(() => {
-    if (!caseId || isMockChat || isDemoMode) {
-      setLocalMessages([]);
-      return undefined;
-    }
-
-    let cancelled = false;
-    setLocalMessages([]);
-
-    asyncStorage
-      .getItem<ChatMessage[]>(getLocalAttachmentStorageKey(caseId))
-      .then((storedMessages) => {
-        if (cancelled || !Array.isArray(storedMessages)) return;
-
-        setLocalMessages(
-          storedMessages.filter((message) => isStoredLocalAttachmentMessage(message, caseId)),
-        );
-      })
-      .catch((error) => {
-        if (__DEV__) console.warn('Could not restore chat attachments:', error);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [caseId, isDemoMode, isMockChat]);
 
   const clearComposerErrors = () => {
     if (sendMessage.isError) sendMessage.reset();
@@ -251,45 +223,14 @@ export function ChatReviewScreen() {
         const localMessage = createLocalAttachmentMessage({
           caseId: 'mock-case',
           file: attachment,
-          text: '',
+          text: message,
         });
-        setMockMessages((current) => [
-          ...current,
-          localMessage,
-          ...(message
-            ? [
-                createMockMessage({
-                  id: `mock-patient-${current.length + 1}`,
-                  senderType: 'patient',
-                  text: message,
-                }),
-              ]
-            : []),
-        ]);
+        setMockMessages((current) => [...current, localMessage]);
         return;
       }
 
       try {
-        await uploadLabResult(attachment);
-
-        const attachmentMessage = createLocalAttachmentMessage({
-          caseId: caseId!,
-          file: attachment,
-          text: '',
-        });
-        setLocalMessages((current) => {
-          const next = [...current, attachmentMessage].slice(-LOCAL_ATTACHMENT_STORAGE_LIMIT);
-          persistLocalAttachmentMessages(caseId!, next);
-          return next;
-        });
-
-        recordGuestMessage();
-        try {
-          await sendChatText(message);
-        } catch {
-          setIsGuestAwaitingReply(false);
-          setDraft(message);
-        }
+        await uploadLabResult(attachment, message || null);
       } catch {
         setDraft(message);
         setPendingAttachment(attachment);
@@ -345,6 +286,20 @@ export function ChatReviewScreen() {
     showUploadError('Upload failed. Please select a different file or try again.');
   };
 
+  const handleBack = () => {
+    if (returnTo === 'insights') {
+      router.replace('/(main)/insights');
+      return;
+    }
+
+    if (returnTo === 'home') {
+      router.replace('/(main)');
+      return;
+    }
+
+    router.back();
+  };
+
   return (
     <>
       <Screen edges={['top']} backgroundColor="#FFFFFF" style={styles.screen}>
@@ -352,14 +307,14 @@ export function ChatReviewScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Go back"
-            onPress={() => router.back()}
+            onPress={handleBack}
             hitSlop={12}
             style={styles.backButton}
           >
             <Ionicons name="chevron-back" size={24} color="#111827" />
           </Pressable>
-          <Typography style={styles.headerTitle}>
-            Chat with <Typography style={styles.floHeaderWord}>Flo</Typography>
+          <Typography style={styles.headerTitle} numberOfLines={1}>
+            {caseName || 'Chat with Flo'}
           </Typography>
           <View style={styles.headerSpacer} />
         </View>
@@ -531,34 +486,6 @@ function getReviewIdentity(review?: AiReviewResult | null) {
   return `${review.status}:${review.id ?? ''}:${review.generatedAt ?? ''}`;
 }
 
-function getLocalAttachmentStorageKey(caseId: string) {
-  return `${LOCAL_ATTACHMENT_STORAGE_KEY_PREFIX}:${caseId}`;
-}
-
-function persistLocalAttachmentMessages(caseId: string, messages: ChatMessage[]) {
-  asyncStorage.setItem(getLocalAttachmentStorageKey(caseId), messages).catch((error) => {
-    if (__DEV__) console.warn('Could not persist chat attachments:', error);
-  });
-}
-
-function isStoredLocalAttachmentMessage(value: unknown, caseId: string): value is ChatMessage {
-  if (!value || typeof value !== 'object') return false;
-
-  const message = value as Partial<ChatMessage>;
-  const content = message.content;
-
-  return Boolean(
-    typeof message.id === 'string' &&
-    message.id.startsWith('local-attachment-') &&
-    message.senderType === 'patient' &&
-    message.medicalCaseId === caseId &&
-    content &&
-    typeof content === 'object' &&
-    typeof content.attachmentName === 'string' &&
-    typeof content.attachmentUri === 'string',
-  );
-}
-
 function createMockMessage({
   id,
   senderType,
@@ -697,12 +624,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 22,
     textAlign: 'center',
-  },
-  floHeaderWord: {
-    color: '#1565C0',
-    fontFamily: 'Inter_600SemiBold',
-    fontSize: 18,
-    lineHeight: 27,
   },
   floInline: {
     color: '#1565C0',

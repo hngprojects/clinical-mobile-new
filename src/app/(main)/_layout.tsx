@@ -74,7 +74,9 @@ export default function MainLayout() {
         name="insights"
         options={{
           title: 'Insights',
-          tabBarIcon: ({ color }) => <InsightsIcon color={color} size={22} />,
+          tabBarIcon: ({ color, focused }) => (
+            <InsightsIcon color={color} size={22} filled={focused} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -82,62 +84,6 @@ export default function MainLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, focused }) => <ProfileTabIcon color={color} focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
-        name="edit-profile"
-        options={{
-          href: null,
-          headerShown: false,
-          tabBarStyle: { display: 'none' },
-        }}
-      />
-      <Tabs.Screen
-        name="change-password"
-        options={{
-          href: null,
-          headerShown: false,
-          tabBarStyle: { display: 'none' },
-        }}
-      />
-      <Tabs.Screen
-        name="change-email"
-        options={{
-          href: null,
-          headerShown: false,
-          tabBarStyle: { display: 'none' },
-        }}
-      />
-      <Tabs.Screen
-        name="change-email-password"
-        options={{
-          href: null,
-          headerShown: false,
-          tabBarStyle: { display: 'none' },
-        }}
-      />
-      <Tabs.Screen
-        name="change-email-otp"
-        options={{
-          href: null,
-          headerShown: false,
-          tabBarStyle: { display: 'none' },
-        }}
-      />
-      <Tabs.Screen
-        name="notifications"
-        options={{
-          href: null,
-          headerShown: false,
-          tabBarStyle: { display: 'none' },
-        }}
-      />
-      <Tabs.Screen
-        name="notification-inbox"
-        options={{
-          href: null,
-          headerShown: false,
-          tabBarStyle: { display: 'none' },
         }}
       />
       <Tabs.Screen

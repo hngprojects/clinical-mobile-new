@@ -125,7 +125,7 @@ export function AiReviewScreen() {
           isNetworkError
             ? "We couldn't connect to the server.\nPlease check your internet connection and try again."
             : isProcessingError
-              ? 'Your file was uploaded, but the lab values could not be extracted.\nPlease try a clearer image or upload a PDF.'
+              ? 'Your file was uploaded, but the lab values could not be extracted.\nPlease check that the file is a lab result, then try a clearer image or upload a PDF.'
               : 'The system encountered an issue.\nPlease try again later.'
         }
         icon={isNetworkError ? 'network' : 'warning'}

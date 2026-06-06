@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, ScrollView, StyleSheet } from 'react-native';
+import { Alert, Linking, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAuthStore } from '@/features/auth/store/auth.store';
@@ -53,11 +53,11 @@ export function ProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.fill, { backgroundColor: '#FFFFFE' }]} edges={['top']}>
+    <SafeAreaView style={[styles.fill, { backgroundColor: colors.surface }]} edges={['top']}>
       <ProfileSettingsHeader title="Account Settings" onBack={() => router.back()} />
 
       <ScrollView
-        style={[styles.fill, { backgroundColor: colors.background }]}
+        style={[styles.fill, { backgroundColor: colors.surface }]}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
@@ -67,17 +67,17 @@ export function ProfileScreen() {
           <ProfileMenuRow
             icon="person-outline"
             label="Edit Profile"
-            onPress={() => router.push('/(main)/edit-profile')}
+            onPress={() => router.push('/(profile)/edit-profile')}
           />
           <ProfileMenuRow
             icon="lock-closed-outline"
             label="Change Password"
-            onPress={() => router.push('/(main)/change-password')}
+            onPress={() => router.push('/(profile)/change-password')}
           />
           <ProfileMenuRow
             icon="notifications-outline"
             label="Notifications"
-            onPress={() => router.push('/(main)/notifications')}
+            onPress={() => router.push('/(profile)/notifications')}
           />
           <ProfileMenuRow
             icon="log-out-outline"
@@ -102,7 +102,15 @@ export function ProfileScreen() {
           <ProfileMenuRow
             icon="chatbubble-ellipses-outline"
             label="Support"
-            onPress={() => {}}
+            onPress={async () => {
+              const url = 'mailto:clinsightai@gmail.com';
+              const supported = await Linking.canOpenURL(url);
+              if (supported) {
+                Linking.openURL(url);
+              } else {
+                Alert.alert('Contact Support', 'Email us at clinsightai@gmail.com');
+              }
+            }}
             isLast
           />
         </ProfileMenuSection>

@@ -2,7 +2,13 @@ import { Href, router, Stack, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { LoginForm, useGuestUploadSession } from '@/features/auth';
+import {
+  AuthSuccessModal,
+  LoginForm,
+  type AuthResponse,
+  useAuthStore,
+  useGuestUploadSession,
+} from '@/features/auth';
 import { useLogin } from '@/features/auth/hooks/useLogin';
 import { Screen, Toast, Typography, UploadBottomSheet } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
@@ -26,8 +32,11 @@ export default function LoginScreen() {
   const { caseId } = useLocalSearchParams<{ caseId?: string }>();
   const loginMutation = useLogin({ caseId });
   const { handleUpload, handleUploadError } = useGuestUploadSession();
+  const setSession = useAuthStore((state) => state.setSession);
   const [showUploadSheet, setShowUploadSheet] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [pendingAuth, setPendingAuth] = useState<AuthResponse | null>(null);
 
   const handleContinueAsGuest = () => {
     setShowUploadSheet(true);
@@ -41,6 +50,31 @@ export default function LoginScreen() {
     }
     setToastVisible(false);
   }, [loginMutation.error]);
+
+  useEffect(() => {
+    if (loginMutation.isSuccess && loginMutation.data) {
+      setPendingAuth(loginMutation.data);
+      setShowSuccessModal(true);
+    }
+  }, [loginMutation.data, loginMutation.isSuccess]);
+
+  const handleGoogleSuccess = (auth: AuthResponse) => {
+    setPendingAuth(auth);
+    setShowSuccessModal(true);
+  };
+
+  const handleSuccessModalAction = () => {
+    if (!pendingAuth) return;
+
+    setShowSuccessModal(false);
+    setSession(pendingAuth.tokens, pendingAuth.user);
+
+    if (caseId) {
+      router.replace({ pathname: '/(main)/chat-review', params: { caseId } });
+    } else {
+      router.replace('/(main)');
+    }
+  };
 
   const errorMessage = getLoginErrorMessage(loginMutation.error);
 
@@ -69,9 +103,12 @@ export default function LoginScreen() {
         <LoginForm
           mutation={loginMutation}
           onContinueAsGuest={handleContinueAsGuest}
+          onGoogleSuccess={handleGoogleSuccess}
           onForgotPassword={() => router.push(RESET_PASSWORD_ROUTE)}
           onInteract={() => {
             loginMutation.reset();
+            setShowSuccessModal(false);
+            setPendingAuth(null);
             setToastVisible(false);
           }}
         />
@@ -110,6 +147,14 @@ export default function LoginScreen() {
         onClose={() => setShowUploadSheet(false)}
         onUpload={handleUpload}
         onUploadError={handleUploadError}
+      />
+
+      <AuthSuccessModal
+        visible={showSuccessModal}
+        title="Welcome back"
+        message={`You've successfully logged in. Let's\ncontinue where you left off.`}
+        actionLabel="Go to Home Page"
+        onAction={handleSuccessModalAction}
       />
     </>
   );

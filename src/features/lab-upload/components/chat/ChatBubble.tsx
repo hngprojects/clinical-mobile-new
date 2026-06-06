@@ -15,9 +15,10 @@ const FLO_PENDING_MESSAGES = [
 
 export function ChatBubble({ message }: { message: ChatMessage }) {
   const isPatient = message.senderType === 'patient';
+  const isFile = message.senderType === 'file';
   const attachment = getMessageAttachment(message);
 
-  if (!isPatient) {
+  if (!isPatient && !isFile) {
     return (
       <View style={styles.aiMessageGroup}>
         <View
@@ -158,36 +159,57 @@ function formatAiMessage(text: string): FormattedBlock[] {
 
       if (lines.length === 0) return [];
 
-      const allListItems = lines.every((line) => /^([-*\u2022]\s+|\d+[.)]\s+)/.test(line));
-      if (allListItems) {
-        return lines.map((line) => {
-          const numbered = line.match(/^(\d+[.)])\s+(.+)$/);
-          if (numbered) {
-            return {
-              marker: numbered[1],
-              text: cleanMarkdownBlockText(numbered[2]),
-              type: 'numbered',
-            };
-          }
-
-          return {
-            text: cleanMarkdownBlockText(line.replace(/^[-*\u2022]\s+/, '')),
-            type: 'bullet',
-          };
-        });
-      }
-
-      const heading = lines[0].match(/^#{1,6}\s+(.+)$/);
-      if (heading && lines.length === 1) {
-        return [{ text: cleanMarkdownBlockText(heading[1]), type: 'heading' }];
-      }
-
-      return [{ text: cleanMarkdownBlockText(lines.join(' ')), type: 'paragraph' }];
+      return parseMarkdownLines(lines);
     });
 }
 
+function parseMarkdownLines(lines: string[]): FormattedBlock[] {
+  const blocks: FormattedBlock[] = [];
+  let paragraphLines: string[] = [];
+
+  function flushParagraph() {
+    if (paragraphLines.length === 0) return;
+    blocks.push({ text: cleanMarkdownBlockText(paragraphLines.join(' ')), type: 'paragraph' });
+    paragraphLines = [];
+  }
+
+  for (const line of lines) {
+    const heading = line.match(/^\s*#{1,6}\s*(.+?)\s*#{0,6}\s*$/);
+    if (heading) {
+      flushParagraph();
+      blocks.push({ text: cleanMarkdownBlockText(heading[1]), type: 'heading' });
+      continue;
+    }
+
+    const numbered = line.match(/^(\d+[.)])\s+(.+)$/);
+    if (numbered) {
+      flushParagraph();
+      blocks.push({
+        marker: numbered[1],
+        text: cleanMarkdownBlockText(numbered[2]),
+        type: 'numbered',
+      });
+      continue;
+    }
+
+    if (/^[-*\u2022]\s+/.test(line)) {
+      flushParagraph();
+      blocks.push({
+        text: cleanMarkdownBlockText(line.replace(/^[-*\u2022]\s+/, '')),
+        type: 'bullet',
+      });
+      continue;
+    }
+
+    paragraphLines.push(line);
+  }
+
+  flushParagraph();
+  return blocks;
+}
+
 function cleanMarkdownBlockText(text: string) {
-  return text.trim();
+  return cleanMarkdownHeadings(text).trim();
 }
 
 function renderInlineText(text: string, keyPrefix: string) {
@@ -225,10 +247,32 @@ function parseInlineMarkdown(text: string) {
 }
 
 function cleanInlineText(text: string) {
-  return text.replace(/`([^`]+)`/g, '$1').replace(/\*([^*]+)\*/g, '$1');
+  return cleanMarkdownHeadings(text)
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1');
+}
+
+function cleanMarkdownHeadings(text: string) {
+  return text.replace(/^\s*#{1,6}\s*/gm, '').replace(/\s+#{1,6}\s*$/gm, '');
 }
 
 function getMessageAttachment(message: ChatMessage) {
+  if (message.file) {
+    const name = message.file.name;
+    const uri = message.file.url;
+
+    if (!name || !uri) return null;
+
+    return {
+      isImage: isImageAttachment(name),
+      mimeType: '',
+      name,
+      size: '',
+      text: getFileMessageText(message),
+      uri,
+    };
+  }
+
   const { content } = message;
   const uri = typeof content.attachmentUri === 'string' ? content.attachmentUri : '';
   const name = typeof content.attachmentName === 'string' ? content.attachmentName : '';
@@ -249,15 +293,29 @@ function getMessageAttachment(message: ChatMessage) {
   };
 }
 
+function getFileMessageText(message: ChatMessage) {
+  if (!message.text || message.text === message.file?.name) return '';
+
+  return message.text;
+}
+
 function AttachmentBubbleCard({
   attachment,
 }: {
   attachment: NonNullable<ReturnType<typeof getMessageAttachment>>;
 }) {
+  const meta = attachment.size || getAttachmentMetaLabel(attachment.name, attachment.mimeType);
+
   if (attachment.isImage) {
     return (
       <View style={styles.attachmentImageCard}>
         <Image source={{ uri: attachment.uri }} resizeMode="cover" style={styles.attachmentImage} />
+        <View style={styles.attachmentImageFooter}>
+          <Typography numberOfLines={1} style={styles.attachmentFileName}>
+            {attachment.name}
+          </Typography>
+          <Typography style={styles.attachmentFileMeta}>{meta}</Typography>
+        </View>
       </View>
     );
   }
@@ -271,9 +329,7 @@ function AttachmentBubbleCard({
         <Typography numberOfLines={1} style={styles.attachmentFileName}>
           {attachment.name}
         </Typography>
-        {attachment.size ? (
-          <Typography style={styles.attachmentFileMeta}>{attachment.size}</Typography>
-        ) : null}
+        <Typography style={styles.attachmentFileMeta}>{meta}</Typography>
       </View>
     </View>
   );
@@ -281,6 +337,18 @@ function AttachmentBubbleCard({
 
 function isImageAttachment(name: string, mimeType?: string) {
   return Boolean(mimeType?.startsWith('image/') || /\.(jpe?g|png|webp|heic)$/i.test(name));
+}
+
+function getAttachmentMetaLabel(name: string, mimeType?: string) {
+  if (mimeType) {
+    const [, subtype] = mimeType.split('/');
+    if (subtype) return `${subtype.toUpperCase()} file`;
+  }
+
+  const extension = name.match(/\.([a-z0-9]+)$/i)?.[1];
+  if (extension) return `${extension.toUpperCase()} file`;
+
+  return 'Uploaded file';
 }
 
 const styles = StyleSheet.create({
@@ -311,9 +379,10 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     flexDirection: 'row',
     gap: 10,
+    maxWidth: '100%',
     paddingHorizontal: 10,
     paddingVertical: 10,
-    width: 160,
+    width: 220,
   },
   attachmentFileCopy: {
     flex: 1,
@@ -341,14 +410,25 @@ const styles = StyleSheet.create({
   },
   attachmentImage: {
     backgroundColor: '#0F4C92',
-    height: '100%',
-    width: '100%',
+    borderRadius: 8,
+    height: 52,
+    width: 52,
   },
   attachmentImageCard: {
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
     borderRadius: 10,
-    height: 72,
+    flexDirection: 'row',
+    gap: 10,
+    maxWidth: '100%',
     overflow: 'hidden',
-    width: 160,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    width: 220,
+  },
+  attachmentImageFooter: {
+    flex: 1,
+    gap: 2,
   },
   bubble: {
     borderRadius: 12,

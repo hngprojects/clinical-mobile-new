@@ -8,6 +8,8 @@ interface AIInterpretationResponse {
   summary?: string | null;
   value_breakdown?: AiReviewResult['valueBreakdown'];
   suggested_questions?: string[] | null;
+  markers_within_range?: number | null;
+  markers_needing_attention?: number | null;
   risk_level?: AiReviewResult['riskLevel'];
   confidence?: AiReviewResult['confidence'];
   id: string;
@@ -36,6 +38,8 @@ function mapInterpretation(interpretation: AIInterpretationResponse): AiReviewRe
     summary: interpretation.summary ?? undefined,
     valueBreakdown: interpretation.value_breakdown,
     suggestedQuestions: interpretation.suggested_questions,
+    markersWithinRange: interpretation.markers_within_range ?? undefined,
+    markersNeedingAttention: interpretation.markers_needing_attention ?? undefined,
     riskLevel: interpretation.risk_level,
     confidence: interpretation.confidence,
     id: interpretation.id,
