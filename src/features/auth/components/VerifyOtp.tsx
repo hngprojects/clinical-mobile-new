@@ -345,11 +345,7 @@ export function VerifyOtp({
         style={({ pressed }) => [
           styles.verifyBtn,
           {
-            backgroundColor: isLoading
-              ? '#F5F5F7'
-              : isCodeComplete
-                ? '#1565C0'
-                : '#F5F5F7',
+            backgroundColor: isLoading ? '#F5F5F7' : isCodeComplete ? '#1565C0' : '#F5F5F7',
             opacity: pressed && isCodeComplete && !isLoading ? 0.85 : 1,
           },
         ]}
@@ -362,12 +358,7 @@ export function VerifyOtp({
             </Typography>
           </View>
         ) : (
-          <Typography
-            style={[
-              styles.btnText,
-              { color: isCodeComplete ? '#FFFFFF' : '#BDBDBD' },
-            ]}
-          >
+          <Typography style={[styles.btnText, { color: isCodeComplete ? '#FFFFFF' : '#BDBDBD' }]}>
             {type === 'reset-password' ? 'Continue' : 'Verify Email'}
           </Typography>
         )}

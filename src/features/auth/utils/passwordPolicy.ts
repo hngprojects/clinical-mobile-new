@@ -21,10 +21,6 @@ export function getPasswordPolicyChecks(password: string): PasswordPolicyChecks 
 export function isPasswordPolicyMet(password: string): boolean {
   const checks = getPasswordPolicyChecks(password);
   return (
-    checks.has8Chars &&
-    checks.hasUpper &&
-    checks.hasLower &&
-    checks.hasNumber &&
-    checks.hasSpecial
+    checks.has8Chars && checks.hasUpper && checks.hasLower && checks.hasNumber && checks.hasSpecial
   );
 }

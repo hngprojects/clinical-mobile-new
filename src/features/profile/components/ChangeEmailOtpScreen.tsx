@@ -218,11 +218,7 @@ export function ChangeEmailOtpScreen() {
           style={({ pressed }) => [
             styles.verifyBtn,
             {
-              backgroundColor: isPending
-                ? '#F5F5F7'
-                : isCodeComplete
-                  ? '#1565C0'
-                  : '#F5F5F7',
+              backgroundColor: isPending ? '#F5F5F7' : isCodeComplete ? '#1565C0' : '#F5F5F7',
               opacity: pressed && isCodeComplete && !isPending ? 0.85 : 1,
             },
           ]}
@@ -233,9 +229,7 @@ export function ChangeEmailOtpScreen() {
               <Typography style={styles.loadingText}>Verifying Code</Typography>
             </View>
           ) : (
-            <Typography
-              style={[styles.btnText, { color: isCodeComplete ? '#FFFFFF' : '#BDBDBD' }]}
-            >
+            <Typography style={[styles.btnText, { color: isCodeComplete ? '#FFFFFF' : '#BDBDBD' }]}>
               Verify Email
             </Typography>
           )}
