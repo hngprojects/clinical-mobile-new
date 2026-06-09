@@ -9,6 +9,7 @@ import {
   useAuthStore,
   useGuestUploadSession,
 } from '@/features/auth';
+import { useEffectiveGuestSessionId } from '@/features/auth/hooks/useEffectiveGuestSessionId';
 import { useLogin } from '@/features/auth/hooks/useLogin';
 import { Screen, Toast, Typography, UploadBottomSheet } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
@@ -29,8 +30,14 @@ function getLoginErrorMessage(error: { message?: string; status?: number } | nul
 
 export default function LoginScreen() {
   const { spacing, colors } = useTheme();
-  const { caseId } = useLocalSearchParams<{ caseId?: string }>();
-  const loginMutation = useLogin({ caseId });
+  const { caseId, guestSessionId } = useLocalSearchParams<{
+    caseId?: string;
+    guestSessionId?: string;
+  }>();
+  const effectiveGuestSessionId = useEffectiveGuestSessionId(
+    typeof guestSessionId === 'string' ? guestSessionId : undefined,
+  );
+  const loginMutation = useLogin({ caseId, guestSessionId: effectiveGuestSessionId });
   const { handleUpload, handleUploadError } = useGuestUploadSession();
   const setSession = useAuthStore((state) => state.setSession);
   const [showUploadSheet, setShowUploadSheet] = useState(false);
@@ -125,7 +132,17 @@ export default function LoginScreen() {
           >
             Don&apos;t have an account?{' '}
           </Typography>
-          <Pressable onPress={() => router.push('/(auth)/register')}>
+          <Pressable
+            onPress={() =>
+              router.push({
+                pathname: '/(auth)/register',
+                params: {
+                  ...(caseId ? { caseId } : {}),
+                  ...(effectiveGuestSessionId ? { guestSessionId: effectiveGuestSessionId } : {}),
+                },
+              })
+            }
+          >
             <Typography
               style={{
                 color: colors.primary,
