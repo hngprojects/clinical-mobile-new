@@ -6,6 +6,8 @@ export const passwordPolicySchema = z
   .string()
   .min(8, 'Minimum 8 characters')
   .regex(/[A-Z]/, 'Must contain an uppercase letter')
+  .regex(/[a-z]/, 'Must contain a lowercase letter')
+  .regex(/[0-9]/, 'Must contain a number')
   .regex(PASSWORD_SPECIAL_CHAR_REGEX, 'Must contain a special character');
 
 export const loginSchema = z.object({
