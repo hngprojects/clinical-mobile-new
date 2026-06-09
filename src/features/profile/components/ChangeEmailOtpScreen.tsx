@@ -173,56 +173,57 @@ export function ChangeEmailOtpScreen() {
         {/* OTP label */}
         <Typography style={styles.otpLabel}>OTP</Typography>
 
-        {/* Hidden native input for keyboard / autofill */}
-        <RNTextInput
-          ref={inputRef}
-          value={code}
-          onChangeText={handleTextChange}
-          keyboardType="number-pad"
-          maxLength={CODE_LENGTH}
-          style={styles.hiddenInput}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
-          textContentType="oneTimeCode"
-          autoComplete={Platform.OS === 'android' ? 'sms-otp' : 'one-time-code'}
-          importantForAutofill="yes"
-          autoFocus
-        />
+        {/* OTP input overlays the grid so taps and keystrokes register reliably */}
+        <View style={styles.otpWrapper}>
+          <Pressable onPress={() => inputRef.current?.focus()} style={styles.otpGrid}>
+            {Array.from({ length: CODE_LENGTH }).map((_, idx) => {
+              const char = code[idx] || '';
+              const isCurrentFocus = isFocused && idx === Math.min(code.length, CODE_LENGTH - 1);
+              const isFilled = idx < code.length;
 
-        {/* OTP grid */}
-        <Pressable onPress={() => inputRef.current?.focus()} style={styles.otpGrid}>
-          {Array.from({ length: CODE_LENGTH }).map((_, idx) => {
-            const char = code[idx] || '';
-            const isCurrentFocus = isFocused && idx === Math.min(code.length, CODE_LENGTH - 1);
-            const isFilled = idx < code.length;
+              let borderStyle = styles.inactiveBox;
+              if (hasOtpError) borderStyle = styles.errorBox;
+              else if (isCurrentFocus || isFilled) borderStyle = styles.activeBox;
 
-            let borderStyle = styles.inactiveBox;
-            if (hasOtpError) borderStyle = styles.errorBox;
-            else if (isCurrentFocus || isFilled) borderStyle = styles.activeBox;
+              return (
+                <View key={idx} style={[styles.otpBox, borderStyle]} pointerEvents="none">
+                  <Typography style={styles.otpText}>{char}</Typography>
+                </View>
+              );
+            })}
+          </Pressable>
 
-            return (
-              <View key={idx} style={[styles.otpBox, borderStyle]}>
-                <Typography style={styles.otpText}>{char}</Typography>
-              </View>
-            );
-          })}
-        </Pressable>
+          <RNTextInput
+            ref={inputRef}
+            value={code}
+            onChangeText={handleTextChange}
+            keyboardType="number-pad"
+            style={styles.hiddenInput}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            textContentType="oneTimeCode"
+            autoComplete={Platform.OS === 'android' ? 'sms-otp' : 'one-time-code'}
+            importantForAutofill="yes"
+            caretHidden
+            autoFocus
+          />
+        </View>
 
         {hasOtpError && <Typography style={styles.errorText}>{otpErrorMessage}</Typography>}
 
         {/* Verify button */}
         <Pressable
-          disabled={!isCodeComplete || isPending || isExpired}
+          disabled={!isCodeComplete || isPending}
           onPress={handleVerify}
           style={({ pressed }) => [
             styles.verifyBtn,
             {
               backgroundColor: isPending
                 ? '#F5F5F7'
-                : isCodeComplete && !isExpired
+                : isCodeComplete
                   ? '#1565C0'
                   : '#F5F5F7',
-              opacity: pressed && isCodeComplete && !isPending && !isExpired ? 0.85 : 1,
+              opacity: pressed && isCodeComplete && !isPending ? 0.85 : 1,
             },
           ]}
         >
@@ -233,10 +234,7 @@ export function ChangeEmailOtpScreen() {
             </View>
           ) : (
             <Typography
-              style={[
-                styles.btnText,
-                { color: isCodeComplete && !isExpired ? '#FFFFFF' : '#BDBDBD' },
-              ]}
+              style={[styles.btnText, { color: isCodeComplete ? '#FFFFFF' : '#BDBDBD' }]}
             >
               Verify Email
             </Typography>
@@ -306,10 +304,14 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     marginBottom: 8,
   },
+  otpWrapper: {
+    position: 'relative',
+    width: '100%',
+  },
   hiddenInput: {
-    position: 'absolute',
-    width: 1,
-    height: 1,
+    ...StyleSheet.absoluteFillObject,
+    color: 'transparent',
+    fontSize: 1,
     opacity: 0,
   },
   otpGrid: {

@@ -13,6 +13,7 @@ import {
 
 import { useResendOtp } from '@/features/auth/hooks/useResendOtp';
 import { useResetPassword } from '@/features/auth/hooks/useResetPassword';
+import { useEffectiveGuestSessionId } from '@/features/auth/hooks/useEffectiveGuestSessionId';
 import { useVerifyOtp } from '@/features/auth/hooks/useVerifyOtp';
 import { useVerifyResetOtp } from '@/features/auth/hooks/useVerifyResetOtp';
 import { useAuthStore } from '@/features/auth/store/auth.store';
@@ -49,13 +50,15 @@ export function VerifyOtp({
   expiresInSeconds,
   type = 'signup',
   caseId,
+  guestSessionId: guestSessionIdParam,
 }: {
   email?: string;
   expiresInSeconds?: number;
   type?: 'signup' | 'reset-password';
   caseId?: string;
+  guestSessionId?: string;
 }) {
-  const guestSessionId = useAuthStore((state) => state.guestSessionId);
+  const effectiveGuestSessionId = useEffectiveGuestSessionId(guestSessionIdParam);
   const verifyOtpMutation = useVerifyOtp();
   const { reset: resetVerifyOtp } = verifyOtpMutation;
   const verifyResetOtpMutation = useVerifyResetOtp();
@@ -194,7 +197,7 @@ export function VerifyOtp({
     verifyOtpMutation.mutate({
       email: email || '',
       code,
-      ...(guestSessionId ? { guestSessionId } : {}),
+      ...(effectiveGuestSessionId ? { guestSessionId: effectiveGuestSessionId } : {}),
     });
   };
 
@@ -246,7 +249,6 @@ export function VerifyOtp({
   };
 
   const isCodeComplete = code.length === CODE_LENGTH;
-  const isExpired = timer === 0;
   const isLoading =
     type === 'reset-password' ? verifyResetOtpMutation.isPending : verifyOtpMutation.isPending;
 
@@ -297,57 +299,58 @@ export function VerifyOtp({
       {/* Label */}
       <Typography style={styles.otpLabel}>OTP</Typography>
 
-      {/* Hidden Native TextInput */}
-      <RNTextInput
-        ref={inputRef}
-        value={code}
-        onChangeText={handleTextChange}
-        keyboardType="number-pad"
-        maxLength={CODE_LENGTH}
-        style={styles.hiddenInput}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
-        textContentType="oneTimeCode"
-        autoComplete={Platform.OS === 'android' ? 'sms-otp' : 'one-time-code'}
-        importantForAutofill="yes"
-        autoFocus
-      />
+      {/* OTP input overlays the grid so taps and keystrokes register reliably */}
+      <View style={styles.otpWrapper}>
+        <Pressable onPress={handleBoxPress} style={styles.otpGrid}>
+          {Array.from({ length: CODE_LENGTH }).map((_, idx) => {
+            const char = code[idx] || '';
+            const isCurrentFocus = isFocused && idx === Math.min(code.length, CODE_LENGTH - 1);
+            const isFilled = idx < code.length;
 
-      {/* Customized Grid of OTP Boxes */}
-      <Pressable onPress={handleBoxPress} style={styles.otpGrid}>
-        {Array.from({ length: CODE_LENGTH }).map((_, idx) => {
-          const char = code[idx] || '';
-          const isCurrentFocus = isFocused && idx === Math.min(code.length, CODE_LENGTH - 1);
-          const isFilled = idx < code.length;
+            let borderStyle = styles.inactiveBox;
+            if (hasOtpError) borderStyle = styles.errorBox;
+            else if (isCurrentFocus || isFilled) borderStyle = styles.activeBox;
 
-          let borderStyle = styles.inactiveBox;
-          if (hasOtpError) borderStyle = styles.errorBox;
-          else if (isCurrentFocus || isFilled) borderStyle = styles.activeBox;
+            return (
+              <View key={idx} style={[styles.otpBox, borderStyle]} pointerEvents="none">
+                <Typography style={styles.otpText}>{char}</Typography>
+              </View>
+            );
+          })}
+        </Pressable>
 
-          return (
-            <View key={idx} style={[styles.otpBox, borderStyle]}>
-              <Typography style={styles.otpText}>{char}</Typography>
-            </View>
-          );
-        })}
-      </Pressable>
+        <RNTextInput
+          ref={inputRef}
+          value={code}
+          onChangeText={handleTextChange}
+          keyboardType="number-pad"
+          style={styles.hiddenInput}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          textContentType="oneTimeCode"
+          autoComplete={Platform.OS === 'android' ? 'sms-otp' : 'one-time-code'}
+          importantForAutofill="yes"
+          caretHidden
+          autoFocus
+        />
+      </View>
 
       {/* Red Error Message if Code is Incorrect */}
       {hasOtpError && <Typography style={styles.errorText}>{otpErrorMessage}</Typography>}
 
       {/* Verify Button matching all states */}
       <Pressable
-        disabled={!isCodeComplete || isLoading || isExpired}
+        disabled={!isCodeComplete || isLoading}
         onPress={handleVerify}
         style={({ pressed }) => [
           styles.verifyBtn,
           {
             backgroundColor: isLoading
               ? '#F5F5F7'
-              : isCodeComplete && !isExpired
+              : isCodeComplete
                 ? '#1565C0'
                 : '#F5F5F7',
-            opacity: pressed && isCodeComplete && !isLoading && !isExpired ? 0.85 : 1,
+            opacity: pressed && isCodeComplete && !isLoading ? 0.85 : 1,
           },
         ]}
       >
@@ -362,7 +365,7 @@ export function VerifyOtp({
           <Typography
             style={[
               styles.btnText,
-              { color: isCodeComplete && !isExpired ? '#FFFFFF' : '#BDBDBD' },
+              { color: isCodeComplete ? '#FFFFFF' : '#BDBDBD' },
             ]}
           >
             {type === 'reset-password' ? 'Continue' : 'Verify Email'}
@@ -447,10 +450,14 @@ const styles = StyleSheet.create({
     marginTop: 32,
     marginBottom: 8,
   },
+  otpWrapper: {
+    position: 'relative',
+    width: '100%',
+  },
   hiddenInput: {
-    position: 'absolute',
-    width: 1,
-    height: 1,
+    ...StyleSheet.absoluteFillObject,
+    color: 'transparent',
+    fontSize: 1,
     opacity: 0,
   },
   otpGrid: {
