@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { a11yRoles, minTouchTargetStyle } from '@/shared/accessibility';
 import { Typography } from '@/shared/components';
 
 import type { AiReviewResult, ValueBreakdown } from '../../api/ai-review.types';
@@ -66,8 +67,8 @@ export function ChatInterpretationCard({ review, onQuestionPress }: ChatInterpre
               <View style={styles.metaRow}>
                 {meta.map((item) => (
                   <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={`What ${item.label.toLowerCase()} means`}
+                    accessibilityRole={a11yRoles.button}
+                    accessibilityLabel={`${item.label}: ${item.value}. Double tap to learn what ${item.label.toLowerCase()} means.`}
                     key={item.kind}
                     onPress={() =>
                       setActiveMetaInfo((current) => (current === item.kind ? null : item.kind))
@@ -96,7 +97,9 @@ export function ChatInterpretationCard({ review, onQuestionPress }: ChatInterpre
         </View>
 
         <View style={styles.takeaway}>
-          <Typography style={styles.sectionTitle}>Key takeaway</Typography>
+          <Typography accessibilityRole={a11yRoles.header} style={styles.sectionTitle}>
+            Key takeaway
+          </Typography>
           {review.summary ? (
             <FormattedText style={styles.summary} text={review.summary} />
           ) : (
@@ -110,7 +113,9 @@ export function ChatInterpretationCard({ review, onQuestionPress }: ChatInterpre
         {groups.watch.length > 0 ? (
           <View style={styles.section}>
             <View style={styles.sectionHeaderRow}>
-              <Typography style={styles.sectionTitle}>Needs attention</Typography>
+              <Typography accessibilityRole={a11yRoles.header} style={styles.sectionTitle}>
+                Needs attention
+              </Typography>
               <Typography style={styles.sectionCount}>
                 {getCountLabel(groups.watch.length)}
               </Typography>
@@ -119,7 +124,11 @@ export function ChatInterpretationCard({ review, onQuestionPress }: ChatInterpre
               These were read as outside range or flagged.
             </Typography>
             {groups.watch.map((item, index) => (
-              <FindingRow item={item} key={`${getMetricText(item)}-${index}`} />
+              <FindingRow
+                groupLabel="Needs attention"
+                item={item}
+                key={`${getMetricText(item)}-${index}`}
+              />
             ))}
           </View>
         ) : null}
@@ -127,7 +136,9 @@ export function ChatInterpretationCard({ review, onQuestionPress }: ChatInterpre
         {groups.good.length > 0 ? (
           <View style={styles.section}>
             <View style={styles.sectionHeaderRow}>
-              <Typography style={styles.sectionTitle}>Within range</Typography>
+              <Typography accessibilityRole={a11yRoles.header} style={styles.sectionTitle}>
+                Within range
+              </Typography>
               <Typography style={styles.sectionCount}>
                 {getCountLabel(groups.good.length)}
               </Typography>
@@ -136,13 +147,18 @@ export function ChatInterpretationCard({ review, onQuestionPress }: ChatInterpre
               These were read as normal or in range.
             </Typography>
             {(showAllGoodValues ? groups.good : groups.good.slice(0, 3)).map((item, index) => (
-              <FindingRow item={item} key={`${getMetricText(item)}-${index}`} />
+              <FindingRow
+                groupLabel="Within range"
+                item={item}
+                key={`${getMetricText(item)}-${index}`}
+              />
             ))}
             {!showAllGoodValues && groups.good.length > 3 ? (
               <Pressable
-                accessibilityRole="button"
+                accessibilityRole={a11yRoles.button}
+                accessibilityLabel={`Show ${groups.good.length - 3} more within range values`}
                 onPress={() => setShowAllGoodValues(true)}
-                style={styles.inlineAction}
+                style={[styles.inlineAction, minTouchTargetStyle]}
               >
                 <Typography style={styles.inlineActionText}>
                   Show {groups.good.length - 3} more
@@ -155,7 +171,9 @@ export function ChatInterpretationCard({ review, onQuestionPress }: ChatInterpre
         {groups.other.length > 0 ? (
           <View style={styles.section}>
             <View style={styles.sectionHeaderRow}>
-              <Typography style={styles.sectionTitle}>Needs context</Typography>
+              <Typography accessibilityRole={a11yRoles.header} style={styles.sectionTitle}>
+                Needs context
+              </Typography>
               <Typography style={styles.sectionCount}>
                 {getCountLabel(groups.other.length)}
               </Typography>
@@ -164,13 +182,18 @@ export function ChatInterpretationCard({ review, onQuestionPress }: ChatInterpre
               Flo read these, but the status was not clear enough to classify.
             </Typography>
             {(showAllContextValues ? groups.other : groups.other.slice(0, 3)).map((item, index) => (
-              <FindingRow item={item} key={`${getMetricText(item)}-${index}`} />
+              <FindingRow
+                groupLabel="Needs context"
+                item={item}
+                key={`${getMetricText(item)}-${index}`}
+              />
             ))}
             {!showAllContextValues && groups.other.length > 3 ? (
               <Pressable
-                accessibilityRole="button"
+                accessibilityRole={a11yRoles.button}
+                accessibilityLabel={`Show ${groups.other.length - 3} more values that need context`}
                 onPress={() => setShowAllContextValues(true)}
-                style={styles.inlineAction}
+                style={[styles.inlineAction, minTouchTargetStyle]}
               >
                 <Typography style={styles.inlineActionText}>
                   Show {groups.other.length - 3} more
@@ -182,10 +205,13 @@ export function ChatInterpretationCard({ review, onQuestionPress }: ChatInterpre
 
         {questions.length > 0 ? (
           <View style={styles.questionGroup}>
-            <Typography style={styles.questionTitle}>Suggested follow-up questions</Typography>
+            <Typography accessibilityRole={a11yRoles.header} style={styles.questionTitle}>
+              Suggested follow-up questions
+            </Typography>
             {questions.map((question) => (
               <Pressable
-                accessibilityRole="button"
+                accessibilityRole={a11yRoles.button}
+                accessibilityLabel={`Ask Flo: ${question}`}
                 key={question}
                 onPress={() => onQuestionPress(question)}
                 style={styles.questionChip}
@@ -200,14 +226,21 @@ export function ChatInterpretationCard({ review, onQuestionPress }: ChatInterpre
   );
 }
 
-function FindingRow({ item }: { item: ValueBreakdown }) {
+function FindingRow({ groupLabel, item }: { groupLabel: string; item: ValueBreakdown }) {
+  const statusText = getAccessibleStatusText(item, groupLabel);
+
   return (
-    <View style={styles.findingRow}>
+    <View
+      accessible
+      accessibilityLabel={`${getMetricText(item)}, ${getValueText(item)}, status: ${statusText}`}
+      style={styles.findingRow}
+    >
       <View style={styles.findingTopRow}>
         <View style={styles.metricBlock}>
           <Typography numberOfLines={2} style={styles.metric}>
             {getMetricText(item)}
           </Typography>
+          <Typography style={styles.statusText}>{statusText}</Typography>
         </View>
         <Typography style={styles.amount}>{getValueText(item)}</Typography>
       </View>
@@ -403,6 +436,10 @@ function getStatusText(item: ValueBreakdown) {
   return formatResultLabel(item.status);
 }
 
+function getAccessibleStatusText(item: ValueBreakdown, groupLabel: string) {
+  return getStatusText(item) || groupLabel;
+}
+
 function getValueText(item: ValueBreakdown) {
   if (isMissingValue(item.value)) return 'Missing value';
 
@@ -511,6 +548,7 @@ const styles = StyleSheet.create({
   },
   inlineAction: {
     alignSelf: 'flex-start',
+    paddingHorizontal: 4,
     paddingVertical: 2,
   },
   inlineActionText: {
@@ -563,6 +601,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flex: 1,
     gap: 1,
+    minHeight: 48,
     paddingHorizontal: 9,
     paddingVertical: 7,
   },
@@ -594,6 +633,8 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
     borderRadius: 10,
     borderWidth: 1,
+    minHeight: 48,
+    justifyContent: 'center',
     paddingHorizontal: 12,
     paddingVertical: 9,
   },
@@ -648,6 +689,12 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_600SemiBold',
     fontSize: 13,
     lineHeight: 18,
+  },
+  statusText: {
+    color: '#4B5563',
+    fontFamily: 'Inter_400Regular',
+    fontSize: 12,
+    lineHeight: 17,
   },
   subtitle: {
     color: '#6B7280',

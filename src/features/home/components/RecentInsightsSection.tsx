@@ -1,10 +1,16 @@
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { InsightItemCard } from '@/features/insights/components/InsightItemCard';
 import { Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
-import { Insight, InsightCard } from './InsightCard';
+export interface Insight {
+  id: string;
+  title: string;
+  timestamp: string;
+  caseId?: string;
+}
 
 interface RecentInsightsSectionProps {
   insights: Insight[];
@@ -38,15 +44,16 @@ export function RecentInsightsSection({
 
       <View style={{ gap: spacing.md }}>
         {insights.map((insight) => (
-          <InsightCard
-            key={insight.id}
-            insight={insight}
-            onPress={onView}
-            onRename={onRename}
-            onView={onView}
-            onDelete={onDelete}
-            onExportPdf={onExportPdf}
-          />
+          <View key={insight.id} style={{ marginHorizontal: spacing.md }}>
+            <InsightItemCard
+              insight={insight}
+              onPress={() => onView?.(insight.id)}
+              onRename={onRename}
+              onView={onView}
+              onDelete={onDelete}
+              onExportPdf={onExportPdf}
+            />
+          </View>
         ))}
       </View>
     </View>

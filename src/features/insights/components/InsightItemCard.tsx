@@ -11,6 +11,7 @@ import {
 
 import { DeleteModal } from '@/features/home/components/DeleteModal';
 import { RenameModal } from '@/features/home/components/RenameModal';
+import { a11yRoles, minTouchTargetStyle } from '@/shared/accessibility';
 import { Typography } from '@/shared/components';
 import { ChevronRightIcon } from '@/shared/components/icons/ChevronRightIcon';
 import { DeleteIcon } from '@/shared/components/icons/DeleteIcon';
@@ -23,6 +24,10 @@ const MENU_GAP = 4;
 const MENU_ITEM_HEIGHT = 52;
 const MENU_MARGIN = 16;
 const MENU_WIDTH = 180;
+
+function getInsightAccessibilityLabel(title: string, timestamp: string) {
+  return `Lab insight: ${title}. Created ${timestamp}. Double tap to open result details.`;
+}
 
 export function InsightItemCard({
   insight,
@@ -95,53 +100,86 @@ export function InsightItemCard({
 
   return (
     <>
-      <Pressable
-        accessibilityRole={onPress ? 'button' : undefined}
-        accessibilityLabel={onPress ? `Open ${insight.title}` : undefined}
-        onPress={onPress}
-        disabled={!onPress}
-        style={({ pressed }) => [
+      <View
+        style={[
           styles.card,
           {
             backgroundColor: colors.cardBackground,
             borderRadius: 12,
             padding: spacing.md,
-            opacity: onPress && pressed ? 0.92 : 1,
           },
         ]}
       >
         <View style={styles.row}>
-          <View style={styles.textGroup}>
-            <Typography variant="body1" style={styles.title}>
-              {insight.title}
-            </Typography>
-            <Typography variant="body2" color={colors.textSecondary}>
-              {insight.timestamp}
-            </Typography>
-          </View>
-          <Pressable ref={menuButtonRef} onPress={openMenu} hitSlop={8} style={styles.menuButton}>
+          <Pressable
+            accessibilityRole={onPress ? a11yRoles.button : undefined}
+            accessibilityLabel={
+              onPress ? getInsightAccessibilityLabel(insight.title, insight.timestamp) : undefined
+            }
+            onPress={onPress}
+            disabled={!onPress}
+            style={({ pressed }) => [styles.cardBody, { opacity: onPress && pressed ? 0.92 : 1 }]}
+          >
+            <View style={styles.textGroup}>
+              <Typography variant="body1" style={styles.title}>
+                {insight.title}
+              </Typography>
+              <Typography variant="body2" color={colors.textSecondary}>
+                {insight.timestamp}
+              </Typography>
+            </View>
+          </Pressable>
+          <Pressable
+            ref={menuButtonRef}
+            accessibilityRole={a11yRoles.button}
+            accessibilityLabel={`Options for lab insight ${insight.title}`}
+            accessibilityHint={
+              onExportPdf
+                ? 'Opens rename, view, export, and delete actions.'
+                : 'Opens rename, view, and delete actions.'
+            }
+            onPress={openMenu}
+            hitSlop={8}
+            style={[styles.menuButton, minTouchTargetStyle]}
+          >
             <Ionicons name="ellipsis-vertical" size={18} color={colors.textSecondary} />
           </Pressable>
         </View>
-      </Pressable>
+      </View>
 
       {/* Three-dot dropdown menu */}
       <Modal visible={menuVisible} transparent animationType="none" onRequestClose={closeMenu}>
-        <Pressable style={styles.backdrop} onPress={closeMenu}>
+        <Pressable
+          accessibilityRole={a11yRoles.button}
+          accessibilityLabel="Close insight actions menu"
+          style={styles.backdrop}
+          onPress={closeMenu}
+        >
           <Pressable
+            accessibilityViewIsModal
             style={[
               styles.menuCard,
               { top: menuPos.top, right: menuPos.right, backgroundColor: colors.surface },
             ]}
           >
-            <Pressable style={styles.menuItem} onPress={handleRename}>
+            <Pressable
+              accessibilityRole={a11yRoles.button}
+              accessibilityLabel={`Rename ${insight.title}`}
+              style={styles.menuItem}
+              onPress={handleRename}
+            >
               <Typography variant="body1">Rename</Typography>
               <RenameIcon size={18} color={colors.text} />
             </Pressable>
 
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-            <Pressable style={styles.menuItem} onPress={handleView}>
+            <Pressable
+              accessibilityRole={a11yRoles.button}
+              accessibilityLabel={`View ${insight.title} details`}
+              style={styles.menuItem}
+              onPress={handleView}
+            >
               <Typography variant="body1">View</Typography>
               <ChevronRightIcon size={18} color={colors.text} />
             </Pressable>
@@ -150,7 +188,12 @@ export function InsightItemCard({
 
             {onExportPdf ? (
               <>
-                <Pressable style={styles.menuItem} onPress={handleExportPdf}>
+                <Pressable
+                  accessibilityRole={a11yRoles.button}
+                  accessibilityLabel={`Export ${insight.title} as PDF`}
+                  style={styles.menuItem}
+                  onPress={handleExportPdf}
+                >
                   <Typography variant="body1">Export as PDF</Typography>
                   <Ionicons name="document-text-outline" size={18} color={colors.text} />
                 </Pressable>
@@ -159,7 +202,12 @@ export function InsightItemCard({
               </>
             ) : null}
 
-            <Pressable style={styles.menuItem} onPress={handleDelete}>
+            <Pressable
+              accessibilityRole={a11yRoles.button}
+              accessibilityLabel={`Delete ${insight.title}`}
+              style={styles.menuItem}
+              onPress={handleDelete}
+            >
               <Typography variant="body1" color="#EF4444">
                 Delete
               </Typography>
@@ -197,6 +245,11 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  cardBody: {
+    flex: 1,
+    justifyContent: 'center',
+    minHeight: 48,
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -210,7 +263,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   menuButton: {
-    paddingLeft: 8,
+    marginLeft: 8,
   },
   backdrop: {
     flex: 1,

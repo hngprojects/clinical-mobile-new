@@ -17,8 +17,7 @@ import { useTheme } from '@/shared/theme';
 
 import { useHome } from '../hooks/useHome';
 import { HomeHeader } from './HomeHeader';
-import { Insight } from './InsightCard';
-import { RecentInsightsSection } from './RecentInsightsSection';
+import { Insight, RecentInsightsSection } from './RecentInsightsSection';
 import { UploadCard } from './UploadCard';
 
 export function HomeScreen() {
