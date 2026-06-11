@@ -31,7 +31,7 @@ const MENU_MARGIN = 16;
 const MENU_WIDTH = 180;
 
 function getInsightAccessibilityLabel(title: string, timestamp: string) {
-  return `Lab insight: ${title}. Created ${timestamp}. Double tap to open result details.`;
+  return `Lab insight: ${title}. Created ${timestamp}.`;
 }
 
 export function InsightItemCard({
@@ -110,8 +110,10 @@ export function InsightItemCard({
           styles.card,
           {
             backgroundColor: colors.cardBackground,
+            borderColor: colors.borderSubtle,
             borderRadius: 12,
             padding: spacing.md,
+            shadowColor: colors.text,
           },
         ]}
       >
@@ -121,6 +123,7 @@ export function InsightItemCard({
             accessibilityLabel={
               onPress ? getInsightAccessibilityLabel(insight.title, insight.timestamp) : undefined
             }
+            accessibilityHint={onPress ? 'Opens result details.' : undefined}
             onPress={onPress}
             disabled={!onPress}
             style={({ pressed }) => [styles.cardBody, { opacity: onPress && pressed ? 0.92 : 1 }]}
@@ -175,7 +178,12 @@ export function InsightItemCard({
             accessibilityViewIsModal
             style={[
               styles.menuCard,
-              { top: menuPos.top, right: menuPos.right, backgroundColor: colors.surface },
+              {
+                top: menuPos.top,
+                right: menuPos.right,
+                backgroundColor: colors.surface,
+                shadowColor: colors.text,
+              },
             ]}
             accessibilityRole="menu"
           >
@@ -226,10 +234,10 @@ export function InsightItemCard({
               accessibilityLabel={`Delete ${insight.title}`}
               accessibilityHint="Destructive action"
             >
-              <Typography variant="body1" color="#EF4444">
+              <Typography variant="body1" color={colors.error}>
                 Delete
               </Typography>
-              <DeleteIcon size={18} />
+              <DeleteIcon size={18} color={colors.error} />
             </Pressable>
           </Pressable>
         </Pressable>
@@ -256,8 +264,6 @@ export function InsightItemCard({
 const styles = StyleSheet.create({
   card: {
     borderWidth: 1,
-    borderColor: '#F0F0F0',
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
     shadowRadius: 4,
@@ -290,7 +296,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: MENU_WIDTH,
     borderRadius: 12,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.12,
     shadowRadius: 12,

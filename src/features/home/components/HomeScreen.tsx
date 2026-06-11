@@ -6,6 +6,7 @@ import { Alert, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { casesApi } from '@/features/insights/api/cases.api';
+import type { InsightCardModel } from '@/features/insights/api/types';
 import { useInsightCases } from '@/features/insights/hooks/useInsightCases';
 import {
   NOTIFICATIONS_KEY,
@@ -17,7 +18,7 @@ import { useTheme } from '@/shared/theme';
 
 import { useHome } from '../hooks/useHome';
 import { HomeHeader } from './HomeHeader';
-import { Insight, RecentInsightsSection } from './RecentInsightsSection';
+import { RecentInsightsSection } from './RecentInsightsSection';
 import { UploadCard } from './UploadCard';
 
 export function HomeScreen() {
@@ -55,7 +56,7 @@ export function HomeScreen() {
     };
   }, []);
 
-  const insights = useMemo<Insight[]>(
+  const insights = useMemo<InsightCardModel[]>(
     () =>
       insightItems.map((item) => ({
         caseId: item.caseId ?? item.id,

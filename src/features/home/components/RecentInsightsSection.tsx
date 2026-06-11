@@ -2,18 +2,12 @@ import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { InsightItemCard } from '@/features/insights/components/InsightItemCard';
+import type { InsightCardModel } from '@/features/insights/api/types';
 import { Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
-export interface Insight {
-  id: string;
-  title: string;
-  timestamp: string;
-  caseId?: string;
-}
-
 interface RecentInsightsSectionProps {
-  insights: Insight[];
+  insights: InsightCardModel[];
   onViewAll?: () => void;
   onRename?: (id: string, newTitle: string) => void;
   onView?: (id: string) => void;

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { Pressable, StyleProp, StyleSheet, Text, TextStyle, View } from 'react-native';
 
 import { a11yRoles, minTouchTargetStyle } from '@/shared/accessibility';
 import { Typography } from '@/shared/components';
+import { useTheme, type Colors } from '@/shared/theme';
 
 import type { AiReviewResult, ValueBreakdown } from '../../api/ai-review.types';
 
@@ -45,6 +46,8 @@ const PRESERVED_METRIC_ACRONYMS = new Set([
 ]);
 
 export function ChatInterpretationCard({ review, onQuestionPress }: ChatInterpretationCardProps) {
+  const { colors } = useTheme();
+  const themedStyles = useMemo(() => createThemedStyles(colors), [colors]);
   const [showAllGoodValues, setShowAllGoodValues] = useState(false);
   const [showAllContextValues, setShowAllContextValues] = useState(false);
   const [activeMetaInfo, setActiveMetaInfo] = useState<ReviewMetaKind | null>(null);
@@ -57,10 +60,10 @@ export function ChatInterpretationCard({ review, onQuestionPress }: ChatInterpre
 
   return (
     <View style={styles.reviewGroup}>
-      <View style={styles.card}>
+      <View style={[styles.card, themedStyles.card]}>
         <View style={styles.header}>
           <View style={styles.titleRow}>
-            <Typography style={styles.title}>Flo&apos;s review</Typography>
+            <Typography style={[styles.title, themedStyles.title]}>Flo&apos;s review</Typography>
           </View>
           {meta.length > 0 ? (
             <>
@@ -68,26 +71,35 @@ export function ChatInterpretationCard({ review, onQuestionPress }: ChatInterpre
                 {meta.map((item) => (
                   <Pressable
                     accessibilityRole={a11yRoles.button}
-                    accessibilityLabel={`${item.label}: ${item.value}. Double tap to learn what ${item.label.toLowerCase()} means.`}
+                    accessibilityLabel={`${item.label}: ${item.value}.`}
+                    accessibilityHint={`Shows what ${item.label.toLowerCase()} means.`}
                     key={item.kind}
                     onPress={() =>
                       setActiveMetaInfo((current) => (current === item.kind ? null : item.kind))
                     }
-                    style={[styles.metaPill, activeMetaInfo === item.kind && styles.metaPillActive]}
+                    style={[
+                      styles.metaPill,
+                      themedStyles.metaPill,
+                      activeMetaInfo === item.kind && themedStyles.metaPillActive,
+                    ]}
                   >
                     <View style={styles.metaLabelRow}>
-                      <Typography style={styles.metaLabel}>{item.label}</Typography>
+                      <Typography style={[styles.metaLabel, themedStyles.metaLabel]}>
+                        {item.label}
+                      </Typography>
                     </View>
-                    <Typography style={styles.metaValue}>{item.value}</Typography>
+                    <Typography style={[styles.metaValue, themedStyles.metaValue]}>
+                      {item.value}
+                    </Typography>
                   </Pressable>
                 ))}
               </View>
               {activeMetaInfo ? (
-                <View style={styles.metaInfoPanel}>
-                  <Typography style={styles.metaInfoTitle}>
+                <View style={[styles.metaInfoPanel, themedStyles.metaInfoPanel]}>
+                  <Typography style={[styles.metaInfoTitle, themedStyles.metaInfoTitle]}>
                     {getMetaInfoTitle(activeMetaInfo)}
                   </Typography>
-                  <Typography style={styles.metaInfoText}>
+                  <Typography style={[styles.metaInfoText, themedStyles.metaInfoText]}>
                     {getMetaInfoText(activeMetaInfo)}
                   </Typography>
                 </View>
@@ -96,31 +108,39 @@ export function ChatInterpretationCard({ review, onQuestionPress }: ChatInterpre
           ) : null}
         </View>
 
-        <View style={styles.takeaway}>
-          <Typography accessibilityRole={a11yRoles.header} style={styles.sectionTitle}>
+        <View style={[styles.takeaway, themedStyles.takeaway]}>
+          <Typography
+            accessibilityRole={a11yRoles.header}
+            style={[styles.sectionTitle, themedStyles.sectionTitle]}
+          >
             Key takeaway
           </Typography>
           {review.summary ? (
-            <FormattedText style={styles.summary} text={review.summary} />
+            <FormattedText style={[styles.summary, themedStyles.summary]} text={review.summary} />
           ) : (
             <>
-              <Typography style={styles.verdictTitle}>{verdict.title}</Typography>
-              <Typography style={styles.summary}>{verdict.body}</Typography>
+              <Typography style={[styles.verdictTitle, themedStyles.verdictTitle]}>
+                {verdict.title}
+              </Typography>
+              <Typography style={[styles.summary, themedStyles.summary]}>{verdict.body}</Typography>
             </>
           )}
         </View>
 
         {groups.watch.length > 0 ? (
-          <View style={styles.section}>
+          <View style={[styles.section, themedStyles.section]}>
             <View style={styles.sectionHeaderRow}>
-              <Typography accessibilityRole={a11yRoles.header} style={styles.sectionTitle}>
+              <Typography
+                accessibilityRole={a11yRoles.header}
+                style={[styles.sectionTitle, themedStyles.sectionTitle]}
+              >
                 Needs attention
               </Typography>
-              <Typography style={styles.sectionCount}>
+              <Typography style={[styles.sectionCount, themedStyles.sectionCount]}>
                 {getCountLabel(groups.watch.length)}
               </Typography>
             </View>
-            <Typography style={styles.sectionIntro}>
+            <Typography style={[styles.sectionIntro, themedStyles.sectionIntro]}>
               These were read as outside range or flagged.
             </Typography>
             {groups.watch.map((item, index) => (
@@ -128,22 +148,26 @@ export function ChatInterpretationCard({ review, onQuestionPress }: ChatInterpre
                 groupLabel="Needs attention"
                 item={item}
                 key={`${getMetricText(item)}-${index}`}
+                themedStyles={themedStyles}
               />
             ))}
           </View>
         ) : null}
 
         {groups.good.length > 0 ? (
-          <View style={styles.section}>
+          <View style={[styles.section, themedStyles.section]}>
             <View style={styles.sectionHeaderRow}>
-              <Typography accessibilityRole={a11yRoles.header} style={styles.sectionTitle}>
+              <Typography
+                accessibilityRole={a11yRoles.header}
+                style={[styles.sectionTitle, themedStyles.sectionTitle]}
+              >
                 Within range
               </Typography>
-              <Typography style={styles.sectionCount}>
+              <Typography style={[styles.sectionCount, themedStyles.sectionCount]}>
                 {getCountLabel(groups.good.length)}
               </Typography>
             </View>
-            <Typography style={styles.sectionIntro}>
+            <Typography style={[styles.sectionIntro, themedStyles.sectionIntro]}>
               These were read as normal or in range.
             </Typography>
             {(showAllGoodValues ? groups.good : groups.good.slice(0, 3)).map((item, index) => (
@@ -151,6 +175,7 @@ export function ChatInterpretationCard({ review, onQuestionPress }: ChatInterpre
                 groupLabel="Within range"
                 item={item}
                 key={`${getMetricText(item)}-${index}`}
+                themedStyles={themedStyles}
               />
             ))}
             {!showAllGoodValues && groups.good.length > 3 ? (
@@ -160,7 +185,7 @@ export function ChatInterpretationCard({ review, onQuestionPress }: ChatInterpre
                 onPress={() => setShowAllGoodValues(true)}
                 style={[styles.inlineAction, minTouchTargetStyle]}
               >
-                <Typography style={styles.inlineActionText}>
+                <Typography style={[styles.inlineActionText, themedStyles.inlineActionText]}>
                   Show {groups.good.length - 3} more
                 </Typography>
               </Pressable>
@@ -169,16 +194,19 @@ export function ChatInterpretationCard({ review, onQuestionPress }: ChatInterpre
         ) : null}
 
         {groups.other.length > 0 ? (
-          <View style={styles.section}>
+          <View style={[styles.section, themedStyles.section]}>
             <View style={styles.sectionHeaderRow}>
-              <Typography accessibilityRole={a11yRoles.header} style={styles.sectionTitle}>
+              <Typography
+                accessibilityRole={a11yRoles.header}
+                style={[styles.sectionTitle, themedStyles.sectionTitle]}
+              >
                 Needs context
               </Typography>
-              <Typography style={styles.sectionCount}>
+              <Typography style={[styles.sectionCount, themedStyles.sectionCount]}>
                 {getCountLabel(groups.other.length)}
               </Typography>
             </View>
-            <Typography style={styles.sectionIntro}>
+            <Typography style={[styles.sectionIntro, themedStyles.sectionIntro]}>
               Flo read these, but the status was not clear enough to classify.
             </Typography>
             {(showAllContextValues ? groups.other : groups.other.slice(0, 3)).map((item, index) => (
@@ -186,6 +214,7 @@ export function ChatInterpretationCard({ review, onQuestionPress }: ChatInterpre
                 groupLabel="Needs context"
                 item={item}
                 key={`${getMetricText(item)}-${index}`}
+                themedStyles={themedStyles}
               />
             ))}
             {!showAllContextValues && groups.other.length > 3 ? (
@@ -195,7 +224,7 @@ export function ChatInterpretationCard({ review, onQuestionPress }: ChatInterpre
                 onPress={() => setShowAllContextValues(true)}
                 style={[styles.inlineAction, minTouchTargetStyle]}
               >
-                <Typography style={styles.inlineActionText}>
+                <Typography style={[styles.inlineActionText, themedStyles.inlineActionText]}>
                   Show {groups.other.length - 3} more
                 </Typography>
               </Pressable>
@@ -205,7 +234,10 @@ export function ChatInterpretationCard({ review, onQuestionPress }: ChatInterpre
 
         {questions.length > 0 ? (
           <View style={styles.questionGroup}>
-            <Typography accessibilityRole={a11yRoles.header} style={styles.questionTitle}>
+            <Typography
+              accessibilityRole={a11yRoles.header}
+              style={[styles.questionTitle, themedStyles.questionTitle]}
+            >
               Suggested follow-up questions
             </Typography>
             {questions.map((question) => (
@@ -214,9 +246,11 @@ export function ChatInterpretationCard({ review, onQuestionPress }: ChatInterpre
                 accessibilityLabel={`Ask Flo: ${question}`}
                 key={question}
                 onPress={() => onQuestionPress(question)}
-                style={styles.questionChip}
+                style={[styles.questionChip, themedStyles.questionChip]}
               >
-                <Typography style={styles.questionText}>{question}</Typography>
+                <Typography style={[styles.questionText, themedStyles.questionText]}>
+                  {question}
+                </Typography>
               </Pressable>
             ))}
           </View>
@@ -226,29 +260,37 @@ export function ChatInterpretationCard({ review, onQuestionPress }: ChatInterpre
   );
 }
 
-function FindingRow({ groupLabel, item }: { groupLabel: string; item: ValueBreakdown }) {
+function FindingRow({
+  groupLabel,
+  item,
+  themedStyles,
+}: {
+  groupLabel: string;
+  item: ValueBreakdown;
+  themedStyles: ThemedStyles;
+}) {
   const statusText = getAccessibleStatusText(item, groupLabel);
 
   return (
     <View
       accessible
       accessibilityLabel={`${getMetricText(item)}, ${getValueText(item)}, status: ${statusText}`}
-      style={styles.findingRow}
+      style={[styles.findingRow, themedStyles.findingRow]}
     >
       <View style={styles.findingTopRow}>
         <View style={styles.metricBlock}>
-          <Typography numberOfLines={2} style={styles.metric}>
+          <Typography numberOfLines={2} style={[styles.metric, themedStyles.metric]}>
             {getMetricText(item)}
           </Typography>
-          <Typography style={styles.statusText}>{statusText}</Typography>
+          <Typography style={[styles.statusText, themedStyles.statusText]}>{statusText}</Typography>
         </View>
-        <Typography style={styles.amount}>{getValueText(item)}</Typography>
+        <Typography style={[styles.amount, themedStyles.amount]}>{getValueText(item)}</Typography>
       </View>
     </View>
   );
 }
 
-function FormattedText({ style, text }: { style: object; text: string }) {
+function FormattedText({ style, text }: { style: StyleProp<TextStyle>; text: string }) {
   return <Typography style={style}>{renderInlineText(cleanMarkdownHeadings(text))}</Typography>;
 }
 
@@ -510,9 +552,93 @@ function normalizeQuestionText(value: string) {
   return text.endsWith('?') ? text : `${text}?`;
 }
 
+function createThemedStyles(colors: Colors) {
+  return StyleSheet.create({
+    amount: {
+      color: colors.text,
+    },
+    card: {
+      backgroundColor: colors.cardBackground,
+    },
+    findingRow: {
+      backgroundColor: colors.cardBackground,
+      borderColor: colors.borderSubtle,
+    },
+    inlineActionText: {
+      color: colors.primary,
+    },
+    metaInfoPanel: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+    },
+    metaInfoText: {
+      color: colors.textSecondary,
+    },
+    metaInfoTitle: {
+      color: colors.text,
+    },
+    metaLabel: {
+      color: colors.placeholder,
+    },
+    metaPill: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+    },
+    metaPillActive: {
+      borderColor: colors.primary,
+    },
+    metaValue: {
+      color: colors.text,
+    },
+    metric: {
+      color: colors.text,
+    },
+    questionChip: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+    },
+    questionText: {
+      color: colors.primary,
+    },
+    questionTitle: {
+      color: colors.textSecondary,
+    },
+    section: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+    },
+    sectionCount: {
+      color: colors.placeholder,
+    },
+    sectionIntro: {
+      color: colors.placeholder,
+    },
+    sectionTitle: {
+      color: colors.text,
+    },
+    statusText: {
+      color: colors.textSecondary,
+    },
+    summary: {
+      color: colors.textSecondary,
+    },
+    takeaway: {
+      backgroundColor: colors.surface,
+      borderColor: colors.borderSubtle,
+    },
+    title: {
+      color: colors.text,
+    },
+    verdictTitle: {
+      color: colors.text,
+    },
+  });
+}
+
+type ThemedStyles = ReturnType<typeof createThemedStyles>;
+
 const styles = StyleSheet.create({
   amount: {
-    color: '#1B1B1B',
     fontFamily: 'Inter_500Medium',
     fontSize: 13,
     lineHeight: 18,
@@ -521,7 +647,6 @@ const styles = StyleSheet.create({
   },
   card: {
     alignSelf: 'flex-start',
-    backgroundColor: '#FAFAFA',
     borderRadius: 12,
     gap: 14,
     paddingHorizontal: 12,
@@ -529,8 +654,6 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   findingRow: {
-    backgroundColor: '#FAFAFA',
-    borderColor: '#ECEFF3',
     borderRadius: 8,
     borderWidth: 1,
     gap: 7,
@@ -552,7 +675,6 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   inlineActionText: {
-    color: '#1565C0',
     fontFamily: 'Inter_500Medium',
     fontSize: 12,
     lineHeight: 17,
@@ -562,7 +684,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   metaLabel: {
-    color: '#6B7280',
     fontFamily: 'Inter_400Regular',
     fontSize: 11,
     lineHeight: 15,
@@ -574,8 +695,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   metaInfoPanel: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E5E7EB',
     borderRadius: 8,
     borderWidth: 1,
     gap: 3,
@@ -583,20 +702,16 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
   },
   metaInfoText: {
-    color: '#4B5563',
     fontFamily: 'Inter_400Regular',
     fontSize: 12,
     lineHeight: 18,
   },
   metaInfoTitle: {
-    color: '#1B1B1B',
     fontFamily: 'Inter_600SemiBold',
     fontSize: 12,
     lineHeight: 17,
   },
   metaPill: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E5E7EB',
     borderRadius: 8,
     borderWidth: 1,
     flex: 1,
@@ -605,21 +720,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 9,
     paddingVertical: 7,
   },
-  metaPillActive: {
-    borderColor: '#C9D7E8',
-  },
   metaRow: {
     flexDirection: 'row',
     gap: 8,
   },
   metaValue: {
-    color: '#1B1B1B',
     fontFamily: 'Inter_600SemiBold',
     fontSize: 13,
     lineHeight: 18,
   },
   metric: {
-    color: '#1B1B1B',
     fontFamily: 'Inter_500Medium',
     fontSize: 13,
     lineHeight: 18,
@@ -629,8 +739,6 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   questionChip: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E5E7EB',
     borderRadius: 10,
     borderWidth: 1,
     minHeight: 48,
@@ -642,13 +750,11 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   questionText: {
-    color: '#1565C0',
     fontFamily: 'Inter_400Regular',
     fontSize: 13,
     lineHeight: 18,
   },
   questionTitle: {
-    color: '#374151',
     fontFamily: 'Inter_500Medium',
     fontSize: 13,
     lineHeight: 18,
@@ -659,8 +765,6 @@ const styles = StyleSheet.create({
     maxWidth: '88%',
   },
   section: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E5E7EB',
     borderRadius: 10,
     borderWidth: 1,
     gap: 9,
@@ -668,7 +772,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   sectionCount: {
-    color: '#6B7280',
     fontFamily: 'Inter_400Regular',
     fontSize: 12,
     lineHeight: 17,
@@ -679,38 +782,31 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   sectionIntro: {
-    color: '#6B7280',
     fontFamily: 'Inter_400Regular',
     fontSize: 12,
     lineHeight: 18,
   },
   sectionTitle: {
-    color: '#1B1B1B',
     fontFamily: 'Inter_600SemiBold',
     fontSize: 13,
     lineHeight: 18,
   },
   statusText: {
-    color: '#4B5563',
     fontFamily: 'Inter_400Regular',
     fontSize: 12,
     lineHeight: 17,
   },
   subtitle: {
-    color: '#6B7280',
     fontFamily: 'Inter_400Regular',
     fontSize: 12,
     lineHeight: 18,
   },
   summary: {
-    color: '#333333',
     fontFamily: 'Inter_400Regular',
     fontSize: 15,
     lineHeight: 22,
   },
   takeaway: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#ECEFF3',
     borderRadius: 10,
     borderWidth: 1,
     gap: 5,
@@ -718,7 +814,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   title: {
-    color: '#1B1B1B',
     fontFamily: 'Inter_500Medium',
     fontSize: 16,
     lineHeight: 22,
@@ -727,7 +822,6 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   verdictTitle: {
-    color: '#1B1B1B',
     fontFamily: 'Inter_600SemiBold',
     fontSize: 15,
     lineHeight: 21,
