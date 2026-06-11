@@ -9,7 +9,7 @@ import {
   useAuthStore,
   useGuestUploadSession,
 } from '@/features/auth';
-import { useEffectiveGuestSessionId } from '@/features/auth/hooks/useEffectiveGuestSessionId';
+import { useSyncGuestSessionFromParams } from '@/features/auth/hooks/useSyncGuestSessionFromParams';
 import { useRegister } from '@/features/auth/hooks/useRegister';
 import { Screen, Toast, Typography, UploadBottomSheet } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
@@ -39,10 +39,11 @@ export default function RegisterScreen() {
     caseId?: string;
     guestSessionId?: string;
   }>();
-  const effectiveGuestSessionId = useEffectiveGuestSessionId(
-    typeof guestSessionId === 'string' ? guestSessionId : undefined,
-  );
-  const registerMutation = useRegister({ caseId, guestSessionId: effectiveGuestSessionId });
+  const paramGuestSessionId = typeof guestSessionId === 'string' ? guestSessionId : undefined;
+  useSyncGuestSessionFromParams(paramGuestSessionId);
+  const storedGuestSessionId = useAuthStore((state) => state.guestSessionId);
+  const guestSessionIdForNav = paramGuestSessionId ?? storedGuestSessionId ?? undefined;
+  const registerMutation = useRegister({ caseId, guestSessionId: paramGuestSessionId });
   const { handleUpload, handleUploadError } = useGuestUploadSession();
   const setSession = useAuthStore((state) => state.setSession);
   const [showUploadSheet, setShowUploadSheet] = useState(false);
@@ -119,7 +120,7 @@ export default function RegisterScreen() {
                 pathname: '/(auth)/login',
                 params: {
                   ...(caseId ? { caseId } : {}),
-                  ...(effectiveGuestSessionId ? { guestSessionId: effectiveGuestSessionId } : {}),
+                  ...(guestSessionIdForNav ? { guestSessionId: guestSessionIdForNav } : {}),
                 },
               })
             }
