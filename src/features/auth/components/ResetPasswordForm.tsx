@@ -38,6 +38,7 @@ export function ResetPasswordForm({ mutation }: ResetPasswordFormProps) {
         control={control}
         name="email"
         label="Email"
+        required
         keyboardType="email-address"
         textContentType="emailAddress"
         autoCapitalize="none"

@@ -14,15 +14,22 @@ interface PasswordValidationListProps {
 }
 
 function ValidationItem({ label, isValid }: { label: string; isValid: boolean }) {
+  const statusLabel = isValid ? 'Met' : 'Not met';
+
   return (
-    <View style={styles.validationItem}>
+    <View
+      style={styles.validationItem}
+      accessibilityRole="text"
+      accessibilityLabel={`${label}, ${statusLabel}`}
+    >
       <Ionicons
         name={isValid ? 'checkmark' : 'close'}
         size={14}
         color={isValid ? '#10B981' : '#767676'}
+        accessible={false}
       />
       <Typography style={[styles.validationText, isValid && styles.validationTextValid]}>
-        {label}
+        {isValid ? `${label} — met` : label}
       </Typography>
     </View>
   );
@@ -57,8 +64,15 @@ export function PasswordValidationList({
 
   if (allMet) return null;
 
+  const unmetCount = rules.filter((rule) => !rule.isValid).length;
+
   return (
-    <View style={styles.validationList}>
+    <View
+      style={styles.validationList}
+      accessibilityRole="alert"
+      accessibilityLiveRegion="polite"
+      accessibilityLabel={`Password requirements, ${unmetCount} not met`}
+    >
       {rules.map((rule) => (
         <ValidationItem key={rule.label} label={rule.label} isValid={rule.isValid} />
       ))}

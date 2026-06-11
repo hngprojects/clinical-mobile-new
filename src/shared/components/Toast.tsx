@@ -10,6 +10,7 @@ import React, {
 } from 'react';
 import { Animated, Platform, StyleSheet, View } from 'react-native';
 
+import { useAnnounce, useReducedMotion } from '@/shared/accessibility';
 import { useTheme } from '@/shared/theme';
 
 import { Typography } from './Typography';
@@ -170,10 +171,13 @@ function ToastCard({
 }) {
   const host = useContext(ToastHostContext);
   const { colors } = useTheme();
-  const slideAnim = useRef(new Animated.Value(-160)).current;
-  const opacityAnim = useRef(new Animated.Value(0)).current;
+  const reducedMotion = useReducedMotion();
+  const slideAnim = useRef(new Animated.Value(reducedMotion ? 0 : -160)).current;
+  const opacityAnim = useRef(new Animated.Value(visible ? 1 : 0)).current;
   const animationRunRef = useRef(0);
   const [renderVisible, setRenderVisible] = useState(visible);
+
+  useAnnounce(message, Boolean(visible && message));
 
   useEffect(() => {
     animationRunRef.current += 1;
@@ -183,6 +187,13 @@ function ToastCard({
 
     if (visible) {
       setRenderVisible(true);
+
+      if (reducedMotion) {
+        slideAnim.setValue(0);
+        opacityAnim.setValue(1);
+        return;
+      }
+
       Animated.parallel([
         Animated.spring(slideAnim, {
           toValue: 0,
@@ -192,6 +203,11 @@ function ToastCard({
         }),
         Animated.timing(opacityAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
       ]).start();
+    } else if (reducedMotion) {
+      slideAnim.setValue(0);
+      opacityAnim.setValue(0);
+      setRenderVisible(false);
+      if (id) onExitComplete?.(id);
     } else {
       Animated.parallel([
         Animated.timing(slideAnim, { toValue: -160, duration: 250, useNativeDriver: true }),
@@ -203,7 +219,7 @@ function ToastCard({
         if (id) onExitComplete?.(id);
       });
     }
-  }, [id, visible, slideAnim, opacityAnim, onExitComplete]);
+  }, [id, visible, slideAnim, opacityAnim, onExitComplete, reducedMotion]);
 
   const bgColor =
     variant === 'success'
@@ -227,8 +243,15 @@ function ToastCard({
         { backgroundColor: bgColor, top: topOffset },
         { transform: [{ translateY: slideAnim }], opacity: opacityAnim },
       ]}
+      accessibilityLiveRegion="polite"
+      accessibilityRole="alert"
+      accessibilityLabel={message}
     >
-      <View style={[styles.iconCircle, { backgroundColor: iconBgColor }]}>
+      <View
+        style={[styles.iconCircle, { backgroundColor: iconBgColor }]}
+        accessible={false}
+        importantForAccessibility="no"
+      >
         <Ionicons name={ICON[variant]} size={16} color="#FFFFFF" />
       </View>
       <Typography variant="body2" style={styles.message}>

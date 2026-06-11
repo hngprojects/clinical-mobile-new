@@ -1,6 +1,7 @@
 import React from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
+import { Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 import { InsightSearchEmptyState } from './InsightSearchEmptyState';
@@ -28,8 +29,19 @@ export function InsightListEmpty({
 
   if (isSearchActive && isSearching) {
     return (
-      <View style={styles.searchLoading}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View
+        style={styles.searchLoading}
+        accessibilityLabel="Searching insights"
+        accessibilityLiveRegion="polite"
+      >
+        <ActivityIndicator
+          size="large"
+          color={colors.primary}
+          accessibilityLabel="Searching insights"
+        />
+        <Typography variant="body2" color={colors.textSecondary} style={styles.loadingText}>
+          Searching insights...
+        </Typography>
       </View>
     );
   }
@@ -47,5 +59,9 @@ const styles = StyleSheet.create({
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    textAlign: 'center',
   },
 });

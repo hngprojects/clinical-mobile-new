@@ -6,7 +6,8 @@ const palette = {
   grey900: '#111827',
   grey700: '#374151',
   grey500: '#5E5E5E',
-  // grey500: '#6B7280',
+  grey600: '#4B5563',
+  placeholder: '#6B7280',
   grey300: '#D1D5DB',
   grey100: '#F3F4F6',
   grey50: '#F9FAFB',
@@ -27,7 +28,8 @@ export const lightColors = {
   primaryPressed: palette.primary600,
   primarySubtle: palette.primary100,
   text: palette.grey900,
-  textSecondary: palette.grey500,
+  textSecondary: palette.grey700,
+  placeholder: palette.placeholder,
   border: palette.grey300,
   inputBackground: palette.white,
   cardBackground: '#FAFAFA',
@@ -38,7 +40,7 @@ export const lightColors = {
   warning: palette.warning500,
   tabBar: palette.white,
   tabBarActive: palette.primary500,
-  tabBarInactive: palette.grey500,
+  tabBarInactive: palette.grey700,
 };
 
 export type Colors = Record<keyof typeof lightColors, string>;
@@ -53,6 +55,7 @@ export const darkColors: Colors = {
   primarySubtle: '#1E1B4B',
   text: '#F1F5F9',
   textSecondary: '#94A3B8',
+  placeholder: '#9CA3AF',
   border: '#334155',
   inputBackground: '#1E293B',
   cardBackground: '#1E293B',

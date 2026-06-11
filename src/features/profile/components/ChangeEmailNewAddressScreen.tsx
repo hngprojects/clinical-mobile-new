@@ -81,6 +81,7 @@ export function ChangeEmailNewAddressScreen() {
             control={control}
             name="email"
             label="New Email Address"
+            required
             placeholder="Enter new email address"
             keyboardType="email-address"
             autoCapitalize="none"

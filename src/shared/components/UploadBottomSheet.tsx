@@ -12,6 +12,12 @@ import {
   View,
 } from 'react-native';
 
+import {
+  dismissSheetLabel,
+  getAnimationDuration,
+  MIN_TOUCH_TARGET,
+  useReducedMotion,
+} from '@/shared/accessibility';
 import { useTheme } from '@/shared/theme';
 
 import { Typography } from './Typography';
@@ -51,6 +57,7 @@ export function UploadBottomSheet({
   onUploadError,
 }: UploadBottomSheetProps) {
   const { colors } = useTheme();
+  const reducedMotion = useReducedMotion();
   const [showSourceSheet, setShowSourceSheet] = useState(false);
   const [cameraGranted, setCameraGranted] = useState(false);
   const [libraryGranted, setLibraryGranted] = useState(false);
@@ -77,12 +84,17 @@ export function UploadBottomSheet({
   const animateHandle = (animatedValue: Animated.Value, isActive: boolean) => {
     Animated.timing(animatedValue, {
       toValue: isActive ? 1 : 0,
-      duration: 120,
+      duration: getAnimationDuration(reducedMotion, 120),
       useNativeDriver: false,
     }).start();
   };
 
   const springSheetBack = (animatedValue: Animated.Value) => {
+    if (reducedMotion) {
+      animatedValue.setValue(0);
+      return;
+    }
+
     Animated.spring(animatedValue, {
       toValue: 0,
       useNativeDriver: true,
@@ -121,22 +133,29 @@ export function UploadBottomSheet({
 
   useEffect(() => {
     if (visible) {
-      slideAnim.setValue(SCREEN_HEIGHT); // Ensure starts off-screen
+      slideAnim.setValue(reducedMotion ? 0 : SCREEN_HEIGHT);
+      if (reducedMotion) return;
+
       Animated.timing(slideAnim, {
         toValue: 0,
-        duration: 300,
+        duration: getAnimationDuration(reducedMotion, 300),
         useNativeDriver: true,
       }).start();
     } else {
-      slideAnim.setValue(SCREEN_HEIGHT);
+      slideAnim.setValue(reducedMotion ? 0 : SCREEN_HEIGHT);
       setShowSourceSheet(false);
     }
-  }, [visible, slideAnim]);
+  }, [visible, slideAnim, reducedMotion]);
 
   const handleDismiss = () => {
+    if (reducedMotion) {
+      onClose();
+      return;
+    }
+
     Animated.timing(slideAnim, {
       toValue: SCREEN_HEIGHT,
-      duration: 220,
+      duration: getAnimationDuration(reducedMotion, 220),
       useNativeDriver: true,
     }).start(() => {
       onClose();
@@ -144,9 +163,15 @@ export function UploadBottomSheet({
   };
 
   const dismissAllAndUpload = (file: UploadedFile) => {
+    if (reducedMotion) {
+      onClose();
+      onUpload(file);
+      return;
+    }
+
     Animated.timing(slideAnim, {
       toValue: SCREEN_HEIGHT,
-      duration: 220,
+      duration: getAnimationDuration(reducedMotion, 220),
       useNativeDriver: true,
     }).start(() => {
       onClose();
@@ -155,9 +180,15 @@ export function UploadBottomSheet({
   };
 
   const dismissAllAndError = (error: UploadError) => {
+    if (reducedMotion) {
+      onClose();
+      onUploadError?.(error);
+      return;
+    }
+
     Animated.timing(slideAnim, {
       toValue: SCREEN_HEIGHT,
-      duration: 220,
+      duration: getAnimationDuration(reducedMotion, 220),
       useNativeDriver: true,
     }).start(() => {
       onClose();
@@ -349,11 +380,17 @@ export function UploadBottomSheet({
       <Modal
         visible={visible}
         transparent
-        animationType="fade"
+        animationType={reducedMotion ? 'none' : 'fade'}
+        accessibilityViewIsModal
         onRequestClose={() => handleDismiss()}
       >
         <View style={styles.container}>
-          <Pressable style={styles.backdrop} onPress={handleBackdropPress} />
+          <Pressable
+            style={styles.backdrop}
+            onPress={handleBackdropPress}
+            accessibilityRole="button"
+            accessibilityLabel={dismissSheetLabel()}
+          />
 
           <Animated.View
             style={[
@@ -364,8 +401,15 @@ export function UploadBottomSheet({
                 transform: [{ translateY }],
               },
             ]}
+            accessibilityRole="none"
           >
-            <View {...panResponder.panHandlers} style={styles.handleGrabArea}>
+            <View
+              {...panResponder.panHandlers}
+              style={styles.handleGrabArea}
+              accessibilityRole="button"
+              accessibilityLabel={dismissSheetLabel()}
+              accessibilityHint="Swipe down to close"
+            >
               <Animated.View style={[styles.sheetHandle, { backgroundColor: handleColor }]} />
             </View>
 
@@ -378,8 +422,10 @@ export function UploadBottomSheet({
                       pressed && styles.sourceSheetOptionPressed,
                     ]}
                     onPress={() => selectUploadSource(handleTakePhoto)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Take photo"
                   >
-                    <Feather name="camera" size={21} color="#1B1B1B" />
+                    <Feather name="camera" size={21} color="#1B1B1B" accessible={false} />
                     <Typography style={styles.sourceSheetOptionText}>Take Photo</Typography>
                   </Pressable>
 
@@ -391,8 +437,10 @@ export function UploadBottomSheet({
                       pressed && styles.sourceSheetOptionPressed,
                     ]}
                     onPress={() => selectUploadSource(handlePhotoLibrary)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Choose from photo library"
                   >
-                    <Feather name="image" size={21} color="#1B1B1B" />
+                    <Feather name="image" size={21} color="#1B1B1B" accessible={false} />
                     <Typography style={styles.sourceSheetOptionText}>Photo Library</Typography>
                   </Pressable>
 
@@ -404,8 +452,10 @@ export function UploadBottomSheet({
                       pressed && styles.sourceSheetOptionPressed,
                     ]}
                     onPress={() => selectUploadSource(handleBrowseFiles)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Browse files"
                   >
-                    <Feather name="folder" size={21} color="#1B1B1B" />
+                    <Feather name="folder" size={21} color="#1B1B1B" accessible={false} />
                     <Typography style={styles.sourceSheetOptionText}>Browse Files</Typography>
                   </Pressable>
                 </View>
@@ -416,6 +466,8 @@ export function UploadBottomSheet({
                     pressed && styles.sourceSheetOptionPressed,
                   ]}
                   onPress={() => setShowSourceSheet(false)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Cancel upload source selection"
                 >
                   <Typography style={styles.sourceSheetCancelText}>Cancel</Typography>
                 </Pressable>
@@ -442,8 +494,10 @@ export function UploadBottomSheet({
                       backgroundColor: pressed ? '#0F4C92' : '#1565C0',
                     },
                   ]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Upload lab result"
                 >
-                  <Feather name="upload" size={18} color="#FFFFFF" />
+                  <Feather name="upload" size={18} color="#FFFFFF" accessible={false} />
                   <Typography style={styles.uploadButtonText}>Upload Result</Typography>
                 </Pressable>
               </>
@@ -527,7 +581,8 @@ const styles = StyleSheet.create({
     color: '#767676',
   },
   uploadButton: {
-    width: 167,
+    minHeight: MIN_TOUCH_TARGET,
+    minWidth: MIN_TOUCH_TARGET,
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 24,
@@ -552,7 +607,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   sourceSheetOption: {
-    height: 40,
+    minHeight: MIN_TOUCH_TARGET,
     paddingHorizontal: 16,
     backgroundColor: '#FFFFFF',
     flexDirection: 'row',
@@ -573,7 +628,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#E5E7EB',
   },
   sourceSheetCancel: {
-    height: 40,
+    minHeight: MIN_TOUCH_TARGET,
     marginTop: 8,
     borderRadius: 14,
     backgroundColor: '#FFFFFF',

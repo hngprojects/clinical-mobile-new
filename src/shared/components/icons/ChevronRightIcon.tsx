@@ -8,7 +8,14 @@ interface ChevronRightIconProps {
 
 export function ChevronRightIcon({ size = 18, color = '#1B1B1B' }: ChevronRightIconProps) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 18 18" fill="none">
+    <Svg
+      width={size}
+      height={size}
+      viewBox="0 0 18 18"
+      fill="none"
+      accessible={false}
+      importantForAccessibility="no"
+    >
       <Path
         d="M6.75 4.5C6.75 4.5 11.25 7.81418 11.25 9C11.25 10.1859 6.75 13.5 6.75 13.5"
         stroke={color}

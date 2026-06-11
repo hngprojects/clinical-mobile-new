@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Keyboard,
-  Platform,
   Pressable,
   TextInput as RNTextInput,
   StyleSheet,
@@ -19,7 +18,9 @@ import { Toast, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 import { AuthSuccessModal } from '../../auth/components/AuthSuccessModal';
+import { OtpCodeInput } from '../../auth/components/OtpCodeInput';
 import { ProfileSettingsHeader } from './ProfileSettingsHeader';
+import { MIN_TOUCH_TARGET, minTouchTargetStyle } from '@/shared/accessibility';
 
 const CODE_LENGTH = 6;
 
@@ -55,7 +56,6 @@ export function ChangeEmailOtpScreen() {
 
   const [code, setCode] = useState('');
   const [timer, setTimer] = useState(initialCooldown);
-  const [isFocused, setIsFocused] = useState(false);
   const [hasOtpError, setHasOtpError] = useState(false);
   const [otpErrorMessage, setOtpErrorMessage] = useState(
     'The code you entered is incorrect. Check again.',
@@ -126,8 +126,7 @@ export function ChangeEmailOtpScreen() {
     );
   };
 
-  const handleTextChange = (val: string) => {
-    const clean = val.replace(/[^0-9]/g, '').slice(0, CODE_LENGTH);
+  const handleTextChange = (clean: string) => {
     setCode(clean);
     if (hasOtpError || hasNetworkError) {
       setHasOtpError(false);
@@ -170,56 +169,28 @@ export function ChangeEmailOtpScreen() {
           </Typography>
         </View>
 
-        {/* OTP label */}
-        <Typography style={styles.otpLabel}>OTP</Typography>
-
-        {/* OTP input overlays the grid so taps and keystrokes register reliably */}
-        <View style={styles.otpWrapper}>
-          <Pressable onPress={() => inputRef.current?.focus()} style={styles.otpGrid}>
-            {Array.from({ length: CODE_LENGTH }).map((_, idx) => {
-              const char = code[idx] || '';
-              const isCurrentFocus = isFocused && idx === Math.min(code.length, CODE_LENGTH - 1);
-              const isFilled = idx < code.length;
-
-              let borderStyle = styles.inactiveBox;
-              if (hasOtpError) borderStyle = styles.errorBox;
-              else if (isCurrentFocus || isFilled) borderStyle = styles.activeBox;
-
-              return (
-                <View key={idx} style={[styles.otpBox, borderStyle]} pointerEvents="none">
-                  <Typography style={styles.otpText}>{char}</Typography>
-                </View>
-              );
-            })}
-          </Pressable>
-
-          <RNTextInput
-            ref={inputRef}
-            value={code}
-            onChangeText={handleTextChange}
-            keyboardType="number-pad"
-            style={styles.hiddenInput}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
-            textContentType="oneTimeCode"
-            autoComplete={Platform.OS === 'android' ? 'sms-otp' : 'one-time-code'}
-            importantForAutofill="yes"
-            caretHidden
-            autoFocus
-          />
-        </View>
-
-        {hasOtpError && <Typography style={styles.errorText}>{otpErrorMessage}</Typography>}
-        {isExpired && !hasOtpError && (
-          <Typography style={styles.expiredHint}>
-            This code has expired. Go back to request a new one.
-          </Typography>
-        )}
-
-        {/* Verify button */}
+        <OtpCodeInput
+          inputRef={inputRef}
+          value={code}
+          onChangeText={handleTextChange}
+          hasError={hasOtpError}
+          errorMessage={otpErrorMessage}
+          expiredHintMessage={
+            isExpired && !hasOtpError
+              ? 'This code has expired. Go back to request a new one.'
+              : undefined
+          }
+          label="Verification code"
+        />
         <Pressable
           disabled={!isCodeComplete || isPending || isExpired}
           onPress={handleVerify}
+          accessibilityRole="button"
+          accessibilityLabel="Verify new email address"
+          accessibilityState={{
+            disabled: !isCodeComplete || isPending || isExpired,
+            busy: isPending,
+          }}
           style={({ pressed }) => [
             styles.verifyBtn,
             {
@@ -258,7 +229,12 @@ export function ChangeEmailOtpScreen() {
           ) : (
             <View style={styles.resendRow}>
               <Typography style={styles.timerText}>Code expired. </Typography>
-              <Pressable onPress={() => router.back()}>
+              <Pressable
+                onPress={() => router.back()}
+                accessibilityRole="button"
+                accessibilityLabel="Go back to request a new verification code"
+                style={minTouchTargetStyle}
+              >
                 <View style={styles.resendLinkRow}>
                   <Ionicons name="arrow-back-outline" size={14} color="#1565C0" />
                   <Typography style={styles.resendLink}>Go back to resend</Typography>
@@ -305,59 +281,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_700Bold',
     color: '#1B1B1B',
   },
-  otpLabel: {
-    fontFamily: 'Inter_500Medium',
-    fontSize: 12,
-    color: '#9CA3AF',
-    textTransform: 'uppercase',
-    marginBottom: 8,
-  },
-  otpWrapper: {
-    position: 'relative',
-    width: '100%',
-  },
-  hiddenInput: {
-    ...StyleSheet.absoluteFillObject,
-    color: 'transparent',
-    fontSize: 1,
-    opacity: 0,
-  },
-  otpGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    gap: 8,
-  },
-  otpBox: {
-    flex: 1,
-    aspectRatio: 1,
-    borderRadius: 8,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  inactiveBox: { borderColor: '#E5E7EB' },
-  activeBox: { borderColor: '#1565C0', borderWidth: 1.5 },
-  errorBox: { borderColor: '#EF4444', borderWidth: 1.5 },
-  otpText: {
-    fontSize: 22,
-    fontFamily: 'Inter_600SemiBold',
-    color: '#1B1B1B',
-    textAlign: 'center',
-  },
-  errorText: {
-    color: '#EF4444',
-    fontFamily: 'Inter_400Regular',
-    fontSize: 13,
-    marginTop: 8,
-  },
-  expiredHint: {
-    color: '#B45309',
-    fontFamily: 'Inter_400Regular',
-    fontSize: 13,
-    marginTop: 8,
-  },
   verifyBtn: {
     borderRadius: 12,
     paddingVertical: 15,
@@ -365,6 +288,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 36,
+    minHeight: MIN_TOUCH_TARGET,
   },
   btnText: { fontFamily: 'Inter_600SemiBold', fontSize: 15 },
   loadingRow: {

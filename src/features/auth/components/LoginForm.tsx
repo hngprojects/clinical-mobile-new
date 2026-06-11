@@ -4,6 +4,7 @@ import { useForm, useWatch } from 'react-hook-form';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 
 import { Button, FormField, Toast, Typography } from '@/shared/components';
+import { minTouchTargetStyle } from '@/shared/accessibility';
 import { useTheme } from '@/shared/theme';
 
 import type { AuthResponse } from '../api/auth.types';
@@ -76,6 +77,7 @@ export function LoginForm({
           control={control}
           name="email"
           label="Email"
+          required
           keyboardType="email-address"
           textContentType="emailAddress"
           placeholder="Enter your email"
@@ -96,7 +98,12 @@ export function LoginForm({
             returnKeyType="done"
             onSubmitEditing={handleSubmit(onSubmit)}
           />
-          <Pressable style={styles.forgotPassword} onPress={onForgotPassword}>
+          <Pressable
+            style={[styles.forgotPassword, minTouchTargetStyle]}
+            onPress={onForgotPassword}
+            accessibilityRole="link"
+            accessibilityLabel="Forgot password"
+          >
             <Typography variant="body2" color={colors.primary} style={styles.forgotPasswordText}>
               Forgot Password?
             </Typography>
@@ -154,12 +161,12 @@ const styles = StyleSheet.create({
   container: { width: '100%' },
   forgotPassword: {
     alignSelf: 'flex-end',
+    marginTop: 6,
   },
   forgotPasswordText: {
     fontWeight: '400',
     letterSpacing: -0.14,
     lineHeight: 21,
-    marginTop: 6,
     textDecorationLine: 'underline',
   },
   line: {

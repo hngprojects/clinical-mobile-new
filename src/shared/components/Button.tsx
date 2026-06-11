@@ -10,6 +10,8 @@ import {
   ViewStyle,
 } from 'react-native';
 
+import { MIN_TOUCH_TARGET } from '@/shared/accessibility';
+
 import { Typography } from './Typography';
 
 /** Hardcoded — avoids theme/Pressable issues on Android release builds. */
@@ -45,6 +47,8 @@ export function Button({
   textColor,
   style,
   textStyle,
+  accessibilityLabel,
+  accessibilityState,
   ...props
 }: ButtonProps) {
   const isInactive = Boolean(disabled || isLoading);
@@ -57,7 +61,19 @@ export function Button({
     (variant === 'primary' ? (isInactive && !backgroundColor ? GRAY_TEXT : '#FFFFFF') : BLUE);
 
   return (
-    <TouchableOpacity activeOpacity={0.85} disabled={isInactive} style={style} {...props}>
+    <TouchableOpacity
+      activeOpacity={0.85}
+      disabled={isInactive}
+      style={style}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityState={{
+        disabled: isInactive,
+        busy: isLoading,
+        ...accessibilityState,
+      }}
+      {...props}
+    >
       <View
         style={[
           styles.inner,
@@ -99,6 +115,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 24,
+    minHeight: MIN_TOUCH_TARGET,
   },
   outline: {
     backgroundColor: 'transparent',
