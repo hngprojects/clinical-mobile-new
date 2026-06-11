@@ -13,7 +13,7 @@ import {
 
 import { useResendOtp } from '@/features/auth/hooks/useResendOtp';
 import { useResetPassword } from '@/features/auth/hooks/useResetPassword';
-import { useEffectiveGuestSessionId } from '@/features/auth/hooks/useEffectiveGuestSessionId';
+import { useSyncGuestSessionFromParams } from '@/features/auth/hooks/useSyncGuestSessionFromParams';
 import { useVerifyOtp } from '@/features/auth/hooks/useVerifyOtp';
 import { useVerifyResetOtp } from '@/features/auth/hooks/useVerifyResetOtp';
 import { useAuthStore } from '@/features/auth/store/auth.store';
@@ -45,6 +45,18 @@ function formatTimer(seconds: number) {
   return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
 }
 
+function getOtpErrorMessage(message: string, status?: number): string {
+  const lower = message.toLowerCase();
+  if (
+    lower.includes('expired') ||
+    lower.includes('expire') ||
+    (status === 400 && lower.includes('invalid') && lower.includes('code'))
+  ) {
+    return message || 'Your code has expired. Please request a new one.';
+  }
+  return message || 'The code you entered is incorrect. Check again.';
+}
+
 export function VerifyOtp({
   email,
   expiresInSeconds,
@@ -58,7 +70,7 @@ export function VerifyOtp({
   caseId?: string;
   guestSessionId?: string;
 }) {
-  const effectiveGuestSessionId = useEffectiveGuestSessionId(guestSessionIdParam);
+  useSyncGuestSessionFromParams(guestSessionIdParam);
   const verifyOtpMutation = useVerifyOtp();
   const { reset: resetVerifyOtp } = verifyOtpMutation;
   const verifyResetOtpMutation = useVerifyResetOtp();
@@ -112,7 +124,7 @@ export function VerifyOtp({
       const rawMsg = activeErr?.message || '';
 
       if (errStatus === 400 || errStatus === 401) {
-        setOtpErrorMessage(rawMsg || 'The code you entered is incorrect. Check again.');
+        setOtpErrorMessage(getOtpErrorMessage(rawMsg, errStatus));
         setHasOtpError(true);
         setHasNetworkError(false);
       } else {
@@ -194,10 +206,11 @@ export function VerifyOtp({
       verifyResetOtpMutation.mutate({ email: email || '', code });
       return;
     }
+    const guestSessionId = useAuthStore.getState().guestSessionId;
     verifyOtpMutation.mutate({
       email: email || '',
       code,
-      ...(effectiveGuestSessionId ? { guestSessionId: effectiveGuestSessionId } : {}),
+      ...(guestSessionId ? { guestSessionId } : {}),
     });
   };
 
@@ -249,6 +262,7 @@ export function VerifyOtp({
   };
 
   const isCodeComplete = code.length === CODE_LENGTH;
+  const isExpired = timer === 0;
   const isLoading =
     type === 'reset-password' ? verifyResetOtpMutation.isPending : verifyOtpMutation.isPending;
 
@@ -337,16 +351,25 @@ export function VerifyOtp({
 
       {/* Red Error Message if Code is Incorrect */}
       {hasOtpError && <Typography style={styles.errorText}>{otpErrorMessage}</Typography>}
+      {isExpired && !hasOtpError && (
+        <Typography style={styles.expiredHint}>
+          This code has expired. Resend a new code to continue.
+        </Typography>
+      )}
 
       {/* Verify Button matching all states */}
       <Pressable
-        disabled={!isCodeComplete || isLoading}
+        disabled={!isCodeComplete || isLoading || isExpired}
         onPress={handleVerify}
         style={({ pressed }) => [
           styles.verifyBtn,
           {
-            backgroundColor: isLoading ? '#F5F5F7' : isCodeComplete ? '#1565C0' : '#F5F5F7',
-            opacity: pressed && isCodeComplete && !isLoading ? 0.85 : 1,
+            backgroundColor: isLoading
+              ? '#F5F5F7'
+              : isCodeComplete && !isExpired
+                ? '#1565C0'
+                : '#F5F5F7',
+            opacity: pressed && isCodeComplete && !isLoading && !isExpired ? 0.85 : 1,
           },
         ]}
       >
@@ -358,7 +381,12 @@ export function VerifyOtp({
             </Typography>
           </View>
         ) : (
-          <Typography style={[styles.btnText, { color: isCodeComplete ? '#FFFFFF' : '#BDBDBD' }]}>
+          <Typography
+            style={[
+              styles.btnText,
+              { color: isCodeComplete && !isExpired ? '#FFFFFF' : '#BDBDBD' },
+            ]}
+          >
             {type === 'reset-password' ? 'Continue' : 'Verify Email'}
           </Typography>
         )}
@@ -372,6 +400,7 @@ export function VerifyOtp({
           </Typography>
         ) : (
           <View style={styles.resendRow}>
+            <Typography style={[styles.timerText, styles.expiredLabel]}>Code expired. </Typography>
             <Typography style={styles.timerText}>Didn&apos;t receive code? </Typography>
             <Pressable
               onPress={handleResend}
@@ -489,6 +518,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 8,
   },
+  expiredHint: {
+    color: '#B45309',
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
+    marginTop: 8,
+  },
   verifyBtn: {
     borderRadius: 12,
     paddingVertical: 15,
@@ -524,6 +559,10 @@ const styles = StyleSheet.create({
   boldTimer: {
     fontFamily: 'Inter_700Bold',
     color: '#1B1B1B',
+  },
+  expiredLabel: {
+    color: '#B45309',
+    fontFamily: 'Inter_600SemiBold',
   },
   resendRow: {
     flexDirection: 'row',

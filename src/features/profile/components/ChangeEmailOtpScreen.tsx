@@ -210,16 +210,25 @@ export function ChangeEmailOtpScreen() {
         </View>
 
         {hasOtpError && <Typography style={styles.errorText}>{otpErrorMessage}</Typography>}
+        {isExpired && !hasOtpError && (
+          <Typography style={styles.expiredHint}>
+            This code has expired. Go back to request a new one.
+          </Typography>
+        )}
 
         {/* Verify button */}
         <Pressable
-          disabled={!isCodeComplete || isPending}
+          disabled={!isCodeComplete || isPending || isExpired}
           onPress={handleVerify}
           style={({ pressed }) => [
             styles.verifyBtn,
             {
-              backgroundColor: isPending ? '#F5F5F7' : isCodeComplete ? '#1565C0' : '#F5F5F7',
-              opacity: pressed && isCodeComplete && !isPending ? 0.85 : 1,
+              backgroundColor: isPending
+                ? '#F5F5F7'
+                : isCodeComplete && !isExpired
+                  ? '#1565C0'
+                  : '#F5F5F7',
+              opacity: pressed && isCodeComplete && !isPending && !isExpired ? 0.85 : 1,
             },
           ]}
         >
@@ -229,7 +238,12 @@ export function ChangeEmailOtpScreen() {
               <Typography style={styles.loadingText}>Verifying Code</Typography>
             </View>
           ) : (
-            <Typography style={[styles.btnText, { color: isCodeComplete ? '#FFFFFF' : '#BDBDBD' }]}>
+            <Typography
+              style={[
+                styles.btnText,
+                { color: isCodeComplete && !isExpired ? '#FFFFFF' : '#BDBDBD' },
+              ]}
+            >
               Verify Email
             </Typography>
           )}
@@ -334,6 +348,12 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: '#EF4444',
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
+    marginTop: 8,
+  },
+  expiredHint: {
+    color: '#B45309',
     fontFamily: 'Inter_400Regular',
     fontSize: 13,
     marginTop: 8,
