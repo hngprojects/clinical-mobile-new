@@ -58,7 +58,8 @@ export function VerifyOtp({
   caseId?: string;
   guestSessionId?: string;
 }) {
-  const effectiveGuestSessionId = useEffectiveGuestSessionId(guestSessionIdParam);
+  // Sync the guest-session param into the store (side-effect only).
+  useEffectiveGuestSessionId(guestSessionIdParam);
   const verifyOtpMutation = useVerifyOtp();
   const { reset: resetVerifyOtp } = verifyOtpMutation;
   const verifyResetOtpMutation = useVerifyResetOtp();
@@ -194,10 +195,11 @@ export function VerifyOtp({
       verifyResetOtpMutation.mutate({ email: email || '', code });
       return;
     }
+    const currentGuestSessionId = useAuthStore.getState().guestSessionId;
     verifyOtpMutation.mutate({
       email: email || '',
       code,
-      ...(effectiveGuestSessionId ? { guestSessionId: effectiveGuestSessionId } : {}),
+      ...(currentGuestSessionId ? { guestSessionId: currentGuestSessionId } : {}),
     });
   };
 
