@@ -57,6 +57,13 @@ export function InsightScreen() {
   const isInitialLoading = isLoading && items.length === 0;
   const isInitialError = isError && items.length === 0;
 
+  const searchStatusMessage = useMemo(() => {
+    if (!hasActiveQuery) return '';
+    if (isSearching) return 'Searching insights';
+    if (listData.length === 0) return `No insights found for ${query.trim()}`;
+    return `${listData.length} insight${listData.length === 1 ? '' : 's'} found`;
+  }, [hasActiveQuery, isSearching, listData.length, query]);
+
   return (
     <Screen scrollable={false} padding backgroundColor={colors.surface}>
       <View style={styles.screenBody}>
@@ -65,6 +72,17 @@ export function InsightScreen() {
         </Typography>
         <View style={{ marginBottom: spacing.md }}>
           <InsightSearchBar value={query} onChangeText={setQuery} />
+          {searchStatusMessage ? (
+            <Typography
+              variant="body2"
+              color={colors.textSecondary}
+              style={{ marginTop: spacing.sm }}
+              accessibilityLiveRegion="polite"
+              accessibilityRole="text"
+            >
+              {searchStatusMessage}
+            </Typography>
+          ) : null}
         </View>
         {isInitialLoading ? (
           <View style={styles.loadingState}>

@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 
+import { MIN_TOUCH_TARGET } from '@/shared/accessibility';
 import { Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
@@ -80,7 +81,7 @@ export function InsightRenameModal({
               Rename Insight
             </Typography>
             <TextInput
-              accessibilityLabel="New insight title"
+              accessibilityLabel="New insight title, required"
               value={draft}
               onChangeText={setDraft}
               style={[
@@ -92,18 +93,31 @@ export function InsightRenameModal({
                   borderRadius: INSIGHT_CARD_RADIUS,
                   paddingHorizontal: spacing.md,
                   paddingVertical: spacing.sm + 4,
+                  minHeight: MIN_TOUCH_TARGET,
                 },
               ]}
               autoFocus
               autoCorrect
               underlineColorAndroid="transparent"
             />
-            <Typography variant="label" color={colors.textSecondary} style={styles.counter}>
-              {len}/{INSIGHT_RENAME_MAX_LENGTH} characters
-            </Typography>
+            {isOver ? (
+              <Typography
+                variant="label"
+                color={colors.error}
+                style={styles.counter}
+                accessibilityLiveRegion="polite"
+              >
+                Title exceeds {INSIGHT_RENAME_MAX_LENGTH} characters
+              </Typography>
+            ) : (
+              <Typography variant="label" color={colors.textSecondary} style={styles.counter}>
+                {len}/{INSIGHT_RENAME_MAX_LENGTH} characters
+              </Typography>
+            )}
             <View style={[styles.actions, { gap: spacing.sm, marginTop: spacing.lg }]}>
               <Pressable
                 accessibilityRole="button"
+                accessibilityLabel="Cancel rename insight"
                 onPress={onClose}
                 style={({ pressed }) => [
                   styles.btn,
@@ -112,6 +126,7 @@ export function InsightRenameModal({
                     borderColor: colors.border,
                     paddingVertical: spacing.sm + 4,
                     opacity: pressed ? 0.85 : 1,
+                    minHeight: MIN_TOUCH_TARGET,
                   },
                 ]}
               >
@@ -121,6 +136,7 @@ export function InsightRenameModal({
               </Pressable>
               <Pressable
                 accessibilityRole="button"
+                accessibilityLabel="Rename insight"
                 accessibilityState={{ disabled: !canSubmit }}
                 disabled={!canSubmit}
                 onPress={apply}
@@ -131,6 +147,7 @@ export function InsightRenameModal({
                     backgroundColor: canSubmit ? INSIGHT_RENAME_ACTIVE_BLUE : '#E5E7EB',
                     paddingVertical: spacing.sm + 4,
                     opacity: pressed && canSubmit ? 0.9 : 1,
+                    minHeight: MIN_TOUCH_TARGET,
                   },
                 ]}
               >

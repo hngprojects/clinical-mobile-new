@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
 import { Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
+import { MIN_TOUCH_TARGET, minTouchTargetStyle } from '@/shared/accessibility';
 import { useTheme } from '@/shared/theme';
 
 import {
@@ -15,7 +16,7 @@ const DEFAULT_PLACEHOLDER = 'Search Insights';
 
 const ICON_SIZE = 22;
 const ICON_GAP = 8;
-const TRAILING_SLOT = 40;
+const TRAILING_SLOT = MIN_TOUCH_TARGET;
 
 export function InsightSearchBar({
   value,
@@ -41,11 +42,15 @@ export function InsightSearchBar({
   return (
     <View style={[styles.wrap, containerStyle]} collapsable={false}>
       <TextInput
+        accessibilityRole="search"
         accessibilityLabel={placeholder}
+        accessibilityHint={
+          value.length > 0 ? `${value.length} characters entered` : 'Type to filter insights'
+        }
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={colors.textSecondary}
+        placeholderTextColor={colors.placeholder}
         style={[
           typography.body1,
           styles.inputField,
@@ -77,6 +82,8 @@ export function InsightSearchBar({
             paddingLeft: spacing.md,
           },
         ]}
+        accessible={false}
+        importantForAccessibility="no"
       >
         <Ionicons name="search-outline" size={ICON_SIZE} color={colors.text} />
       </View>
@@ -85,11 +92,19 @@ export function InsightSearchBar({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Clear search"
-            hitSlop={10}
             onPress={clear}
-            style={({ pressed }) => [styles.clearHit, pressed && styles.clearPressed]}
+            style={({ pressed }) => [
+              styles.clearHit,
+              minTouchTargetStyle,
+              pressed && styles.clearPressed,
+            ]}
           >
-            <Ionicons name="close-circle" size={24} color={colors.textSecondary} />
+            <Ionicons
+              name="close-circle"
+              size={24}
+              color={colors.textSecondary}
+              accessible={false}
+            />
           </Pressable>
         ) : null}
       </View>
@@ -105,7 +120,7 @@ const styles = StyleSheet.create({
   inputField: {
     width: '100%',
     margin: 0,
-    minHeight: 44,
+    minHeight: MIN_TOUCH_TARGET,
   },
   iconSlot: {
     position: 'absolute',
@@ -122,7 +137,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    gap: 4,
+    gap: 8,
     pointerEvents: 'box-none',
   },
   clearHit: {
