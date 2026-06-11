@@ -15,6 +15,7 @@ import { Typography } from './Typography';
 export interface AppTextInputProps extends TextInputProps {
   label?: string;
   error?: string;
+  required?: boolean;
   rightIcon?: React.ReactNode;
 }
 
@@ -23,6 +24,7 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
     {
       label,
       error,
+      required = false,
       rightIcon,
       style,
       onFocus,
@@ -44,8 +46,15 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
       internalRef.current?.focus();
     };
 
-    const resolvedAccessibilityLabel = accessibilityLabel ?? label;
-    const resolvedAccessibilityHint = accessibilityHint ?? (error ? `Error: ${error}` : undefined);
+    const resolvedAccessibilityLabel =
+      accessibilityLabel ?? (label ? `${label}${required ? ', required' : ''}` : undefined);
+
+    const hintParts = [
+      required ? 'Required field' : undefined,
+      accessibilityHint,
+      error ? `Error: ${error}` : undefined,
+    ].filter(Boolean);
+    const resolvedAccessibilityHint = hintParts.length > 0 ? hintParts.join('. ') : undefined;
 
     return (
       <View style={styles.container}>
