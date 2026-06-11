@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 
+import { expandHitSlop, MIN_TOUCH_TARGET, minTouchTargetStyle } from '@/shared/accessibility';
 import { Typography } from '@/shared/components';
 import { ChevronRightIcon } from '@/shared/components/icons/ChevronRightIcon';
 import { DeleteIcon } from '@/shared/components/icons/DeleteIcon';
@@ -133,29 +134,63 @@ export function InsightCard({
               {insight.timestamp}
             </Typography>
           </View>
-          <Pressable ref={menuButtonRef} onPress={openMenu} hitSlop={8} style={styles.menuButton}>
-            <Ionicons name="ellipsis-vertical" size={18} color={colors.textSecondary} />
+          <Pressable
+            ref={menuButtonRef}
+            onPress={openMenu}
+            hitSlop={expandHitSlop(18)}
+            style={[styles.menuButton, minTouchTargetStyle]}
+            accessibilityRole="button"
+            accessibilityLabel={`More actions for ${insight.title}`}
+          >
+            <Ionicons
+              name="ellipsis-vertical"
+              size={18}
+              color={colors.textSecondary}
+              accessible={false}
+            />
           </Pressable>
         </View>
       </Pressable>
 
       {/* Three-dot dropdown menu */}
-      <Modal visible={menuVisible} transparent animationType="none" onRequestClose={closeMenu}>
-        <Pressable style={styles.backdrop} onPress={closeMenu}>
+      <Modal
+        visible={menuVisible}
+        transparent
+        animationType="none"
+        accessibilityViewIsModal
+        onRequestClose={closeMenu}
+      >
+        <Pressable
+          style={styles.backdrop}
+          onPress={closeMenu}
+          accessibilityRole="button"
+          accessibilityLabel="Close insight actions menu"
+        >
           <Pressable
             style={[
               styles.menuCard,
               { top: menuPos.top, right: menuPos.right, backgroundColor: colors.surface },
             ]}
+            accessibilityRole="menu"
           >
-            <Pressable style={styles.menuItem} onPress={handleRename}>
+            <Pressable
+              style={styles.menuItem}
+              onPress={handleRename}
+              accessibilityRole="menuitem"
+              accessibilityLabel={`Rename ${insight.title}`}
+            >
               <Typography variant="body1">Rename</Typography>
               <RenameIcon size={18} color={colors.text} />
             </Pressable>
 
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-            <Pressable style={styles.menuItem} onPress={handleView}>
+            <Pressable
+              style={styles.menuItem}
+              onPress={handleView}
+              accessibilityRole="menuitem"
+              accessibilityLabel={`View ${insight.title}`}
+            >
               <Typography variant="body1">View</Typography>
               <ChevronRightIcon size={18} color={colors.text} />
             </Pressable>
@@ -164,7 +199,12 @@ export function InsightCard({
 
             {onExportPdf ? (
               <>
-                <Pressable style={styles.menuItem} onPress={handleExportPdf}>
+                <Pressable
+                  style={styles.menuItem}
+                  onPress={handleExportPdf}
+                  accessibilityRole="menuitem"
+                  accessibilityLabel={`Export ${insight.title} as PDF`}
+                >
                   <Typography variant="body1">Export as PDF</Typography>
                   <Ionicons name="document-text-outline" size={18} color={colors.text} />
                 </Pressable>
@@ -173,7 +213,13 @@ export function InsightCard({
               </>
             ) : null}
 
-            <Pressable style={styles.menuItem} onPress={handleDelete}>
+            <Pressable
+              style={styles.menuItem}
+              onPress={handleDelete}
+              accessibilityRole="menuitem"
+              accessibilityLabel={`Delete ${insight.title}`}
+              accessibilityHint="Destructive action"
+            >
               <Typography variant="body1" color="#EF4444">
                 Delete
               </Typography>
@@ -224,7 +270,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   menuButton: {
-    paddingLeft: 8,
+    marginLeft: 8,
   },
   backdrop: {
     flex: 1,
@@ -246,6 +292,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
+    minHeight: MIN_TOUCH_TARGET,
   },
   divider: {
     height: StyleSheet.hairlineWidth,

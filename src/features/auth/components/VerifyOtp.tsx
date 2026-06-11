@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Keyboard,
-  Platform,
   Pressable,
   TextInput as RNTextInput,
   StyleSheet,
@@ -17,9 +16,16 @@ import { useVerifyOtp } from '@/features/auth/hooks/useVerifyOtp';
 import { useVerifyResetOtp } from '@/features/auth/hooks/useVerifyResetOtp';
 import { useAuthStore } from '@/features/auth/store/auth.store';
 import type { ApiError } from '@/shared/api/types';
+import {
+  backButtonLabel,
+  expandHitSlop,
+  MIN_TOUCH_TARGET,
+  minTouchTargetStyle,
+} from '@/shared/accessibility';
 import { Toast, Typography } from '@/shared/components';
 
 import { AuthSuccessModal } from './AuthSuccessModal';
+import { OtpCodeInput } from './OtpCodeInput';
 
 const CODE_LENGTH = 6;
 
@@ -81,7 +87,6 @@ export function VerifyOtp({
 
   const inputRef = useRef<RNTextInput>(null);
   const resendToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [isFocused, setIsFocused] = useState(false);
 
   useEffect(() => {
     setTimer(initialCooldown);
@@ -214,8 +219,7 @@ export function VerifyOtp({
     }
   };
 
-  const handleTextChange = (val: string) => {
-    const cleanVal = val.replace(/[^0-9]/g, '').slice(0, CODE_LENGTH);
+  const handleTextChange = (cleanVal: string) => {
     setCode(cleanVal);
 
     if (hasOtpError || hasNetworkError) {
@@ -225,10 +229,6 @@ export function VerifyOtp({
       resetVerifyOtp();
       verifyResetOtpMutation.reset();
     }
-  };
-
-  const handleBoxPress = () => {
-    inputRef.current?.focus();
   };
 
   const handleContinue = () => {
@@ -274,12 +274,16 @@ export function VerifyOtp({
           onPress={() =>
             type === 'reset-password' ? router.replace('/(auth)/reset-password') : router.back()
           }
-          style={styles.backButton}
-          accessibilityLabel="Go back"
+          style={[styles.backButton, minTouchTargetStyle]}
+          hitSlop={expandHitSlop(24)}
+          accessibilityRole="button"
+          accessibilityLabel={backButtonLabel('OTP Verification')}
         >
-          <Ionicons name="chevron-back" size={24} color="#1B1B1B" />
+          <Ionicons name="chevron-back" size={24} color="#1B1B1B" accessible={false} />
         </Pressable>
-        <Typography style={styles.headerTitle}>OTP Verification</Typography>
+        <Typography style={styles.headerTitle} accessibilityRole="header">
+          OTP Verification
+        </Typography>
         <View style={{ width: 24 }} />
       </View>
 
@@ -294,51 +298,24 @@ export function VerifyOtp({
         </Typography>
       </View>
 
-      {/* Label */}
-      <Typography style={styles.otpLabel}>OTP</Typography>
-
-      {/* Hidden Native TextInput */}
-      <RNTextInput
-        ref={inputRef}
+      <OtpCodeInput
+        inputRef={inputRef}
         value={code}
         onChangeText={handleTextChange}
-        keyboardType="number-pad"
-        maxLength={CODE_LENGTH}
-        style={styles.hiddenInput}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
-        textContentType="oneTimeCode"
-        autoComplete={Platform.OS === 'android' ? 'sms-otp' : 'one-time-code'}
-        importantForAutofill="yes"
-        autoFocus
+        hasError={hasOtpError}
+        errorMessage={otpErrorMessage}
+        label="Verification code"
       />
 
-      {/* Customized Grid of OTP Boxes */}
-      <Pressable onPress={handleBoxPress} style={styles.otpGrid}>
-        {Array.from({ length: CODE_LENGTH }).map((_, idx) => {
-          const char = code[idx] || '';
-          const isCurrentFocus = isFocused && idx === Math.min(code.length, CODE_LENGTH - 1);
-          const isFilled = idx < code.length;
-
-          let borderStyle = styles.inactiveBox;
-          if (hasOtpError) borderStyle = styles.errorBox;
-          else if (isCurrentFocus || isFilled) borderStyle = styles.activeBox;
-
-          return (
-            <View key={idx} style={[styles.otpBox, borderStyle]}>
-              <Typography style={styles.otpText}>{char}</Typography>
-            </View>
-          );
-        })}
-      </Pressable>
-
-      {/* Red Error Message if Code is Incorrect */}
-      {hasOtpError && <Typography style={styles.errorText}>{otpErrorMessage}</Typography>}
-
-      {/* Verify Button matching all states */}
       <Pressable
         disabled={!isCodeComplete || isLoading || isExpired}
         onPress={handleVerify}
+        accessibilityRole="button"
+        accessibilityLabel={type === 'reset-password' ? 'Continue' : 'Verify email'}
+        accessibilityState={{
+          disabled: !isCodeComplete || isLoading || isExpired,
+          busy: isLoading,
+        }}
         style={({ pressed }) => [
           styles.verifyBtn,
           {
@@ -382,6 +359,13 @@ export function VerifyOtp({
             <Pressable
               onPress={handleResend}
               disabled={resendOtpMutation.isPending || resetPasswordMutation.isPending}
+              accessibilityRole="button"
+              accessibilityLabel="Resend verification code"
+              accessibilityState={{
+                disabled: resendOtpMutation.isPending || resetPasswordMutation.isPending,
+                busy: resendOtpMutation.isPending || resetPasswordMutation.isPending,
+              }}
+              style={minTouchTargetStyle}
             >
               <Typography style={styles.resendLink}>
                 {resendOtpMutation.isPending || resetPasswordMutation.isPending
@@ -413,7 +397,6 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   backButton: {
-    padding: 4,
     marginLeft: -8,
   },
   headerTitle: {
@@ -439,58 +422,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_700Bold',
     color: '#1B1B1B',
   },
-  otpLabel: {
-    fontFamily: 'Inter_500Medium',
-    fontSize: 12,
-    color: '#9CA3AF',
-    textTransform: 'uppercase',
-    marginTop: 32,
-    marginBottom: 8,
-  },
-  hiddenInput: {
-    position: 'absolute',
-    width: 1,
-    height: 1,
-    opacity: 0,
-  },
-  otpGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    gap: 8,
-  },
-  otpBox: {
-    flex: 1,
-    aspectRatio: 1,
-    borderRadius: 8,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  inactiveBox: {
-    borderColor: '#E5E7EB',
-  },
-  activeBox: {
-    borderColor: '#1565C0',
-    borderWidth: 1.5,
-  },
-  errorBox: {
-    borderColor: '#EF4444',
-    borderWidth: 1.5,
-  },
-  otpText: {
-    fontSize: 22,
-    fontFamily: 'Inter_600SemiBold',
-    color: '#1B1B1B',
-    textAlign: 'center',
-  },
-  errorText: {
-    color: '#EF4444',
-    fontFamily: 'Inter_400Regular',
-    fontSize: 13,
-    marginTop: 8,
-  },
   verifyBtn: {
     borderRadius: 12,
     paddingVertical: 15,
@@ -498,6 +429,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 36,
+    minHeight: MIN_TOUCH_TARGET,
   },
   btnText: {
     fontFamily: 'Inter_600SemiBold',

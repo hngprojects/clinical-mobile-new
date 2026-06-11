@@ -11,7 +11,12 @@ import {
 
 import { DeleteModal } from '@/features/home/components/DeleteModal';
 import { RenameModal } from '@/features/home/components/RenameModal';
-import { a11yRoles, minTouchTargetStyle } from '@/shared/accessibility';
+import {
+  a11yRoles,
+  expandHitSlop,
+  MIN_TOUCH_TARGET,
+  minTouchTargetStyle,
+} from '@/shared/accessibility';
 import { Typography } from '@/shared/components';
 import { ChevronRightIcon } from '@/shared/components/icons/ChevronRightIcon';
 import { DeleteIcon } from '@/shared/components/icons/DeleteIcon';
@@ -139,21 +144,32 @@ export function InsightItemCard({
                 : 'Opens rename, view, and delete actions.'
             }
             onPress={openMenu}
-            hitSlop={8}
+            hitSlop={expandHitSlop(18)}
             style={[styles.menuButton, minTouchTargetStyle]}
           >
-            <Ionicons name="ellipsis-vertical" size={18} color={colors.textSecondary} />
+            <Ionicons
+              name="ellipsis-vertical"
+              size={18}
+              color={colors.textSecondary}
+              accessible={false}
+            />
           </Pressable>
         </View>
       </View>
 
       {/* Three-dot dropdown menu */}
-      <Modal visible={menuVisible} transparent animationType="none" onRequestClose={closeMenu}>
+      <Modal
+        visible={menuVisible}
+        transparent
+        animationType="none"
+        accessibilityViewIsModal
+        onRequestClose={closeMenu}
+      >
         <Pressable
-          accessibilityRole={a11yRoles.button}
-          accessibilityLabel="Close insight actions menu"
           style={styles.backdrop}
           onPress={closeMenu}
+          accessibilityRole={a11yRoles.button}
+          accessibilityLabel="Close insight actions menu"
         >
           <Pressable
             accessibilityViewIsModal
@@ -161,12 +177,13 @@ export function InsightItemCard({
               styles.menuCard,
               { top: menuPos.top, right: menuPos.right, backgroundColor: colors.surface },
             ]}
+            accessibilityRole="menu"
           >
             <Pressable
-              accessibilityRole={a11yRoles.button}
-              accessibilityLabel={`Rename ${insight.title}`}
               style={styles.menuItem}
               onPress={handleRename}
+              accessibilityRole={a11yRoles.menuitem}
+              accessibilityLabel={`Rename ${insight.title}`}
             >
               <Typography variant="body1">Rename</Typography>
               <RenameIcon size={18} color={colors.text} />
@@ -175,10 +192,10 @@ export function InsightItemCard({
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
             <Pressable
-              accessibilityRole={a11yRoles.button}
-              accessibilityLabel={`View ${insight.title} details`}
               style={styles.menuItem}
               onPress={handleView}
+              accessibilityRole={a11yRoles.menuitem}
+              accessibilityLabel={`View ${insight.title} details`}
             >
               <Typography variant="body1">View</Typography>
               <ChevronRightIcon size={18} color={colors.text} />
@@ -189,10 +206,10 @@ export function InsightItemCard({
             {onExportPdf ? (
               <>
                 <Pressable
-                  accessibilityRole={a11yRoles.button}
-                  accessibilityLabel={`Export ${insight.title} as PDF`}
                   style={styles.menuItem}
                   onPress={handleExportPdf}
+                  accessibilityRole={a11yRoles.menuitem}
+                  accessibilityLabel={`Export ${insight.title} as PDF`}
                 >
                   <Typography variant="body1">Export as PDF</Typography>
                   <Ionicons name="document-text-outline" size={18} color={colors.text} />
@@ -203,10 +220,11 @@ export function InsightItemCard({
             ) : null}
 
             <Pressable
-              accessibilityRole={a11yRoles.button}
-              accessibilityLabel={`Delete ${insight.title}`}
               style={styles.menuItem}
               onPress={handleDelete}
+              accessibilityRole={a11yRoles.menuitem}
+              accessibilityLabel={`Delete ${insight.title}`}
+              accessibilityHint="Destructive action"
             >
               <Typography variant="body1" color="#EF4444">
                 Delete
@@ -285,6 +303,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
+    minHeight: MIN_TOUCH_TARGET,
   },
   divider: {
     height: StyleSheet.hairlineWidth,
