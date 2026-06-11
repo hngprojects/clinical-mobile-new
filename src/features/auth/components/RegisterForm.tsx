@@ -82,6 +82,7 @@ export function RegisterForm({ mutation, onContinueAsGuest, onGoogleSuccess }: R
           control={control}
           name="firstName"
           label="First Name"
+          required
           placeholder="Enter your name"
           returnKeyType="next"
           onSubmitEditing={() => lastNameRef.current?.focus()}
@@ -92,6 +93,7 @@ export function RegisterForm({ mutation, onContinueAsGuest, onGoogleSuccess }: R
           control={control}
           name="lastName"
           label="Last Name"
+          required
           placeholder="Enter your name"
           returnKeyType="next"
           onSubmitEditing={() => emailRef.current?.focus()}
@@ -102,6 +104,7 @@ export function RegisterForm({ mutation, onContinueAsGuest, onGoogleSuccess }: R
           control={control}
           name="email"
           label="Email"
+          required
           keyboardType="email-address"
           textContentType="emailAddress"
           placeholder="Enter your email"
