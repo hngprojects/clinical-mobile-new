@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { MIN_TOUCH_TARGET } from '@/shared/accessibility';
 import { Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
@@ -26,16 +27,21 @@ export function ProfileMenuRow({ icon, label, onPress, isLast, danger }: Profile
     <>
       <Pressable
         onPress={onPress}
-        style={({ pressed }) => [styles.row, { opacity: pressed ? 0.6 : 1 }]}
+        style={({ pressed }) => [
+          styles.row,
+          { opacity: pressed ? 0.6 : 1, minHeight: MIN_TOUCH_TARGET },
+        ]}
         android_ripple={{ color: colors.border }}
+        accessibilityRole="button"
+        accessibilityLabel={label}
       >
         <View style={styles.rowLeft}>
-          <Ionicons name={icon} size={20} color={iconColor} />
+          <Ionicons name={icon} size={20} color={iconColor} accessible={false} />
           <Typography variant="body1" color={textColor} style={styles.rowLabel}>
             {label}
           </Typography>
         </View>
-        <Ionicons name="chevron-forward" size={18} color={iconColor} />
+        <Ionicons name="chevron-forward" size={18} color={iconColor} accessible={false} />
       </Pressable>
       {!isLast && (
         <View

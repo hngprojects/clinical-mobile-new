@@ -21,7 +21,7 @@ function ProfileTabIcon({ color, focused }: { color: string; focused: boolean })
         },
       ]}
     >
-      <Ionicons name="person" size={14} color={focused ? '#FFFFFF' : color} />
+      <Ionicons name="person" size={14} color={focused ? '#FFFFFF' : color} accessible={false} />
     </View>
   );
 }
@@ -67,6 +67,7 @@ export default function MainLayout() {
         name="index"
         options={{
           title: 'Home',
+          tabBarAccessibilityLabel: 'Home tab',
           tabBarIcon: ({ color }) => <HomeIcon color={color} size={22} />,
         }}
       />
@@ -74,6 +75,7 @@ export default function MainLayout() {
         name="insights"
         options={{
           title: 'Insights',
+          tabBarAccessibilityLabel: 'Insights tab',
           tabBarIcon: ({ color, focused }) => (
             <InsightsIcon color={color} size={22} filled={focused} />
           ),
@@ -83,6 +85,7 @@ export default function MainLayout() {
         name="profile"
         options={{
           title: 'Profile',
+          tabBarAccessibilityLabel: 'Profile tab',
           tabBarIcon: ({ color, focused }) => <ProfileTabIcon color={color} focused={focused} />,
         }}
       />

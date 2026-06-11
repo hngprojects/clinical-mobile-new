@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { MIN_TOUCH_TARGET } from '@/shared/accessibility';
 import { TextInput, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
@@ -54,14 +55,19 @@ export function DeleteAccountConfirmModal({
           onPress={handleClose}
         />
 
-        <View style={[styles.card, { backgroundColor: colors.surface }]}>
+        <View style={[styles.card, { backgroundColor: colors.surface }]} accessibilityViewIsModal>
           {step === 'warning' ? (
             <>
               <View style={[styles.iconRing, { backgroundColor: DELETE_ACCOUNT_ICON_RING }]}>
-                <Ionicons name="warning" size={36} color={DELETE_ACCOUNT_BUTTON_FILL} />
+                <Ionicons
+                  name="warning"
+                  size={36}
+                  color={DELETE_ACCOUNT_BUTTON_FILL}
+                  accessible={false}
+                />
               </View>
 
-              <Typography variant="h3" style={styles.title}>
+              <Typography variant="h3" style={styles.title} accessibilityRole="header">
                 Delete Account
               </Typography>
 
@@ -90,10 +96,15 @@ export function DeleteAccountConfirmModal({
           ) : (
             <>
               <View style={[styles.iconRing, { backgroundColor: DELETE_ACCOUNT_ICON_RING }]}>
-                <Ionicons name="warning" size={36} color={DELETE_ACCOUNT_BUTTON_FILL} />
+                <Ionicons
+                  name="warning"
+                  size={36}
+                  color={DELETE_ACCOUNT_BUTTON_FILL}
+                  accessible={false}
+                />
               </View>
 
-              <Typography variant="h3" style={styles.title}>
+              <Typography variant="h3" style={styles.title} accessibilityRole="header">
                 Are You Sure?
               </Typography>
 
@@ -139,6 +150,7 @@ export function DeleteAccountConfirmModal({
 
               <Pressable
                 accessibilityRole="button"
+                accessibilityLabel="Cancel"
                 onPress={handleClose}
                 disabled={isLoading}
                 style={({ pressed }) => [styles.cancelButton, { opacity: pressed ? 0.6 : 1 }]}
@@ -226,6 +238,9 @@ const styles = StyleSheet.create({
   cancelButton: {
     marginTop: 16,
     paddingVertical: 8,
+    minHeight: MIN_TOUCH_TARGET,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   cancelLabel: {
     fontWeight: '500',
