@@ -12,7 +12,14 @@ export function InsightsIcon({ color = '#5E5E5E', size = 22, filled = false }: I
   const detailColor = filled ? '#FFFFFF' : color;
 
   return (
-    <Svg width={19 * scale} height={22 * scale} viewBox="0 0 19 22" fill="none">
+    <Svg
+      width={19 * scale}
+      height={22 * scale}
+      viewBox="0 0 19 22"
+      fill="none"
+      accessible={false}
+      importantForAccessibility="no"
+    >
       <Path
         d="M11.75 3.75L9.75 3.75C6.92157 3.75 5.50736 3.75 4.62868 4.62868C3.75 5.50736 3.75 6.92157 3.75 9.75L3.75 14.75C3.75 17.5784 3.75 18.9926 4.62868 19.8713C5.50736 20.75 6.92157 20.75 9.75 20.75H11.0931C11.9106 20.75 12.3194 20.75 12.6869 20.5978C13.0545 20.4455 13.3435 20.1565 13.9216 19.5784L16.5784 16.9216C17.1565 16.3435 17.4455 16.0545 17.5978 15.6869C17.75 15.3194 17.75 14.9106 17.75 14.0931V9.75C17.75 6.92157 17.75 5.50736 16.8713 4.62868C15.9926 3.75 14.5784 3.75 11.75 3.75Z"
         fill={filled ? color : 'none'}

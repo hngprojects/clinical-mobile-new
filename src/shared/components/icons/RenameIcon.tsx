@@ -8,7 +8,14 @@ interface RenameIconProps {
 
 export function RenameIcon({ size = 18, color = '#1B1B1B' }: RenameIconProps) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 18 18" fill="none">
+    <Svg
+      width={size}
+      height={size}
+      viewBox="0 0 18 18"
+      fill="none"
+      accessible={false}
+      importantForAccessibility="no"
+    >
       <ClipPath id="clip">
         <Rect width="18" height="18" fill="white" />
       </ClipPath>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { ActivityIndicator, Modal, StyleSheet, View } from 'react-native';
 
+import { loadingLabel } from '@/shared/accessibility';
 import { useTheme } from '@/shared/theme';
 
 import { Typography } from './Typography';
@@ -12,12 +13,28 @@ interface LoadingOverlayProps {
 
 export function LoadingOverlay({ visible, message }: LoadingOverlayProps) {
   const { colors } = useTheme();
+  const accessibilityLabel = message ?? loadingLabel();
 
   return (
-    <Modal transparent visible={visible} animationType="fade">
-      <View style={styles.backdrop}>
+    <Modal
+      transparent
+      visible={visible}
+      animationType="fade"
+      accessibilityViewIsModal
+      onRequestClose={() => undefined}
+    >
+      <View
+        style={styles.backdrop}
+        accessibilityLabel={accessibilityLabel}
+        accessibilityState={{ busy: true }}
+        importantForAccessibility="yes"
+      >
         <View style={[styles.card, { backgroundColor: colors.surface }]}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <ActivityIndicator
+            size="large"
+            color={colors.primary}
+            accessibilityLabel={accessibilityLabel}
+          />
           {message && (
             <Typography variant="body2" style={styles.message}>
               {message}

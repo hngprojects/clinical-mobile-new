@@ -8,7 +8,14 @@ interface DeleteIconProps {
 
 export function DeleteIcon({ size = 18, color = '#EF4444' }: DeleteIconProps) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 18 18" fill="none">
+    <Svg
+      width={size}
+      height={size}
+      viewBox="0 0 18 18"
+      fill="none"
+      accessible={false}
+      importantForAccessibility="no"
+    >
       <Path
         d="M14.625 4.125L14.1602 11.6438C14.0414 13.5648 13.9821 14.5253 13.5006 15.2159C13.2625 15.5573 12.956 15.8455 12.6005 16.062C11.8816 16.5 10.9192 16.5 8.99452 16.5C7.06734 16.5 6.10372 16.5 5.38429 16.0612C5.0286 15.8443 4.722 15.5556 4.48401 15.2136C4.00266 14.5219 3.94459 13.5601 3.82846 11.6364L3.375 4.125"
         stroke={color}
