@@ -118,18 +118,22 @@ export function DeleteAccountConfirmModal({
                   Type <Text style={styles.inputHintBold}>{CONFIRM_PHRASE}</Text> to confirm
                 </Text>
                 <TextInput
+                  label="Type Delete to confirm"
+                  required
                   value={confirmText}
                   onChangeText={setConfirmText}
                   placeholder={CONFIRM_PHRASE}
                   autoCapitalize="none"
                   autoCorrect={false}
                   editable={!isLoading}
+                  accessibilityHint={`Type the word ${CONFIRM_PHRASE} exactly to enable account deletion`}
                 />
               </View>
 
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Confirm delete account"
+                accessibilityState={{ disabled: !canSubmitDelete, busy: isLoading }}
                 disabled={!canSubmitDelete}
                 onPress={onConfirm}
                 style={({ pressed }) => [
@@ -150,7 +154,7 @@ export function DeleteAccountConfirmModal({
 
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Cancel"
+                accessibilityLabel="Cancel delete account"
                 onPress={handleClose}
                 disabled={isLoading}
                 style={({ pressed }) => [styles.cancelButton, { opacity: pressed ? 0.6 : 1 }]}
@@ -226,6 +230,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 16,
     borderRadius: 12,
+    minHeight: MIN_TOUCH_TARGET,
   },
   confirmLabel: {
     fontWeight: '600',

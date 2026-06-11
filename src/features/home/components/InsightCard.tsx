@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import { expandHitSlop, minTouchTargetStyle } from '@/shared/accessibility';
+import { expandHitSlop, MIN_TOUCH_TARGET, minTouchTargetStyle } from '@/shared/accessibility';
 import { Typography } from '@/shared/components';
 import { ChevronRightIcon } from '@/shared/components/icons/ChevronRightIcon';
 import { DeleteIcon } from '@/shared/components/icons/DeleteIcon';
@@ -153,19 +153,24 @@ export function InsightCard({
       </Pressable>
 
       {/* Three-dot dropdown menu */}
-      <Modal visible={menuVisible} transparent animationType="none" onRequestClose={closeMenu}>
+      <Modal
+        visible={menuVisible}
+        transparent
+        animationType="none"
+        accessibilityViewIsModal
+        onRequestClose={closeMenu}
+      >
         <Pressable
           style={styles.backdrop}
           onPress={closeMenu}
           accessibilityRole="button"
-          accessibilityLabel="Close menu"
+          accessibilityLabel="Close insight actions menu"
         >
           <Pressable
             style={[
               styles.menuCard,
               { top: menuPos.top, right: menuPos.right, backgroundColor: colors.surface },
             ]}
-            accessibilityViewIsModal
             accessibilityRole="menu"
           >
             <Pressable
@@ -218,6 +223,7 @@ export function InsightCard({
               onPress={handleDelete}
               accessibilityRole="menuitem"
               accessibilityLabel={`Delete ${insight.title}`}
+              accessibilityHint="Destructive action"
             >
               <Typography variant="body1" color="#EF4444">
                 Delete
@@ -269,7 +275,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   menuButton: {
-    paddingLeft: 8,
+    marginLeft: 8,
   },
   backdrop: {
     flex: 1,
@@ -291,6 +297,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
+    minHeight: MIN_TOUCH_TARGET,
   },
   divider: {
     height: StyleSheet.hairlineWidth,

@@ -5,6 +5,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Ionicons } from '@expo/vector-icons';
 
+import {
+  backButtonLabel,
+  expandHitSlop,
+  MIN_TOUCH_TARGET,
+  minTouchTargetStyle,
+} from '@/shared/accessibility';
 import { Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
@@ -31,11 +37,12 @@ function ToggleRow({
   showDivider = true,
 }: ToggleRowProps) {
   const { colors } = useTheme();
+  const switchLabel = description ? `${title}. ${description}` : title;
 
   return (
     <>
       <View style={styles.row}>
-        <View style={styles.rowText}>
+        <View style={styles.rowText} accessible={false} importantForAccessibility="no">
           <Typography variant="body1" style={styles.rowTitle}>
             {title}
           </Typography>
@@ -51,6 +58,9 @@ function ToggleRow({
           disabled={disabled}
           trackColor={{ false: colors.border, true: colors.primary }}
           thumbColor="#FFFFFF"
+          accessibilityRole="switch"
+          accessibilityLabel={switchLabel}
+          accessibilityState={{ disabled: Boolean(disabled), checked: value }}
         />
       </View>
       {showDivider && <View style={[styles.divider, { backgroundColor: colors.borderSubtle }]} />}
@@ -82,19 +92,23 @@ export function NotificationsSettingsScreen() {
 
   return (
     <SafeAreaView style={[styles.fill, { backgroundColor: colors.surface }]} edges={['top']}>
-      {/* Header */}
       <View style={[styles.header, { borderBottomColor: colors.borderSubtle }]}>
-        <Pressable onPress={() => router.back()} style={styles.backButton} hitSlop={8}>
-          <Ionicons name="chevron-back" size={24} color={colors.text} />
+        <Pressable
+          onPress={() => router.back()}
+          style={[styles.backButton, minTouchTargetStyle]}
+          hitSlop={expandHitSlop(24)}
+          accessibilityRole="button"
+          accessibilityLabel={backButtonLabel('Notification')}
+        >
+          <Ionicons name="chevron-back" size={24} color={colors.text} accessible={false} />
         </Pressable>
-        <Typography variant="body1" style={styles.headerTitle}>
+        <Typography variant="body1" style={styles.headerTitle} accessibilityRole="header">
           Notification
         </Typography>
         <View style={styles.headerSpacer} />
       </View>
 
       <View style={styles.content}>
-        {/* Page title */}
         <View style={styles.titleBlock}>
           <Typography variant="h2" style={styles.pageTitle}>
             Notification Preferences
@@ -105,7 +119,6 @@ export function NotificationsSettingsScreen() {
           </Typography>
         </View>
 
-        {/* Toggles */}
         <View style={styles.toggleList}>
           <ToggleRow
             title="AI Insights"
@@ -141,9 +154,12 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  backButton: { width: 32, alignItems: 'flex-start', justifyContent: 'center' },
+  backButton: {
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+  },
   headerTitle: { flex: 1, textAlign: 'center', fontWeight: '500' },
-  headerSpacer: { width: 32 },
+  headerSpacer: { width: MIN_TOUCH_TARGET },
 
   content: {
     flex: 1,
@@ -163,6 +179,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 18,
     gap: 16,
+    minHeight: MIN_TOUCH_TARGET,
   },
   rowText: { flex: 1, gap: 2 },
   rowTitle: { fontWeight: '500' },

@@ -31,6 +31,7 @@ export function RenameModal({ visible, currentTitle, onCancel, onConfirm }: Rena
       transparent
       animationType="fade"
       statusBarTranslucent
+      accessibilityViewIsModal
       onRequestClose={onCancel}
     >
       <KeyboardAvoidingView
@@ -48,10 +49,12 @@ export function RenameModal({ visible, currentTitle, onCancel, onConfirm }: Rena
 
             <View style={{ gap: 4 }}>
               <TextInput
+                label="New insight title"
+                required
                 value={value}
                 onChangeText={setValue}
                 autoFocus
-                error={isOverLimit ? `${value.length}/${MAX_LENGTH} characters` : undefined}
+                error={isOverLimit ? `Title exceeds ${MAX_LENGTH} characters` : undefined}
               />
               {!isOverLimit && (
                 <Typography variant="label" color={colors.textSecondary} align="right">

@@ -1,8 +1,7 @@
-import { Ionicons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
 import React, { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Button, FormField, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
@@ -15,6 +14,7 @@ import {
 import { isPasswordPolicyMet } from '../utils/passwordPolicy';
 
 import { PasswordValidationList } from './PasswordValidationList';
+import { PasswordVisibilityToggle } from './PasswordVisibilityToggle';
 
 interface CompletePasswordResetFormProps {
   mutation: {
@@ -55,6 +55,7 @@ export function CompletePasswordResetForm({
         control={control}
         name="password"
         label="New password"
+        required
         secureTextEntry={!showPassword}
         textContentType="newPassword"
         placeholder="Enter your new password"
@@ -62,13 +63,10 @@ export function CompletePasswordResetForm({
         onSubmitEditing={() => confirmPasswordRef.current?.focus()}
         submitBehavior="submit"
         rightIcon={
-          <Pressable onPress={() => setShowPassword(!showPassword)}>
-            <Ionicons
-              name={showPassword ? 'eye-outline' : 'eye-off-outline'}
-              size={20}
-              color="#1B1B1B"
-            />
-          </Pressable>
+          <PasswordVisibilityToggle
+            visible={showPassword}
+            onToggle={() => setShowPassword((value) => !value)}
+          />
         }
       />
 
@@ -79,6 +77,7 @@ export function CompletePasswordResetForm({
         control={control}
         name="confirmPassword"
         label="Confirm password"
+        required
         secureTextEntry={!showPassword}
         textContentType="newPassword"
         placeholder="Confirm your new password"
@@ -103,14 +102,13 @@ export function CompletePasswordResetForm({
 
 function PasswordMatchHint({ isValid }: { isValid: boolean }) {
   return (
-    <View style={styles.validationItem}>
-      <Ionicons
-        name={isValid ? 'checkmark' : 'close'}
-        size={14}
-        color={isValid ? '#10B981' : '#767676'}
-      />
+    <View
+      style={styles.validationItem}
+      accessibilityRole="text"
+      accessibilityLabel={`Passwords must match, ${isValid ? 'met' : 'not met'}`}
+    >
       <Typography style={[styles.validationText, isValid && styles.validationTextValid]}>
-        Passwords must match
+        {isValid ? 'Passwords match' : 'Passwords must match'}
       </Typography>
     </View>
   );
@@ -119,9 +117,6 @@ function PasswordMatchHint({ isValid }: { isValid: boolean }) {
 const styles = StyleSheet.create({
   container: { width: '100%' },
   validationItem: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 6,
     marginTop: 8,
   },
   validationText: {
