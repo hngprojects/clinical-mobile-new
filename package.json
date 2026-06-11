@@ -88,6 +88,9 @@
   },
   "private": true,
   "pnpm": {
+    "overrides": {
+      "shell-quote": "^1.8.4"
+    },
     "onlyBuiltDependencies": [
       "unrs-resolver"
     ]

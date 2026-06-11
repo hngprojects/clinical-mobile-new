@@ -19,7 +19,7 @@ import { minTouchTargetStyle, expandHitSlop } from '@/shared/accessibility';
   hitSlop={expandHitSlop(24)}
   accessibilityRole="button"
   accessibilityLabel="View glucose result details"
-/>
+/>;
 ```
 
 - Use `hitSlop` only when the visual control must stay smaller (e.g. icon buttons in headers).
@@ -89,10 +89,10 @@ Tab bar height is already 80pt; ensure icons and labels remain tappable at minim
 
 Every accessibility PR must be tested on a **physical device or simulator** with a screen reader enabled:
 
-| Platform | Screen reader |
-|----------|----------------|
-| iOS | VoiceOver (Settings → Accessibility → VoiceOver) |
-| Android | TalkBack (Settings → Accessibility → TalkBack) |
+| Platform | Screen reader                                    |
+| -------- | ------------------------------------------------ |
+| iOS      | VoiceOver (Settings → Accessibility → VoiceOver) |
+| Android  | TalkBack (Settings → Accessibility → TalkBack)   |
 
 **Checklist:**
 
