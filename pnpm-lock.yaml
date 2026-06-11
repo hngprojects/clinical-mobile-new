@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  shell-quote: ^1.8.4
+
 importers:
 
   .:
@@ -5456,9 +5459,9 @@ snapshots:
 
   '@babel/helper-wrap-function@7.28.6':
     dependencies:
-      '@babel/template': 7.28.6
+      '@babel/template': 7.29.7
       '@babel/traverse': 7.29.0
-      '@babel/types': 7.29.0
+      '@babel/types': 7.29.7
     transitivePeerDependencies:
       - supports-color
 
@@ -5661,7 +5664,7 @@ snapshots:
     dependencies:
       '@babel/core': 7.29.0
       '@babel/helper-plugin-utils': 7.28.6
-      '@babel/template': 7.28.6
+      '@babel/template': 7.29.7
 
   '@babel/plugin-transform-destructuring@7.28.5(@babel/core@7.29.0)':
     dependencies:
