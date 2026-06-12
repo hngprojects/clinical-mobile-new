@@ -2,8 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { TextInput, Typography } from '@/shared/components';
 import { MIN_TOUCH_TARGET } from '@/shared/accessibility';
+import { TextInput, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 import { DELETE_ACCOUNT_BUTTON_FILL, DELETE_ACCOUNT_ICON_RING } from '../constants';
@@ -55,14 +55,19 @@ export function DeleteAccountConfirmModal({
           onPress={handleClose}
         />
 
-        <View style={[styles.card, { backgroundColor: colors.surface }]}>
+        <View style={[styles.card, { backgroundColor: colors.surface }]} accessibilityViewIsModal>
           {step === 'warning' ? (
             <>
               <View style={[styles.iconRing, { backgroundColor: DELETE_ACCOUNT_ICON_RING }]}>
-                <Ionicons name="warning" size={36} color={DELETE_ACCOUNT_BUTTON_FILL} />
+                <Ionicons
+                  name="warning"
+                  size={36}
+                  color={DELETE_ACCOUNT_BUTTON_FILL}
+                  accessible={false}
+                />
               </View>
 
-              <Typography variant="h3" style={styles.title}>
+              <Typography variant="h3" style={styles.title} accessibilityRole="header">
                 Delete Account
               </Typography>
 
@@ -91,10 +96,15 @@ export function DeleteAccountConfirmModal({
           ) : (
             <>
               <View style={[styles.iconRing, { backgroundColor: DELETE_ACCOUNT_ICON_RING }]}>
-                <Ionicons name="warning" size={36} color={DELETE_ACCOUNT_BUTTON_FILL} />
+                <Ionicons
+                  name="warning"
+                  size={36}
+                  color={DELETE_ACCOUNT_BUTTON_FILL}
+                  accessible={false}
+                />
               </View>
 
-              <Typography variant="h3" style={styles.title}>
+              <Typography variant="h3" style={styles.title} accessibilityRole="header">
                 Are You Sure?
               </Typography>
 
@@ -235,6 +245,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     minHeight: MIN_TOUCH_TARGET,
     justifyContent: 'center',
+    alignItems: 'center',
   },
   cancelLabel: {
     fontWeight: '500',
