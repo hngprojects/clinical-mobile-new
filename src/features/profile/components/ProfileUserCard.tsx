@@ -22,8 +22,14 @@ export function ProfileUserCard({ displayName, email, initials, avatarUrl }: Pro
         styles.userCard,
         { backgroundColor: colors.surface, borderColor: PROFILE_CARD_BORDER },
       ]}
+      accessible
+      accessibilityLabel={`${displayName}, ${email}`}
     >
-      <View style={[styles.avatar, { backgroundColor: colors.primarySubtle }]}>
+      <View
+        style={[styles.avatar, { backgroundColor: colors.primarySubtle }]}
+        accessible={false}
+        importantForAccessibility="no"
+      >
         {avatarUrl ? (
           <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
         ) : (

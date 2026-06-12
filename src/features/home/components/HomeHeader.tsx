@@ -4,6 +4,7 @@ import React, { useCallback } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useUnreadCount } from '@/features/notifications/hooks/useNotifications';
+import { expandHitSlop, minTouchTargetStyle } from '@/shared/accessibility';
 import { Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
@@ -31,7 +32,9 @@ export function HomeHeader({ name = 'User' }: HomeHeaderProps) {
       ]}
     >
       <View style={styles.textGroup}>
-        <Typography variant="h2">Hello, {name}</Typography>
+        <Typography variant="h2" accessibilityRole="header">
+          Hello, {name}
+        </Typography>
         <Typography variant="body2" color={colors.textSecondary}>
           Here&apos;s a quick overview of your lab results.
         </Typography>
@@ -40,14 +43,20 @@ export function HomeHeader({ name = 'User' }: HomeHeaderProps) {
         onPress={() => router.push('/(profile)/notification-inbox')}
         style={[
           styles.bellButton,
+          minTouchTargetStyle,
           { backgroundColor: colors.surfaceMuted, borderColor: colors.borderSubtle },
         ]}
-        accessibilityLabel={hasUnread ? `${unreadCount} unread notifications` : 'Notifications'}
+        hitSlop={expandHitSlop(44)}
+        accessibilityRole="button"
+        accessibilityLabel={
+          hasUnread ? `Notifications, ${unreadCount} unread` : 'Notifications, no unread'
+        }
       >
         <Ionicons
           name={hasUnread ? 'notifications' : 'notifications-outline'}
           size={22}
           color={hasUnread ? colors.primary : colors.text}
+          accessible={false}
         />
       </Pressable>
     </View>
