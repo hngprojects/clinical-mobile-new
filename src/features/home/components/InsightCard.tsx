@@ -112,7 +112,7 @@ export function InsightCard({
     <>
       <Pressable
         accessibilityRole={onPress ? 'button' : undefined}
-        accessibilityLabel={onPress ? `Open ${insight.title}` : undefined}
+        accessibilityLabel={onPress ? `Open ${insight.title}, ${insight.timestamp}` : undefined}
         disabled={!onPress}
         onPress={() => onPress?.(insight.id)}
         style={[
@@ -206,7 +206,12 @@ export function InsightCard({
                   accessibilityLabel={`Export ${insight.title} as PDF`}
                 >
                   <Typography variant="body1">Export as PDF</Typography>
-                  <Ionicons name="document-text-outline" size={18} color={colors.text} />
+                  <Ionicons
+                    name="document-text-outline"
+                    size={18}
+                    color={colors.text}
+                    accessible={false}
+                  />
                 </Pressable>
 
                 <View style={[styles.divider, { backgroundColor: colors.border }]} />

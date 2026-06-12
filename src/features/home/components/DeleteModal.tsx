@@ -22,9 +22,12 @@ export function DeleteModal({ visible, onCancel, onConfirm }: DeleteModalProps) 
       onRequestClose={onCancel}
     >
       <View style={styles.overlay}>
-        <View style={[styles.card, { backgroundColor: colors.surface, padding: spacing.lg }]}>
+        <View
+          style={[styles.card, { backgroundColor: colors.surface, padding: spacing.lg }]}
+          accessibilityViewIsModal
+        >
           <View style={{ gap: 6 }}>
-            <Typography variant="h2" style={styles.title}>
+            <Typography variant="h2" style={styles.title} accessibilityRole="header">
               Delete this insight?
             </Typography>
             <Typography variant="body1" color={colors.textSecondary}>

@@ -33,15 +33,17 @@ export function LogoutConfirmModal({
           onPress={onClose}
         />
 
-        <View style={[styles.card, { backgroundColor: colors.surface }]}>
+        <View style={[styles.card, { backgroundColor: colors.surface }]} accessibilityViewIsModal>
           <Image
             source={exitIllustration}
             style={styles.illustration}
             resizeMode="contain"
             accessibilityIgnoresInvertColors
+            accessible={false}
+            importantForAccessibility="no"
           />
 
-          <Typography variant="h3" style={styles.title}>
+          <Typography variant="h3" style={styles.title} accessibilityRole="header">
             Logout From Clinsight?
           </Typography>
 
