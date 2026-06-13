@@ -3,6 +3,7 @@ import type { AuthTokens as SharedAuthTokens } from '@/shared/auth/authTokens';
 export interface LoginRequest {
   email: string;
   password: string;
+  guestSessionId?: string;
 }
 
 export interface RegisterRequest {

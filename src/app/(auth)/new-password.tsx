@@ -8,6 +8,18 @@ import { useCompletePasswordReset } from '@/features/auth/hooks/useCompletePassw
 import { Screen, Toast, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
+function getPasswordResetErrorMessage(error: { message?: string; status?: number } | null): string {
+  if (!error) return '';
+  const msg = error.message?.trim();
+  if (error.status === 0 || msg?.toLowerCase().includes('network')) {
+    return 'Connection failed. Please check your network and try again.';
+  }
+  if (msg && (error.status === 400 || error.status === 422)) {
+    return msg;
+  }
+  return 'We could not reset your password. Please request a new code and try again.';
+}
+
 export default function NewPasswordScreen() {
   const { colors, spacing } = useTheme();
   const { token } = useLocalSearchParams<{ token?: string | string[] }>();
@@ -26,7 +38,7 @@ export default function NewPasswordScreen() {
 
   useEffect(() => {
     if (completeResetMutation.error) {
-      setToastMessage('We could not reset your password. Please request a new code and try again.');
+      setToastMessage(getPasswordResetErrorMessage(completeResetMutation.error));
       setToastVisible(true);
       const t = setTimeout(() => setToastVisible(false), 5000);
       return () => clearTimeout(t);

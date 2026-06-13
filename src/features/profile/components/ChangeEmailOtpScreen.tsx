@@ -175,9 +175,13 @@ export function ChangeEmailOtpScreen() {
           onChangeText={handleTextChange}
           hasError={hasOtpError}
           errorMessage={otpErrorMessage}
+          expiredHintMessage={
+            isExpired && !hasOtpError
+              ? 'This code has expired. Go back to request a new one.'
+              : undefined
+          }
           label="Verification code"
         />
-
         <Pressable
           disabled={!isCodeComplete || isPending || isExpired}
           onPress={handleVerify}

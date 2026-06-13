@@ -6,6 +6,7 @@ import { env } from '@/shared/constants/env';
 
 import { authApi } from '../api/auth.api';
 import type { AuthResponse } from '../api/auth.types';
+import { useAuthStore } from '../store/auth.store';
 
 const GOOGLE_AUTH_PATH = '/api/v1/auth/google';
 const GOOGLE_AUTH_REDIRECT_URL = 'clinsight://auth/google';
@@ -15,11 +16,14 @@ const REFRESH_TOKEN_KEYS = ['refresh_token', 'refreshToken'];
 type UrlQueryParams = NonNullable<ReturnType<typeof Linking.parse>['queryParams']>;
 type GoogleAuthResult = { success: true; auth: AuthResponse } | { success: false };
 
-function buildGoogleAuthUrl(redirectUrl: string) {
+function buildGoogleAuthUrl(redirectUrl: string, guestSessionId?: string | null) {
   const baseUrl = env.API_BASE_URL.replace(/\/$/, '');
   const encodedRedirectUrl = encodeURIComponent(redirectUrl);
+  const guestParam = guestSessionId
+    ? `&guest_session_id=${encodeURIComponent(guestSessionId)}`
+    : '';
 
-  return `${baseUrl}${GOOGLE_AUTH_PATH}?redirect_uri=${encodedRedirectUrl}&return_url=${encodedRedirectUrl}&platform=mobile&device_id=mobile`;
+  return `${baseUrl}${GOOGLE_AUTH_PATH}?redirect_uri=${encodedRedirectUrl}&return_url=${encodedRedirectUrl}&platform=mobile&device_id=mobile${guestParam}`;
 }
 
 function getParamValue(
@@ -91,6 +95,7 @@ function mapGoogleOAuthError(rawError: string, flow: 'signin' | 'signup'): strin
 export function useGoogleAuth(flow: 'signin' | 'signup' = 'signin') {
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const guestSessionId = useAuthStore((state) => state.guestSessionId);
 
   const action = flow === 'signup' ? 'sign-up' : 'login';
 
@@ -101,7 +106,7 @@ export function useGoogleAuth(flow: 'signin' | 'signup' = 'signin') {
 
     try {
       const redirectUrl = GOOGLE_AUTH_REDIRECT_URL;
-      const googleAuthUrl = buildGoogleAuthUrl(redirectUrl);
+      const googleAuthUrl = buildGoogleAuthUrl(redirectUrl, guestSessionId);
 
       const result = await WebBrowser.openAuthSessionAsync(googleAuthUrl, redirectUrl);
 
