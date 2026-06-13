@@ -139,6 +139,7 @@ async function login(data: LoginRequest): Promise<AuthResponse> {
     password: data.password,
     device_id: 'mobile',
     platform: 'mobile',
+    ...(data.guestSessionId ? { guest_session_id: data.guestSessionId } : {}),
   });
   return mapAuthResponse(response.data.data);
 }

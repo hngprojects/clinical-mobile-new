@@ -12,6 +12,7 @@ interface OtpCodeInputProps {
   length?: number;
   hasError?: boolean;
   errorMessage?: string;
+  expiredHintMessage?: string;
   label?: string;
   autoFocus?: boolean;
   inputRef?: React.RefObject<RNTextInput | null>;
@@ -23,6 +24,7 @@ export function OtpCodeInput({
   length = DEFAULT_LENGTH,
   hasError = false,
   errorMessage,
+  expiredHintMessage,
   label = 'Verification code',
   autoFocus = true,
   inputRef: externalRef,
@@ -50,54 +52,59 @@ export function OtpCodeInput({
         {label}
       </Typography>
 
-      <RNTextInput
-        ref={inputRef}
-        value={value}
-        onChangeText={handleChange}
-        keyboardType="number-pad"
-        maxLength={length}
-        style={styles.hiddenInput}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
-        textContentType="oneTimeCode"
-        autoComplete={Platform.OS === 'android' ? 'sms-otp' : 'one-time-code'}
-        importantForAutofill="yes"
-        autoFocus={autoFocus}
-        accessibilityLabel={accessibilityLabel}
-        accessibilityHint={
-          hasError && errorMessage ? `Error: ${errorMessage}` : 'Required verification code'
-        }
-        accessibilityState={{ disabled: false }}
-      />
+      {/* Input overlays the grid so taps and keystrokes register reliably */}
+      <View style={styles.otpWrapper}>
+        <Pressable
+          onPress={() => inputRef.current?.focus()}
+          accessibilityRole="button"
+          accessibilityLabel={`${label}, ${digitsEnteredLabel}`}
+          accessibilityHint="Double tap to enter verification code"
+          style={styles.otpGrid}
+        >
+          {Array.from({ length }).map((_, idx) => {
+            const char = value[idx] ?? '';
+            const isCurrentFocus = isFocused && idx === Math.min(value.length, length - 1);
+            const isFilled = idx < value.length;
 
-      <Pressable
-        onPress={() => inputRef.current?.focus()}
-        accessibilityRole="button"
-        accessibilityLabel={`${label}, ${digitsEnteredLabel}`}
-        accessibilityHint="Double tap to enter verification code"
-        style={styles.otpGrid}
-      >
-        {Array.from({ length }).map((_, idx) => {
-          const char = value[idx] ?? '';
-          const isCurrentFocus = isFocused && idx === Math.min(value.length, length - 1);
-          const isFilled = idx < value.length;
+            let borderStyle = styles.inactiveBox;
+            if (hasError) borderStyle = styles.errorBox;
+            else if (isCurrentFocus || isFilled) borderStyle = styles.activeBox;
 
-          let borderStyle = styles.inactiveBox;
-          if (hasError) borderStyle = styles.errorBox;
-          else if (isCurrentFocus || isFilled) borderStyle = styles.activeBox;
+            return (
+              <View
+                key={idx}
+                style={[styles.otpBox, borderStyle]}
+                pointerEvents="none"
+                accessible={false}
+                importantForAccessibility="no"
+              >
+                <Typography style={styles.otpText}>{char}</Typography>
+              </View>
+            );
+          })}
+        </Pressable>
 
-          return (
-            <View
-              key={idx}
-              style={[styles.otpBox, borderStyle]}
-              accessible={false}
-              importantForAccessibility="no"
-            >
-              <Typography style={styles.otpText}>{char}</Typography>
-            </View>
-          );
-        })}
-      </Pressable>
+        <RNTextInput
+          ref={inputRef}
+          value={value}
+          onChangeText={handleChange}
+          keyboardType="number-pad"
+          maxLength={length}
+          style={styles.hiddenInput}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          textContentType="oneTimeCode"
+          autoComplete={Platform.OS === 'android' ? 'sms-otp' : 'one-time-code'}
+          importantForAutofill="yes"
+          caretHidden
+          autoFocus={autoFocus}
+          accessibilityLabel={accessibilityLabel}
+          accessibilityHint={
+            hasError && errorMessage ? `Error: ${errorMessage}` : 'Required verification code'
+          }
+          accessibilityState={{ disabled: false }}
+        />
+      </View>
 
       {hasError && errorMessage ? (
         <Typography
@@ -107,6 +114,10 @@ export function OtpCodeInput({
         >
           {errorMessage}
         </Typography>
+      ) : null}
+
+      {!hasError && expiredHintMessage ? (
+        <Typography style={styles.expiredHint}>{expiredHintMessage}</Typography>
       ) : null}
     </View>
   );
@@ -121,10 +132,14 @@ const styles = StyleSheet.create({
     marginTop: 32,
     marginBottom: 8,
   },
+  otpWrapper: {
+    position: 'relative',
+    width: '100%',
+  },
   hiddenInput: {
-    position: 'absolute',
-    width: 1,
-    height: 1,
+    ...StyleSheet.absoluteFillObject,
+    color: 'transparent',
+    fontSize: 1,
     opacity: 0,
   },
   otpGrid: {
@@ -162,6 +177,12 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: '#EF4444',
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
+    marginTop: 8,
+  },
+  expiredHint: {
+    color: '#B45309',
     fontFamily: 'Inter_400Regular',
     fontSize: 13,
     marginTop: 8,

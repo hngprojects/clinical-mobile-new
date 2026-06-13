@@ -9,6 +9,7 @@ import {
   useAuthStore,
   useGuestUploadSession,
 } from '@/features/auth';
+import { useSyncGuestSessionFromParams } from '@/features/auth/hooks/useSyncGuestSessionFromParams';
 import { useLogin } from '@/features/auth/hooks/useLogin';
 import { Screen, Toast, Typography, UploadBottomSheet } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
@@ -29,8 +30,15 @@ function getLoginErrorMessage(error: { message?: string; status?: number } | nul
 
 export default function LoginScreen() {
   const { spacing, colors } = useTheme();
-  const { caseId } = useLocalSearchParams<{ caseId?: string }>();
-  const loginMutation = useLogin({ caseId });
+  const { caseId, guestSessionId } = useLocalSearchParams<{
+    caseId?: string;
+    guestSessionId?: string;
+  }>();
+  const paramGuestSessionId = typeof guestSessionId === 'string' ? guestSessionId : undefined;
+  useSyncGuestSessionFromParams(paramGuestSessionId);
+  const storedGuestSessionId = useAuthStore((state) => state.guestSessionId);
+  const guestSessionIdForNav = paramGuestSessionId ?? storedGuestSessionId ?? undefined;
+  const loginMutation = useLogin({ caseId, guestSessionId: paramGuestSessionId });
   const { handleUpload, handleUploadError } = useGuestUploadSession();
   const setSession = useAuthStore((state) => state.setSession);
   const [showUploadSheet, setShowUploadSheet] = useState(false);
@@ -125,7 +133,17 @@ export default function LoginScreen() {
           >
             Don&apos;t have an account?{' '}
           </Typography>
-          <Pressable onPress={() => router.push('/(auth)/register')}>
+          <Pressable
+            onPress={() =>
+              router.push({
+                pathname: '/(auth)/register',
+                params: {
+                  ...(caseId ? { caseId } : {}),
+                  ...(guestSessionIdForNav ? { guestSessionId: guestSessionIdForNav } : {}),
+                },
+              })
+            }
+          >
             <Typography
               style={{
                 color: colors.primary,
