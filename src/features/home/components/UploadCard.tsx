@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
+import { MIN_TOUCH_TARGET } from '@/shared/accessibility';
 import { Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
@@ -27,7 +28,7 @@ export function UploadCard({ onUpload }: UploadCardProps) {
       ]}
     >
       <View style={styles.textGroup}>
-        <Typography variant="h2" align="center">
+        <Typography variant="h2" align="center" accessibilityRole="header">
           Upload your result
         </Typography>
         <Typography variant="body2" color={colors.textSecondary} align="center">
@@ -38,9 +39,15 @@ export function UploadCard({ onUpload }: UploadCardProps) {
       <TouchableOpacity
         onPress={onUpload}
         activeOpacity={0.8}
-        style={[styles.uploadButton, { backgroundColor: colors.primary, marginTop: 24 }]}
+        style={[
+          styles.uploadButton,
+          { backgroundColor: colors.primary, marginTop: 24, minHeight: MIN_TOUCH_TARGET },
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel="Upload lab result"
+        accessibilityHint="Opens options to upload a lab report image or PDF"
       >
-        <Ionicons name="arrow-up-circle-outline" size={20} color="#FFFFFF" />
+        <Ionicons name="arrow-up-circle-outline" size={20} color="#FFFFFF" accessible={false} />
         <Typography variant="body1" color="#FFFFFF" style={styles.buttonLabel}>
           Upload Result
         </Typography>

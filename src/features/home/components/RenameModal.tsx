@@ -39,8 +39,11 @@ export function RenameModal({ visible, currentTitle, onCancel, onConfirm }: Rena
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={styles.overlay}>
-          <View style={[styles.card, { backgroundColor: colors.surface, padding: spacing.lg }]}>
-            <Typography variant="h2" style={styles.title}>
+          <View
+            style={[styles.card, { backgroundColor: colors.surface, padding: spacing.lg }]}
+            accessibilityViewIsModal
+          >
+            <Typography variant="h2" style={styles.title} accessibilityRole="header">
               Rename Insight
             </Typography>
 

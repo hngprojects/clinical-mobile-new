@@ -21,6 +21,7 @@ export function ProfileMenuSection({ title, titleColor, children }: ProfileMenuS
         variant="label"
         color={titleColor ?? PROFILE_SECTION_LABEL}
         style={styles.sectionLabel}
+        accessibilityRole="header"
       >
         {title.toUpperCase()}
       </Typography>
