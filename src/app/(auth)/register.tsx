@@ -9,6 +9,7 @@ import {
   useAuthStore,
   useGuestUploadSession,
 } from '@/features/auth';
+import { useSyncGuestSessionFromParams } from '@/features/auth/hooks/useSyncGuestSessionFromParams';
 import { useRegister } from '@/features/auth/hooks/useRegister';
 import { Screen, Toast, Typography, UploadBottomSheet } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
@@ -34,8 +35,15 @@ function getRegisterErrorMessage(error: { message?: string; status?: number } | 
 
 export default function RegisterScreen() {
   const { spacing, colors } = useTheme();
-  const { caseId } = useLocalSearchParams<{ caseId?: string }>();
-  const registerMutation = useRegister({ caseId });
+  const { caseId, guestSessionId } = useLocalSearchParams<{
+    caseId?: string;
+    guestSessionId?: string;
+  }>();
+  const paramGuestSessionId = typeof guestSessionId === 'string' ? guestSessionId : undefined;
+  useSyncGuestSessionFromParams(paramGuestSessionId);
+  const storedGuestSessionId = useAuthStore((state) => state.guestSessionId);
+  const guestSessionIdForNav = paramGuestSessionId ?? storedGuestSessionId ?? undefined;
+  const registerMutation = useRegister({ caseId, guestSessionId: paramGuestSessionId });
   const { handleUpload, handleUploadError } = useGuestUploadSession();
   const setSession = useAuthStore((state) => state.setSession);
   const [showUploadSheet, setShowUploadSheet] = useState(false);
@@ -106,7 +114,17 @@ export default function RegisterScreen() {
 
         <View style={styles.footer}>
           <Typography style={styles.footerText}>Already have an account? </Typography>
-          <Pressable onPress={() => router.push('/(auth)/login')}>
+          <Pressable
+            onPress={() =>
+              router.push({
+                pathname: '/(auth)/login',
+                params: {
+                  ...(caseId ? { caseId } : {}),
+                  ...(guestSessionIdForNav ? { guestSessionId: guestSessionIdForNav } : {}),
+                },
+              })
+            }
+          >
             <Typography style={[styles.footerText, { color: colors.primary }, styles.footerLink]}>
               Login
             </Typography>

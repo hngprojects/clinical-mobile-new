@@ -12,6 +12,7 @@ import {
 
 import { useResendOtp } from '@/features/auth/hooks/useResendOtp';
 import { useResetPassword } from '@/features/auth/hooks/useResetPassword';
+import { useSyncGuestSessionFromParams } from '@/features/auth/hooks/useSyncGuestSessionFromParams';
 import { useVerifyOtp } from '@/features/auth/hooks/useVerifyOtp';
 import { useVerifyResetOtp } from '@/features/auth/hooks/useVerifyResetOtp';
 import { useAuthStore } from '@/features/auth/store/auth.store';
@@ -50,18 +51,32 @@ function formatTimer(seconds: number) {
   return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
 }
 
+function getOtpErrorMessage(message: string, status?: number): string {
+  const lower = message.toLowerCase();
+  if (
+    lower.includes('expired') ||
+    lower.includes('expire') ||
+    (status === 400 && lower.includes('invalid') && lower.includes('code'))
+  ) {
+    return message || 'Your code has expired. Please request a new one.';
+  }
+  return message || 'The code you entered is incorrect. Check again.';
+}
+
 export function VerifyOtp({
   email,
   expiresInSeconds,
   type = 'signup',
   caseId,
+  guestSessionId: guestSessionIdParam,
 }: {
   email?: string;
   expiresInSeconds?: number;
   type?: 'signup' | 'reset-password';
   caseId?: string;
+  guestSessionId?: string;
 }) {
-  const guestSessionId = useAuthStore((state) => state.guestSessionId);
+  useSyncGuestSessionFromParams(guestSessionIdParam);
   const verifyOtpMutation = useVerifyOtp();
   const { reset: resetVerifyOtp } = verifyOtpMutation;
   const verifyResetOtpMutation = useVerifyResetOtp();
@@ -114,7 +129,7 @@ export function VerifyOtp({
       const rawMsg = activeErr?.message || '';
 
       if (errStatus === 400 || errStatus === 401) {
-        setOtpErrorMessage(rawMsg || 'The code you entered is incorrect. Check again.');
+        setOtpErrorMessage(getOtpErrorMessage(rawMsg, errStatus));
         setHasOtpError(true);
         setHasNetworkError(false);
       } else {
@@ -196,6 +211,7 @@ export function VerifyOtp({
       verifyResetOtpMutation.mutate({ email: email || '', code });
       return;
     }
+    const guestSessionId = useAuthStore.getState().guestSessionId;
     verifyOtpMutation.mutate({
       email: email || '',
       code,
@@ -304,9 +320,13 @@ export function VerifyOtp({
         onChangeText={handleTextChange}
         hasError={hasOtpError}
         errorMessage={otpErrorMessage}
+        expiredHintMessage={
+          isExpired && !hasOtpError
+            ? 'This code has expired. Resend a new code to continue.'
+            : undefined
+        }
         label="Verification code"
       />
-
       <Pressable
         disabled={!isCodeComplete || isLoading || isExpired}
         onPress={handleVerify}
@@ -355,6 +375,7 @@ export function VerifyOtp({
           </Typography>
         ) : (
           <View style={styles.resendRow}>
+            <Typography style={[styles.timerText, styles.expiredLabel]}>Code expired. </Typography>
             <Typography style={styles.timerText}>Didn&apos;t receive code? </Typography>
             <Pressable
               onPress={handleResend}
@@ -458,6 +479,10 @@ const styles = StyleSheet.create({
   boldTimer: {
     fontFamily: 'Inter_700Bold',
     color: '#1B1B1B',
+  },
+  expiredLabel: {
+    color: '#B45309',
+    fontFamily: 'Inter_600SemiBold',
   },
   resendRow: {
     flexDirection: 'row',

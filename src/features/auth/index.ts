@@ -28,6 +28,7 @@ export { useAuthSession } from './hooks/useAuthSession';
 export { useChangePassword } from './hooks/useChangePassword';
 export { useCompletePasswordReset } from './hooks/useCompletePasswordReset';
 export { useGoogleAuth } from './hooks/useGoogleAuth';
+export { useSyncGuestSessionFromParams } from './hooks/useSyncGuestSessionFromParams';
 export { useGuestUploadSession } from './hooks/useGuestUploadSession';
 export { useLogin } from './hooks/useLogin';
 export { useRegister } from './hooks/useRegister';

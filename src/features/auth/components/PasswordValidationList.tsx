@@ -46,12 +46,16 @@ export function PasswordValidationList({
   const compactRules = [
     { label: 'Password must have 8 characters', isValid: checks.has8Chars },
     { label: 'Password must have one uppercase letter', isValid: checks.hasUpper },
+    { label: 'Password must have one lowercase letter', isValid: checks.hasLower },
+    { label: 'Password must have one number', isValid: checks.hasNumber },
     { label: 'Password must have one special character', isValid: checks.hasSpecial },
   ];
 
   const fullRules = [
     { label: 'Password must have at least 8 characters', isValid: checks.has8Chars },
     { label: 'Password must have at least one uppercase letter', isValid: checks.hasUpper },
+    { label: 'Password must have at least one lowercase letter', isValid: checks.hasLower },
+    { label: 'Password must have at least one number', isValid: checks.hasNumber },
     { label: 'Password must have at least one special character', isValid: checks.hasSpecial },
   ];
 
