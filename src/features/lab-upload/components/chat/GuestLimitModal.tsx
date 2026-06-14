@@ -129,7 +129,7 @@ export function GuestLimitModal({
       onDismiss();
       router.push({
         pathname: '/(auth)/login',
-        params: { caseId },
+        params: { caseId, guestSessionId },
       });
     });
   };

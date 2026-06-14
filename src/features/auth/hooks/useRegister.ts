@@ -4,7 +4,10 @@ import { useApiMutation } from '@/shared/api/hooks';
 
 import { authApi } from '../api/auth.api';
 
-export function useRegister({ caseId }: { caseId?: string } = {}) {
+export function useRegister({
+  caseId,
+  guestSessionId,
+}: { caseId?: string; guestSessionId?: string } = {}) {
   return useApiMutation(authApi.register, {
     onSuccess: (data) => {
       router.push({
@@ -13,6 +16,7 @@ export function useRegister({ caseId }: { caseId?: string } = {}) {
           email: data.email,
           expiresInSeconds: data.expiresInSeconds.toString(),
           ...(caseId ? { caseId } : {}),
+          ...(guestSessionId ? { guestSessionId } : {}),
         },
       });
     },
