@@ -1,0 +1,155 @@
+import { Ionicons } from '@expo/vector-icons';
+import { Redirect, Tabs, useGlobalSearchParams, usePathname } from 'expo-router';
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
+
+import { useAuthSession } from '@/features/auth/hooks/useAuthSession';
+import { HomeIcon } from '@/shared/components/icons/HomeIcon';
+import { InsightsIcon } from '@/shared/components/icons/InsightsIcon';
+import { useTheme } from '@/shared/theme';
+
+function ProfileTabIcon({ color, focused }: { color: string; focused: boolean }) {
+  const { colors } = useTheme();
+  return (
+    <View
+      style={[
+        styles.avatarTab,
+        {
+          backgroundColor: focused ? colors.primary : colors.cardBackground,
+          borderWidth: focused ? 2 : 0,
+          borderColor: colors.primary,
+        },
+      ]}
+    >
+      <Ionicons name="person" size={14} color={focused ? '#FFFFFF' : color} />
+    </View>
+  );
+}
+
+export default function MainLayout() {
+  const { colors } = useTheme();
+  const { isLoggedIn, isGuest } = useAuthSession();
+  const pathname = usePathname();
+  const { guestSessionId } = useGlobalSearchParams<{ guestSessionId?: string }>();
+
+  const isGuestFlowRoute =
+    pathname.endsWith('/preview-upload') ||
+    pathname.endsWith('/ai-review') ||
+    pathname.endsWith('/chat-review');
+  const hasGuestFlowSession = isGuestFlowRoute && typeof guestSessionId === 'string';
+
+  if (!isLoggedIn && !isGuest && !hasGuestFlowSession) {
+    return <Redirect href="/(auth)/login" />;
+  }
+
+  if ((isGuest || hasGuestFlowSession) && !isGuestFlowRoute) {
+    return <Redirect href="/(auth)/register" />;
+  }
+
+  return (
+    <Tabs
+      screenOptions={{
+        tabBarStyle: {
+          backgroundColor: colors.tabBar,
+          borderTopColor: colors.border,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          height: 80,
+          paddingBottom: 20,
+          paddingTop: 8,
+        },
+        tabBarActiveTintColor: colors.tabBarActive,
+        tabBarInactiveTintColor: colors.tabBarInactive,
+        tabBarLabelStyle: { fontSize: 12, fontWeight: '500' },
+        headerShown: false,
+      }}
+    >
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ color }) => <HomeIcon color={color} size={22} />,
+        }}
+      />
+      <Tabs.Screen
+        name="insights"
+        options={{
+          title: 'Insights',
+          tabBarIcon: ({ color }) => <InsightsIcon color={color} size={22} />,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color, focused }) => <ProfileTabIcon color={color} focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
+        name="edit-profile"
+        options={{
+          href: null,
+          headerShown: false,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
+      <Tabs.Screen
+        name="change-password"
+        options={{
+          href: null,
+          headerShown: false,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
+      <Tabs.Screen
+        name="notifications"
+        options={{
+          href: null,
+          headerShown: false,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
+      <Tabs.Screen
+        name="notification-inbox"
+        options={{
+          href: null,
+          headerShown: false,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
+      <Tabs.Screen
+        name="preview-upload"
+        options={{
+          href: null,
+          headerShown: false,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
+      <Tabs.Screen
+        name="ai-review"
+        options={{
+          href: null,
+          headerShown: false,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
+      <Tabs.Screen
+        name="chat-review"
+        options={{
+          href: null,
+          headerShown: false,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
+    </Tabs>
+  );
+}
+
+const styles = StyleSheet.create({
+  avatarTab: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});

@@ -1,0 +1,196 @@
+name: CD
+
+on:
+  push:
+    branches: [dev, staging, main]
+
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  eas-update:
+    name: Publish EAS Update (OTA)
+    runs-on: ubuntu-latest
+    if: github.ref_name == 'dev'
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      API_BASE_URL: ${{ vars.API_BASE_URL_STAGING }}
+      APP_ENV: development
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Create .env file
+        run: |
+          echo "EXPO_PUBLIC_API_BASE_URL=${{ env.API_BASE_URL }}" >> .env
+          echo "EXPO_PUBLIC_APP_ENV=${{ env.APP_ENV }}" >> .env
+
+      - name: Publish EAS Update
+        id: eas-update
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          SAFE_MESSAGE="$(printf '%s' "$COMMIT_MESSAGE" | tr '\n' ' ')"
+          UPDATE_OUTPUT=$(npx eas-cli update \
+            --channel development \
+            --message "[dev] $SAFE_MESSAGE" \
+            --non-interactive \
+            --json)
+
+          UPDATE_GROUP_ID=$(echo "$UPDATE_OUTPUT" | python3 -c "
+          import sys, json
+          try:
+            data = json.load(sys.stdin)
+            items = data if isinstance(data, list) else [data]
+            print(items[0].get('group', ''))
+          except Exception:
+            print('')
+          ")
+
+          if [ -z "$UPDATE_GROUP_ID" ]; then
+            echo 'EAS update publish failed: missing update group id' >&2
+            exit 1
+          fi
+
+          echo "updateGroupId=$UPDATE_GROUP_ID" >> $GITHUB_OUTPUT
+
+      - name: Write EAS Update summary
+        run: |
+          GROUP_ID="${{ steps.eas-update.outputs.updateGroupId }}"
+          echo "## ⚡ EAS Update Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| | |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Channel | \`development\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          if [ -n "$GROUP_ID" ]; then
+            echo "| Update Group | \`$GROUP_ID\` |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  deploy:
+    name: Build and Deploy Android APK
+    runs-on: ubuntu-latest
+    env:
+      APPETIZE_API_TOKEN: ${{ secrets.APPETIZE_API_TOKEN }}
+      API_BASE_URL: ${{ github.ref_name == 'main' && vars.API_BASE_URL_PROD || vars.API_BASE_URL_STAGING }}
+      APP_ENV: ${{ github.ref_name == 'main' && 'production' || github.ref_name == 'staging' && 'staging' || 'development' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache Gradle
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Create .env file
+        run: |
+          echo "EXPO_PUBLIC_API_BASE_URL=${{ env.API_BASE_URL }}" >> .env
+          echo "EXPO_PUBLIC_APP_ENV=${{ env.APP_ENV }}" >> .env
+
+      - name: Expo Prebuild
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Set Android versionCode
+        run: |
+          VERSION_CODE=${{ github.run_number }}
+          sed -i "s/versionCode [0-9]\+/versionCode $VERSION_CODE/" android/app/build.gradle
+
+      - name: Cache Android Gradle
+        uses: actions/cache@v5
+        with:
+          path: android/.gradle
+          key: android-gradle-${{ runner.os }}-${{ hashFiles('android/**/*.gradle*') }}
+          restore-keys: |
+            android-gradle-${{ runner.os }}-
+
+      - name: Bundle JS and build APK
+        run: |
+          npx expo export --platform android --output-dir android/app/src/main/assets
+          cd android && ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK artifact
+        id: artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-${{ github.ref_name }}-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 7
+
+      - name: Upload to Appetize
+        id: appetize
+        if: ${{ env.APPETIZE_API_TOKEN != '' }}
+        uses: appetizeio/github-action-appetize@v1.0.5
+        with:
+          apiToken: ${{ secrets.APPETIZE_API_TOKEN }}
+          appFile: android/app/build/outputs/apk/debug/app-debug.apk
+          platform: android
+
+      - name: Generate Appetize Links
+        id: appetize-links
+        if: steps.appetize.outputs.publicKey != ''
+        run: |
+          PUBLIC_KEY="${{ steps.appetize.outputs.publicKey }}"
+          echo "publicKey=$PUBLIC_KEY" >> $GITHUB_OUTPUT
+          echo "embedUrl=https://appetize.io/embed/$PUBLIC_KEY" >> $GITHUB_OUTPUT
+          echo "appUrl=https://appetize.io/app/$PUBLIC_KEY" >> $GITHUB_OUTPUT
+          echo "manageUrl=https://appetize.io/app/$PUBLIC_KEY/manage" >> $GITHUB_OUTPUT
+
+      - name: Write job summary
+        run: |
+          echo "## 📱 CD Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| | |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Branch | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Artifact | [Download APK](${{ steps.artifact.outputs.artifact-url }}) |" >> $GITHUB_STEP_SUMMARY
+          if [ -n "${{ steps.appetize.outputs.publicKey }}" ]; then
+            echo "| 🔗 Appetize | [Open in Appetize](${{ steps.appetize-links.outputs.appUrl }}) |" >> $GITHUB_STEP_SUMMARY
+            echo "| 🖼️ Embed | [Embed View](${{ steps.appetize-links.outputs.embedUrl }}) |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| ⚠️ Appetize | Upload failed or \`APPETIZE_API_TOKEN\` not set |" >> $GITHUB_STEP_SUMMARY
+          fi
