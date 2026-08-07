@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 
+import { Button } from '@/shared/components';
 import { brand } from '@/shared/theme/brand';
 
 import { OnboardingSlideData } from '../data/slides';
@@ -87,19 +88,15 @@ export function OnboardingPager({
       <View style={styles.footer}>
         <OnboardingDots total={slides.length} current={currentSlide} accentColor={brand.accent} />
 
-        <Pressable
-          onPress={onGetStarted}
-          style={({ pressed }) => [styles.primaryBtn, pressed && { opacity: 0.85 }]}
-        >
-          <Text style={styles.primaryBtnText}>Get started</Text>
-        </Pressable>
+        <Button label="Get started" onPress={onGetStarted} style={styles.primaryBtn} />
 
-        <Pressable
+        <Button
+          label="Continue as guest"
+          variant="outline"
           onPress={onContinueAsGuest}
-          style={({ pressed }) => [styles.guestBtn, pressed && { opacity: 0.75 }]}
-        >
-          <Text style={styles.guestBtnText}>Continue as guest</Text>
-        </Pressable>
+          style={styles.guestBtn}
+          textColor="#5E5E5E"
+        />
 
         <Pressable onPress={onLogin} hitSlop={8} style={styles.loginContainer}>
           <Text style={styles.loginText}>Already have an account?</Text>
@@ -121,33 +118,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   primaryBtn: {
-    width: 343,
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    backgroundColor: brand.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: '100%',
     marginTop: 8, // (20px total: footer gap 12 + margin 8 = 20)
   },
-  primaryBtnText: {
-    ...BTN_FONT,
-    color: '#FFFFFF',
-  },
   guestBtn: {
-    width: 343,
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderWidth: 1,
-    borderColor: '#D0D0D0',
-    backgroundColor: 'transparent',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  guestBtnText: {
-    ...BTN_FONT,
-    color: '#5E5E5E',
+    width: '100%',
   },
   loginContainer: {
     flexDirection: 'row',

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 
 import { InsightItemCard } from '@/features/insights/components/InsightItemCard';
 import type { InsightCardModel } from '@/features/insights/api/types';
@@ -32,32 +32,47 @@ export function RecentInsightsSection({
         <Typography variant="h3" accessibilityRole="header">
           Recent Insights
         </Typography>
-        <Pressable
-          onPress={onViewAll}
-          hitSlop={expandHitSlop(24)}
-          style={minTouchTargetStyle}
-          accessibilityRole="button"
-          accessibilityLabel="View all insights"
-        >
-          <Typography variant="body2" color={colors.primary} style={styles.viewAll}>
-            View All
-          </Typography>
-        </Pressable>
+        {insights.length > 0 && (
+          <Pressable
+            onPress={onViewAll}
+            hitSlop={expandHitSlop(24)}
+            style={minTouchTargetStyle}
+            accessibilityRole="button"
+            accessibilityLabel="View all insights"
+          >
+            <Typography variant="body2" color={colors.primary} style={styles.viewAll}>
+              View All
+            </Typography>
+          </Pressable>
+        )}
       </View>
 
       <View style={{ gap: spacing.md }}>
-        {insights.map((insight) => (
-          <View key={insight.id} style={{ marginHorizontal: spacing.md }}>
-            <InsightItemCard
-              insight={insight}
-              onPress={() => onView?.(insight.id)}
-              onRename={onRename}
-              onView={onView}
-              onDelete={onDelete}
-              onExportPdf={onExportPdf}
+        {insights.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Image
+              source={require('../../../../assets/images/Folder.png')}
+              style={styles.illustration}
+              resizeMode="contain"
             />
+            <Typography variant="body1" color={colors.textSecondary} align="center">
+              No recent insights yet
+            </Typography>
           </View>
-        ))}
+        ) : (
+          insights.map((insight) => (
+            <View key={insight.id} style={{ marginHorizontal: spacing.md }}>
+              <InsightItemCard
+                insight={insight}
+                onPress={() => onView?.(insight.id)}
+                onRename={onRename}
+                onView={onView}
+                onDelete={onDelete}
+                onExportPdf={onExportPdf}
+              />
+            </View>
+          ))
+        )}
       </View>
     </View>
   );
@@ -72,5 +87,15 @@ const styles = StyleSheet.create({
   },
   viewAll: {
     textDecorationLine: 'underline',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 32,
+    gap: 12,
+  },
+  illustration: {
+    width: 140,
+    height: 140,
   },
 });

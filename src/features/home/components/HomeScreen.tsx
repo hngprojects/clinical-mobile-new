@@ -16,6 +16,7 @@ import { Toast, UploadBottomSheet, UploadedFile, UploadError } from '@/shared/co
 import { useNotificationStream } from '@/shared/hooks/useNotificationStream';
 import { useTheme } from '@/shared/theme';
 
+import { useAuthStore } from '@/features/auth/store/auth.store';
 import { useHome } from '../hooks/useHome';
 import { HomeHeader } from './HomeHeader';
 import { RecentInsightsSection } from './RecentInsightsSection';
@@ -24,6 +25,7 @@ import { UploadCard } from './UploadCard';
 export function HomeScreen() {
   const { colors, spacing } = useTheme();
   const { user, isGuest } = useHome();
+  const guestSessionId = useAuthStore((s) => s.guestSessionId);
   const router = useRouter();
   const { insightItems, deleteCase, renameCase } = useInsightCases(0, 3);
   const [showUploadSheet, setShowUploadSheet] = useState(false);
@@ -33,6 +35,7 @@ export function HomeScreen() {
   const queryClient = useQueryClient();
 
   useNotificationStream({
+    guestSessionId,
     onEvent: (event) => {
       queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_KEY });
       queryClient.invalidateQueries({ queryKey: UNREAD_COUNT_KEY });

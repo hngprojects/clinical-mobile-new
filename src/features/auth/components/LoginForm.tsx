@@ -120,9 +120,9 @@ export function LoginForm({
         />
 
         <View style={styles.separatorContainer}>
-          <View style={[styles.line, { backgroundColor: '#F0F0F0' }]} />
+          <View style={[styles.line, { backgroundColor: '#E2E8F0' }]} />
           <Typography style={styles.separatorText}>or</Typography>
-          <View style={[styles.line, { backgroundColor: '#F0F0F0' }]} />
+          <View style={[styles.line, { backgroundColor: '#E2E8F0' }]} />
         </View>
 
         <View style={{ gap: 16 }}>
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   separatorText: {
-    color: '#767676',
+    color: '#94A3B8',
     fontFamily: 'Inter_500Medium',
     fontSize: 14,
     letterSpacing: -0.14,

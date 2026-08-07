@@ -97,12 +97,15 @@ export default function RegisterScreen() {
         style={{ backgroundColor: '#FFFFFF' }}
         keyboardAvoiding
       >
-        <View style={{ marginTop: spacing.xxl, marginBottom: spacing.xl }}>
-          <Typography variant="h1" style={{ fontWeight: '700' }}>
+        <View style={{ marginTop: spacing.lg, marginBottom: spacing.xl }}>
+          <Typography variant="h1" style={{ fontWeight: '700', letterSpacing: -0.6 }}>
             Create Account
           </Typography>
-          <Typography variant="body1" style={{ color: colors.textSecondary, marginTop: 4 }}>
-            Insert your details to create your account in minutes
+          <Typography
+            variant="body1"
+            style={{ color: '#475569', marginTop: 4, letterSpacing: -0.15, lineHeight: 22 }}
+          >
+            Create your account to get started in minutes
           </Typography>
         </View>
 
@@ -125,15 +128,13 @@ export default function RegisterScreen() {
               })
             }
           >
-            <Typography style={[styles.footerText, { color: colors.primary }, styles.footerLink]}>
-              Login
-            </Typography>
+            <Typography style={[{ color: colors.primary }, styles.footerLink]}>Login</Typography>
           </Pressable>
         </View>
 
         <View style={styles.legalContainer}>
           <Text style={styles.legalText}>
-            By continuing, you have read and agreed to ClinSight&apos;s{' '}
+            By continuing, you have read and agreed to Clinsight&apos;s{' '}
             <Text
               style={styles.legalLink}
               onPress={() => router.push('/(legal)/terms-and-condition')}
@@ -172,14 +173,17 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
   footerText: {
-    color: '#767676',
+    color: '#475569',
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
     letterSpacing: -0.14,
     lineHeight: 21,
   },
   footerLink: {
-    textDecorationLine: 'underline',
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 14,
+    letterSpacing: -0.14,
+    lineHeight: 21,
   },
   legalContainer: {
     marginBottom: 24,

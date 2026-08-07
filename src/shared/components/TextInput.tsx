@@ -88,17 +88,6 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
               setIsFocused(false);
               onBlur?.(e);
             }}
-            style={[
-              styles.input,
-              {
-                flex: 1,
-                color: colors.text,
-                paddingHorizontal: 20,
-                paddingRight: rightIcon ? 48 : 20,
-                textAlignVertical: 'center',
-              },
-              style,
-            ]}
             placeholderTextColor={colors.placeholder}
             autoCapitalize="none"
             autoCorrect={false}
@@ -107,6 +96,20 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
             accessibilityHint={resolvedAccessibilityHint}
             accessibilityState={{ disabled: props.editable === false }}
             {...props}
+            style={[
+              styles.input,
+              {
+                flex: 1,
+                color: colors.text,
+                paddingHorizontal: 20,
+                paddingRight: rightIcon ? 48 : 20,
+                textAlignVertical: 'center',
+                includeFontPadding: false,
+                fontFamily: 'Inter_400Regular',
+                fontSize: 14,
+              },
+              style,
+            ]}
           />
           {rightIcon && (
             <View style={styles.rightIcon} accessible={false} importantForAccessibility="no">
@@ -141,13 +144,11 @@ const styles = StyleSheet.create({
   },
   label: { marginBottom: 2 },
   input: {
-    height: '100%',
     textAlignVertical: 'center',
-    paddingTop: 0,
-    paddingBottom: 0,
+    paddingTop: 14,
+    paddingBottom: 14,
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
-    lineHeight: 21,
   },
   rightIcon: {
     position: 'absolute',
