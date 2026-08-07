@@ -100,11 +100,14 @@ export default function LoginScreen() {
         keyboardAvoiding
       >
         <View style={{ marginTop: spacing.lg, marginBottom: spacing.xl }}>
-          <Typography variant="h1" style={{ fontWeight: '700' }}>
+          <Typography variant="h1" style={{ fontWeight: '700', letterSpacing: -0.6 }}>
             Welcome Back
           </Typography>
-          <Typography variant="body1" style={{ color: colors.textSecondary, marginTop: 4 }}>
-            Insert your details to login to Clinsight
+          <Typography
+            variant="body1"
+            style={{ color: '#475569', marginTop: 4, letterSpacing: -0.15, lineHeight: 22 }}
+          >
+            Sign in to access your health insights
           </Typography>
         </View>
 
@@ -134,6 +137,9 @@ export default function LoginScreen() {
             Don&apos;t have an account?{' '}
           </Typography>
           <Pressable
+            accessibilityRole="link"
+            accessibilityLabel="Sign Up"
+            style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
             onPress={() =>
               router.push({
                 pathname: '/(auth)/register',
@@ -147,11 +153,10 @@ export default function LoginScreen() {
             <Typography
               style={{
                 color: colors.primary,
-                fontFamily: 'Inter_400Regular',
+                fontFamily: 'Inter_600SemiBold',
                 fontSize: 14,
                 lineHeight: 21,
                 letterSpacing: -0.14,
-                textDecorationLine: 'underline',
               }}
             >
               Sign Up

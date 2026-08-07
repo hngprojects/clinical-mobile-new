@@ -29,7 +29,7 @@ function ValidationItem({ label, isValid }: { label: string; isValid: boolean })
         accessible={false}
       />
       <Typography style={[styles.validationText, isValid && styles.validationTextValid]}>
-        {isValid ? `${label} — met` : label}
+        {label}
       </Typography>
     </View>
   );
@@ -43,25 +43,32 @@ export function PasswordValidationList({
 
   const checks = getPasswordPolicyChecks(password);
 
-  const compactRules = [
-    { label: 'Password must have 8 characters', isValid: checks.has8Chars },
-    { label: 'Password must have one uppercase letter', isValid: checks.hasUpper },
-    { label: 'Password must have one lowercase letter', isValid: checks.hasLower },
-    { label: 'Password must have one number', isValid: checks.hasNumber },
-    { label: 'Password must have one special character', isValid: checks.hasSpecial },
+  const rules = [
+    { label: 'At least 8 characters', isValid: checks.has8Chars },
+    { label: 'At least one uppercase letter', isValid: checks.hasUpper },
+    { label: 'At least one lowercase letter', isValid: checks.hasLower },
+    { label: 'At least one number', isValid: checks.hasNumber },
+    { label: 'At least one special character', isValid: checks.hasSpecial },
   ];
 
-  const fullRules = [
-    { label: 'Password must have at least 8 characters', isValid: checks.has8Chars },
-    { label: 'Password must have at least one uppercase letter', isValid: checks.hasUpper },
-    { label: 'Password must have at least one lowercase letter', isValid: checks.hasLower },
-    { label: 'Password must have at least one number', isValid: checks.hasNumber },
-    { label: 'Password must have at least one special character', isValid: checks.hasSpecial },
-  ];
+  if (variant === 'compact') {
+    const unmetRules = rules.filter((rule) => !rule.isValid);
+    if (unmetRules.length === 0) return null;
+    return (
+      <View
+        style={styles.validationList}
+        accessibilityRole="alert"
+        accessibilityLiveRegion="polite"
+        accessibilityLabel={`Password requirements, ${unmetRules.length} not met`}
+      >
+        {unmetRules.map((rule) => (
+          <ValidationItem key={rule.label} label={rule.label} isValid={rule.isValid} />
+        ))}
+      </View>
+    );
+  }
 
-  const rules = variant === 'compact' ? compactRules : fullRules;
   const allMet = rules.every((rule) => rule.isValid);
-
   if (allMet) return null;
 
   const unmetCount = rules.filter((rule) => !rule.isValid).length;

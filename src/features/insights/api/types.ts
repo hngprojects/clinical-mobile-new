@@ -5,6 +5,7 @@ export interface InsightCardModel {
   id: string;
   title: string;
   timestamp: string;
+  caseId?: string;
 }
 
 export interface InsightItemCardProps {

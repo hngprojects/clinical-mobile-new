@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-const DEFAULT_BASE_URL = 'https://api.staging.clinsight.hng14.com';
+const DEFAULT_BASE_URL = 'https://api.staging.useclinsight.com';
 const TERMINAL_STATUSES = new Set(['complete', 'failed']);
 
 function readDotEnv() {

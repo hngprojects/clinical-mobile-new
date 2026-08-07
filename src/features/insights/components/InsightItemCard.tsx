@@ -11,7 +11,12 @@ import {
 
 import { DeleteModal } from '@/features/home/components/DeleteModal';
 import { RenameModal } from '@/features/home/components/RenameModal';
-import { expandHitSlop, MIN_TOUCH_TARGET, minTouchTargetStyle } from '@/shared/accessibility';
+import {
+  a11yRoles,
+  expandHitSlop,
+  MIN_TOUCH_TARGET,
+  minTouchTargetStyle,
+} from '@/shared/accessibility';
 import { Typography } from '@/shared/components';
 import { ChevronRightIcon } from '@/shared/components/icons/ChevronRightIcon';
 import { DeleteIcon } from '@/shared/components/icons/DeleteIcon';
@@ -24,6 +29,10 @@ const MENU_GAP = 4;
 const MENU_ITEM_HEIGHT = 52;
 const MENU_MARGIN = 16;
 const MENU_WIDTH = 180;
+
+function getInsightAccessibilityLabel(title: string, timestamp: string) {
+  return `Lab insight: ${title}. Created ${timestamp}.`;
+}
 
 export function InsightItemCard({
   insight,
@@ -96,37 +105,50 @@ export function InsightItemCard({
 
   return (
     <>
-      <Pressable
-        accessibilityRole={onPress ? 'button' : undefined}
-        accessibilityLabel={onPress ? `Open ${insight.title}` : undefined}
-        onPress={onPress}
-        disabled={!onPress}
-        style={({ pressed }) => [
+      <View
+        style={[
           styles.card,
           {
             backgroundColor: colors.cardBackground,
+            borderColor: colors.borderSubtle,
             borderRadius: 12,
             padding: spacing.md,
-            opacity: onPress && pressed ? 0.92 : 1,
+            shadowColor: colors.text,
           },
         ]}
       >
         <View style={styles.row}>
-          <View style={styles.textGroup}>
-            <Typography variant="body1" style={styles.title}>
-              {insight.title}
-            </Typography>
-            <Typography variant="body2" color={colors.textSecondary}>
-              {insight.timestamp}
-            </Typography>
-          </View>
+          <Pressable
+            accessibilityRole={onPress ? a11yRoles.button : undefined}
+            accessibilityLabel={
+              onPress ? getInsightAccessibilityLabel(insight.title, insight.timestamp) : undefined
+            }
+            accessibilityHint={onPress ? 'Opens result details.' : undefined}
+            onPress={onPress}
+            disabled={!onPress}
+            style={({ pressed }) => [styles.cardBody, { opacity: onPress && pressed ? 0.92 : 1 }]}
+          >
+            <View style={styles.textGroup}>
+              <Typography variant="body1" style={styles.title}>
+                {insight.title}
+              </Typography>
+              <Typography variant="body2" color={colors.textSecondary}>
+                {insight.timestamp}
+              </Typography>
+            </View>
+          </Pressable>
           <Pressable
             ref={menuButtonRef}
+            accessibilityRole={a11yRoles.button}
+            accessibilityLabel={`Options for lab insight ${insight.title}`}
+            accessibilityHint={
+              onExportPdf
+                ? 'Opens rename, view, export, and delete actions.'
+                : 'Opens rename, view, and delete actions.'
+            }
             onPress={openMenu}
             hitSlop={expandHitSlop(18)}
             style={[styles.menuButton, minTouchTargetStyle]}
-            accessibilityRole="button"
-            accessibilityLabel={`More actions for ${insight.title}`}
           >
             <Ionicons
               name="ellipsis-vertical"
@@ -136,7 +158,7 @@ export function InsightItemCard({
             />
           </Pressable>
         </View>
-      </Pressable>
+      </View>
 
       {/* Three-dot dropdown menu */}
       <Modal
@@ -149,20 +171,26 @@ export function InsightItemCard({
         <Pressable
           style={styles.backdrop}
           onPress={closeMenu}
-          accessibilityRole="button"
+          accessibilityRole={a11yRoles.button}
           accessibilityLabel="Close insight actions menu"
         >
           <Pressable
+            accessibilityViewIsModal
             style={[
               styles.menuCard,
-              { top: menuPos.top, right: menuPos.right, backgroundColor: colors.surface },
+              {
+                top: menuPos.top,
+                right: menuPos.right,
+                backgroundColor: colors.surface,
+                shadowColor: colors.text,
+              },
             ]}
             accessibilityRole="menu"
           >
             <Pressable
               style={styles.menuItem}
               onPress={handleRename}
-              accessibilityRole="menuitem"
+              accessibilityRole={a11yRoles.menuitem}
               accessibilityLabel={`Rename ${insight.title}`}
             >
               <Typography variant="body1">Rename</Typography>
@@ -174,8 +202,8 @@ export function InsightItemCard({
             <Pressable
               style={styles.menuItem}
               onPress={handleView}
-              accessibilityRole="menuitem"
-              accessibilityLabel={`View ${insight.title}`}
+              accessibilityRole={a11yRoles.menuitem}
+              accessibilityLabel={`View ${insight.title} details`}
             >
               <Typography variant="body1">View</Typography>
               <ChevronRightIcon size={18} color={colors.text} />
@@ -188,7 +216,7 @@ export function InsightItemCard({
                 <Pressable
                   style={styles.menuItem}
                   onPress={handleExportPdf}
-                  accessibilityRole="menuitem"
+                  accessibilityRole={a11yRoles.menuitem}
                   accessibilityLabel={`Export ${insight.title} as PDF`}
                 >
                   <Typography variant="body1">Export as PDF</Typography>
@@ -202,14 +230,14 @@ export function InsightItemCard({
             <Pressable
               style={styles.menuItem}
               onPress={handleDelete}
-              accessibilityRole="menuitem"
+              accessibilityRole={a11yRoles.menuitem}
               accessibilityLabel={`Delete ${insight.title}`}
               accessibilityHint="Destructive action"
             >
-              <Typography variant="body1" color="#EF4444">
+              <Typography variant="body1" color={colors.error}>
                 Delete
               </Typography>
-              <DeleteIcon size={18} />
+              <DeleteIcon size={18} color={colors.error} />
             </Pressable>
           </Pressable>
         </Pressable>
@@ -236,12 +264,15 @@ export function InsightItemCard({
 const styles = StyleSheet.create({
   card: {
     borderWidth: 1,
-    borderColor: '#F0F0F0',
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
     shadowRadius: 4,
     elevation: 2,
+  },
+  cardBody: {
+    flex: 1,
+    justifyContent: 'center',
+    minHeight: 48,
   },
   row: {
     flexDirection: 'row',
@@ -265,7 +296,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: MENU_WIDTH,
     borderRadius: 12,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.12,
     shadowRadius: 12,

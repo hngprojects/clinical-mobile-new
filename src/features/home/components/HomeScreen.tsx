@@ -6,6 +6,7 @@ import { Alert, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { casesApi } from '@/features/insights/api/cases.api';
+import type { InsightCardModel } from '@/features/insights/api/types';
 import { useInsightCases } from '@/features/insights/hooks/useInsightCases';
 import {
   NOTIFICATIONS_KEY,
@@ -15,15 +16,16 @@ import { Toast, UploadBottomSheet, UploadedFile, UploadError } from '@/shared/co
 import { useNotificationStream } from '@/shared/hooks/useNotificationStream';
 import { useTheme } from '@/shared/theme';
 
+import { useAuthStore } from '@/features/auth/store/auth.store';
 import { useHome } from '../hooks/useHome';
 import { HomeHeader } from './HomeHeader';
-import { Insight } from './InsightCard';
 import { RecentInsightsSection } from './RecentInsightsSection';
 import { UploadCard } from './UploadCard';
 
 export function HomeScreen() {
   const { colors, spacing } = useTheme();
   const { user, isGuest } = useHome();
+  const guestSessionId = useAuthStore((s) => s.guestSessionId);
   const router = useRouter();
   const { insightItems, deleteCase, renameCase } = useInsightCases(0, 3);
   const [showUploadSheet, setShowUploadSheet] = useState(false);
@@ -33,6 +35,7 @@ export function HomeScreen() {
   const queryClient = useQueryClient();
 
   useNotificationStream({
+    guestSessionId,
     onEvent: (event) => {
       queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_KEY });
       queryClient.invalidateQueries({ queryKey: UNREAD_COUNT_KEY });
@@ -56,7 +59,7 @@ export function HomeScreen() {
     };
   }, []);
 
-  const insights = useMemo<Insight[]>(
+  const insights = useMemo<InsightCardModel[]>(
     () =>
       insightItems.map((item) => ({
         caseId: item.caseId ?? item.id,

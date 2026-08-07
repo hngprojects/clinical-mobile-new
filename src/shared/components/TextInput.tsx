@@ -31,6 +31,7 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
       onBlur,
       accessibilityLabel,
       accessibilityHint,
+      accessibilityState,
       ...props
     },
     ref,
@@ -88,6 +89,17 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
               setIsFocused(false);
               onBlur?.(e);
             }}
+            placeholderTextColor={colors.placeholder}
+            autoCapitalize="none"
+            autoCorrect={false}
+            selectionColor={colors.primary}
+            accessibilityLabel={resolvedAccessibilityLabel}
+            accessibilityHint={resolvedAccessibilityHint}
+            accessibilityState={{
+              disabled: props.editable === false,
+              ...accessibilityState,
+            }}
+            {...props}
             style={[
               styles.input,
               {
@@ -96,17 +108,12 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
                 paddingHorizontal: 20,
                 paddingRight: rightIcon ? 48 : 20,
                 textAlignVertical: 'center',
+                includeFontPadding: false,
+                fontFamily: 'Inter_400Regular',
+                fontSize: 14,
               },
               style,
             ]}
-            placeholderTextColor={colors.placeholder}
-            autoCapitalize="none"
-            autoCorrect={false}
-            selectionColor={colors.primary}
-            accessibilityLabel={resolvedAccessibilityLabel}
-            accessibilityHint={resolvedAccessibilityHint}
-            accessibilityState={{ disabled: props.editable === false }}
-            {...props}
           />
           {rightIcon && (
             <View style={styles.rightIcon} accessible={false} importantForAccessibility="no">
@@ -141,13 +148,11 @@ const styles = StyleSheet.create({
   },
   label: { marginBottom: 2 },
   input: {
-    height: '100%',
     textAlignVertical: 'center',
-    paddingTop: 0,
-    paddingBottom: 0,
+    paddingTop: 14,
+    paddingBottom: 14,
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
-    lineHeight: 21,
   },
   rightIcon: {
     position: 'absolute',

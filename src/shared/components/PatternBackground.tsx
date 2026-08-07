@@ -26,7 +26,10 @@ export function PatternBackground({
       {Array.from({ length: PATTERN_ROWS }).map((_, row) => (
         <View key={row} style={[styles.patternRow, { height: CELL_H }]}>
           {Array.from({ length: PATTERN_COLS + 1 }).map((_, col) => (
-            <View key={col} style={[styles.patternCell, { width: CELL_W, height: CELL_H }]}>
+            <View
+              key={col}
+              style={[styles.patternCell, { width: CELL_W, height: CELL_H, opacity }]}
+            >
               <ClinsightLogo size={50} color={color} />
             </View>
           ))}
