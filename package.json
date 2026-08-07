@@ -87,13 +87,5 @@
     "prettier": "^3.8.3",
     "typescript": "~5.9.2"
   },
-  "private": true,
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "unrs-resolver"
-    ],
-    "overrides": {
-      "shell-quote": ">=1.8.4"
-    }
-  }
+  "private": true
 }
