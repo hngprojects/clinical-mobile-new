@@ -7,9 +7,6 @@
     "icon": "./assets/images/icon.png",
     "scheme": "clinsight",
     "userInterfaceStyle": "automatic",
-    "updates": {
-      "url": "https://u.expo.dev/671a26cb-7214-46e6-99b5-0db3d2f3a5c1"
-    },
     "runtimeVersion": {
       "policy": "appVersion"
     },
@@ -30,7 +27,8 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": ["android.permission.RECORD_AUDIO"]
     },
     "web": {
       "output": "static",
@@ -67,13 +65,13 @@
       "reactCompiler": true
     },
     "extra": {
-      "EXPO_PUBLIC_API_BASE_URL": "https://api.staging.clinsight.hng14.com",
+      "EXPO_PUBLIC_API_BASE_URL": "https://api.staging.useclinsight.com",
       "EXPO_PUBLIC_APP_ENV": "staging",
       "router": {},
       "eas": {
-        "projectId": "671a26cb-7214-46e6-99b5-0db3d2f3a5c1"
+        "projectId": "4d95fa1c-259d-4031-b0fb-ff56c14c1f98"
       }
     },
-    "owner": "aideloje"
+    "owner": "d33n"
   }
 }
