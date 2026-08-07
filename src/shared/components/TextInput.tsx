@@ -31,6 +31,7 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
       onBlur,
       accessibilityLabel,
       accessibilityHint,
+      accessibilityState,
       ...props
     },
     ref,
@@ -94,7 +95,10 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
             selectionColor={colors.primary}
             accessibilityLabel={resolvedAccessibilityLabel}
             accessibilityHint={resolvedAccessibilityHint}
-            accessibilityState={{ disabled: props.editable === false }}
+            accessibilityState={{
+              disabled: props.editable === false,
+              ...accessibilityState,
+            }}
             {...props}
             style={[
               styles.input,

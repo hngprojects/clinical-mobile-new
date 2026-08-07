@@ -118,6 +118,9 @@ export default function RegisterScreen() {
         <View style={styles.footer}>
           <Typography style={styles.footerText}>Already have an account? </Typography>
           <Pressable
+            accessibilityRole="link"
+            accessibilityLabel="Login"
+            style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
             onPress={() =>
               router.push({
                 pathname: '/(auth)/login',

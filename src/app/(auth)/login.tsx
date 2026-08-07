@@ -137,6 +137,9 @@ export default function LoginScreen() {
             Don&apos;t have an account?{' '}
           </Typography>
           <Pressable
+            accessibilityRole="link"
+            accessibilityLabel="Sign Up"
+            style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
             onPress={() =>
               router.push({
                 pathname: '/(auth)/register',

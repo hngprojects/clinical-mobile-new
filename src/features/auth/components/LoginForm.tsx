@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   separatorText: {
-    color: '#94A3B8',
+    color: '#5E5E5E',
     fontFamily: 'Inter_500Medium',
     fontSize: 14,
     letterSpacing: -0.14,

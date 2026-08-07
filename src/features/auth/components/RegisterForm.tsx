@@ -84,6 +84,7 @@ export function RegisterForm({ mutation, onContinueAsGuest, onGoogleSuccess }: R
           label="First Name"
           required
           placeholder="Enter your name"
+          autoCapitalize="words"
           returnKeyType="next"
           onSubmitEditing={() => lastNameRef.current?.focus()}
           blurOnSubmit={false}
@@ -95,6 +96,7 @@ export function RegisterForm({ mutation, onContinueAsGuest, onGoogleSuccess }: R
           label="Last Name"
           required
           placeholder="Enter your name"
+          autoCapitalize="words"
           returnKeyType="next"
           onSubmitEditing={() => emailRef.current?.focus()}
           blurOnSubmit={false}
@@ -200,7 +202,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   separatorText: {
-    color: '#94A3B8',
+    color: '#5E5E5E',
     fontFamily: 'Inter_500Medium',
     fontSize: 14,
     letterSpacing: -0.14,
