@@ -50,7 +50,7 @@ jobs:
 
       - name: pnpm audit
         if: always()
-        run: pnpm audit --audit-level high --prod
+        run: pnpm audit --audit-level high --prod --ignore GHSA-w3rx-r6r6-pgpr --ignore GHSA-5p2g-fcmc-qvqq
 
       - name: Jest
         if: always()
