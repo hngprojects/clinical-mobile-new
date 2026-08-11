@@ -8,7 +8,7 @@ jest.mock('@/shared/api/client', () => ({
 }));
 
 const mockPost = client.post as jest.Mock;
-const RealFormData = global.FormData;
+const RealFormData = (globalThis as any).FormData;
 
 class MockFormData {
   parts: [string, unknown][] = [];
@@ -21,11 +21,11 @@ class MockFormData {
 describe('uploadApi', () => {
   beforeEach(() => {
     mockPost.mockReset();
-    global.FormData = MockFormData as unknown as typeof FormData;
+    (globalThis as any).FormData = MockFormData as unknown as typeof FormData;
   });
 
   afterEach(() => {
-    global.FormData = RealFormData;
+    (globalThis as any).FormData = RealFormData;
   });
 
   it('sends a note when uploading a lab result to an existing case', async () => {
